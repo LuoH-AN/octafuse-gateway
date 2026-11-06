@@ -157,6 +157,7 @@ export const routePoolStickyBindingsTable = mysqlTable('route_pool_sticky_bindin
 	expiresAt: timestamp('expires_at', { fsp: 6, mode: 'string' }).notNull(),
 	createdAt: timestamp('created_at', { fsp: 6, mode: 'string' }).notNull(),
 	updatedAt: timestamp('updated_at', { fsp: 6, mode: 'string' }).notNull(),
+	affinityKey: varchar('affinity_key', { length: 512 }),
 });
 
 export const modelSurfacesTable = mysqlTable('model_surfaces', {
@@ -194,6 +195,8 @@ export const apiKeyRequestLogsTable = mysqlTable('api_key_request_logs', {
 	id: varchar('id', { length: COL.ID }).primaryKey(),
 	userId: varchar('user_id', { length: COL.USER_ID }),
 	apiKeyId: varchar('api_key_id', { length: COL.ID }),
+	/** 访问令牌调用（OAuth）：此时 api_key_id 为空 */
+	oauthAccessTokenId: varchar('oauth_access_token_id', { length: COL.ID }),
 	userEmail: varchar('user_email', { length: COL.EMAIL }),
 	modelId: varchar('model_id', { length: COL.ID }),
 	providerId: varchar('provider_id', { length: COL.ID }),

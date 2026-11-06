@@ -125,6 +125,7 @@ export const routePoolStickyBindingsTable = sqliteTable('route_pool_sticky_bindi
 	expiresAt: text('expires_at').notNull(),
 	createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
 	updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+	affinityKey: text('affinity_key'),
 });
 
 export const modelSurfacesTable = sqliteTable('model_surfaces', {
@@ -162,6 +163,8 @@ export const apiKeyRequestLogsTable = sqliteTable('api_key_request_logs', {
 	id: text('id').primaryKey(),
 	userId: text('user_id'),
 	apiKeyId: text('api_key_id'),
+	/** 访问令牌调用（OAuth）：此时 api_key_id 为空 */
+	oauthAccessTokenId: text('oauth_access_token_id'),
 	userEmail: text('user_email'),
 	modelId: text('model_id'),
 	providerId: text('provider_id'),

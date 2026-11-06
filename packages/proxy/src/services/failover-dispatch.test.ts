@@ -2,8 +2,10 @@ import { beforeEach, describe, it, mock } from 'node:test';
 import assert from 'node:assert/strict';
 import type { GatewayRepositories } from '@octafuse/core';
 import type { RouteResult } from './model-router';
-import { EMPTY_USAGE } from './proxy';
+import { EMPTY_USAGE, textStreamDispatchOptions } from './proxy';
 import { failoverDispatch, isSuccessfulDispatchResponse } from './failover-dispatch';
+import { UPSTREAM_HEADERS_TIMEOUT_MESSAGE_PREFIX } from './egress/upstream-fetch-timeout';
+import { RequestTimingCollector } from './request-timing';
 import {
 	isProviderCircuitOpen,
 	markProviderFailure,
@@ -412,6 +414,90 @@ describe('failoverDispatch — soft server failures', () => {
 	});
 });
 
+describe('failoverDispatch — attempt context', () => {
+	it('reports canFailover=false once every remaining candidate is cooling down', async () => {
+		const seen: Array<[string, boolean | undefined]> = [];
+		const dispatch = mock.fn(
+			async (
+				route: RouteResult,
+				_signal?: AbortSignal,
+				_timing?: RequestTimingCollector | null,
+				_attempt?: unknown,
+				context?: { canFailover: boolean }
+			) => {
+				seen.push([route.targetId, context?.canFailover]);
+				return {
+					response:
+						route.providerId === 'p1'
+							? new Response('rate limited', { status: 429, headers: { 'Retry-After': '30' } })
+							: new Response('error', { status: 503 }),
+					usagePromise: Promise.resolve(EMPTY_USAGE),
+					upstreamRequestId: null,
+				};
+			}
+		);
+		// t1 的 429 让 p1 熔断，t2 之后只剩同 provider 的 t3
+		const routes = [
+			makeRoute('p1', { targetId: 't1', routePriority: 30 }),
+			makeRoute('p2', { targetId: 't2', routePriority: 20 }),
+			makeRoute('p1', { targetId: 't3', routePriority: 10 }),
+		];
+
+		await failoverDispatch(emptyRepos, routes, 'openai', dispatch, undefined, defaultOptions);
+
+		assert.deepEqual(seen, [
+			['t1', true],
+			['t2', false],
+		]);
+	});
+
+	it('maps an upstream headers timeout to failure kind timeout and 504', async () => {
+		const timing = new RequestTimingCollector();
+		const dispatch = mock.fn(async () => {
+			throw new Error(`${UPSTREAM_HEADERS_TIMEOUT_MESSAGE_PREFIX} after 60000ms`);
+		});
+
+		const result = await failoverDispatch(emptyRepos, [makeRoute('p1')], 'openai', dispatch, undefined, {
+			...defaultOptions,
+			timing,
+		});
+
+		assert.equal(result.response.status, 504);
+		const metadata = JSON.parse(timing.snapshot().timingMetadata ?? '{}') as {
+			attempts?: Array<{ failure_kind: string | null }>;
+		};
+		assert.equal(metadata.attempts?.[0]?.failure_kind, 'timeout');
+		assert.equal(isProviderCircuitOpen('p1'), false);
+	});
+});
+
+describe('textStreamDispatchOptions', () => {
+	const firstEvent = { timeoutMs: 60_000, groups: '*' as const };
+	const options = { firstChunkTimeoutMs: 120_000, idleTimeoutMs: 90_000, headersTimeoutMs: 60_000 };
+
+	it('keeps fast-fail timeouts while another candidate is available', () => {
+		const resolved = textStreamDispatchOptions(firstEvent, 'default', options, { canFailover: true });
+		assert.equal(resolved.firstEventTimeoutMs, 60_000);
+		assert.equal(resolved.headersTimeoutMs, 60_000);
+	});
+
+	it('drops the first-event timeout and widens the headers wait on the last candidate', () => {
+		const resolved = textStreamDispatchOptions(firstEvent, 'default', options, { canFailover: false });
+		assert.equal(resolved.firstEventTimeoutMs, 0);
+		assert.equal(resolved.headersTimeoutMs, 120_000);
+	});
+
+	it('leaves the headers wait unlimited when it is not configured', () => {
+		const resolved = textStreamDispatchOptions(
+			firstEvent,
+			'default',
+			{ firstChunkTimeoutMs: 120_000 },
+			{ canFailover: false }
+		);
+		assert.equal(resolved.headersTimeoutMs, undefined);
+	});
+});
+
 describe('failoverDispatch — provider sticky', () => {
 	const stickyRepoExtras = {
 		deleteStaleBefore: mock.fn(async () => 0),
@@ -732,5 +818,211 @@ describe('failoverDispatch — provider sticky', () => {
 		const trace = await result.stickyTrace!();
 		assert.equal(trace.lookup, 'invalid_circuit');
 		resetProviderCircuitStateForTests();
+	});
+});
+
+function captureWarns(): { warns: string[]; restore: () => void } {
+	const warns: string[] = [];
+	const original = console.warn;
+	console.warn = (...args: unknown[]) => {
+		warns.push(args.map((part) => String(part)).join(' '));
+	};
+	return {
+		warns,
+		restore: () => {
+			console.warn = original;
+		},
+	};
+}
+
+describe('failoverDispatch — failover logs', () => {
+	it('logs the upstream error and the next provider, and keeps the failed body readable', async () => {
+		const timing = new RequestTimingCollector();
+		const dispatch = mock.fn(async (route: RouteResult) => {
+			if (route.providerId === 'p1') {
+				return {
+					response: new Response(
+						JSON.stringify({ error: { message: 'rate limit exceeded for model-x' } }),
+						{ status: 429, headers: { 'content-type': 'application/json' } }
+					),
+					usagePromise: Promise.resolve(EMPTY_USAGE),
+					upstreamRequestId: null,
+				};
+			}
+			return {
+				response: new Response('ok', { status: 200 }),
+				usagePromise: Promise.resolve(EMPTY_USAGE),
+				upstreamRequestId: null,
+			};
+		});
+		const logs = captureWarns();
+		try {
+			const result = await failoverDispatch(
+				emptyRepos,
+				[makeRoute('p1', { providerName: 'Alpha' }), makeRoute('p2', { providerName: 'Beta' })],
+				'openai',
+				dispatch,
+				undefined,
+				{ ...defaultOptions, timing }
+			);
+			assert.equal(result.response.status, 200);
+			assert.equal(result.chosenRoute.providerId, 'p2');
+		} finally {
+			logs.restore();
+		}
+
+		const failover = logs.warns.find((line) => line.includes('trying next candidate'));
+		assert.ok(failover, logs.warns.join('\n'));
+		assert.match(failover!, /candidate=1\/2/);
+		assert.match(failover!, /providerId=p1/);
+		assert.match(failover!, /provider=Alpha/);
+		assert.match(failover!, /target=target-p1/);
+		assert.match(failover!, /status=429/);
+		assert.match(failover!, /kind=rate_limit/);
+		assert.match(failover!, /circuit=open/);
+		assert.match(failover!, /nextProviderId=p2/);
+		assert.match(failover!, /nextProvider=Beta/);
+		assert.match(failover!, /nextTarget=target-p2/);
+		assert.match(failover!, /rate limit exceeded for model-x/);
+
+		const metadata = JSON.parse(timing.snapshot().timingMetadata ?? '{}') as {
+			attempts: Array<{
+				provider_id: string;
+				target_id: string | null;
+				status: number | null;
+				error: string | null;
+				failure_kind: string | null;
+				selected: boolean;
+			}>;
+		};
+		assert.equal(metadata.attempts[0]?.failure_kind, 'rate_limit');
+		assert.equal(metadata.attempts[0]?.target_id, 'target-p1');
+		assert.match(metadata.attempts[0]?.error ?? '', /rate limit exceeded/);
+		assert.equal(metadata.attempts[1]?.selected, true);
+		assert.equal(metadata.attempts[1]?.failure_kind, null);
+		assert.equal(metadata.attempts[1]?.error, null);
+	});
+
+	it('logs auth failures once, with the upstream message and no second non-OK line', async () => {
+		const dispatch = mock.fn(async (route: RouteResult) => {
+			if (route.providerId === 'p1') {
+				return {
+					response: new Response(JSON.stringify({ error: { message: 'invalid api key' } }), {
+						status: 401,
+						headers: { 'content-type': 'application/json' },
+					}),
+					usagePromise: Promise.resolve(EMPTY_USAGE),
+					upstreamRequestId: null,
+				};
+			}
+			return {
+				response: new Response('ok', { status: 200 }),
+				usagePromise: Promise.resolve(EMPTY_USAGE),
+				upstreamRequestId: null,
+			};
+		});
+		const logs = captureWarns();
+		try {
+			const result = await failoverDispatch(
+				emptyRepos,
+				[makeRoute('p1'), makeRoute('p2')],
+				'openai',
+				dispatch,
+				undefined,
+				defaultOptions
+			);
+			assert.equal(result.response.status, 200);
+		} finally {
+			logs.restore();
+		}
+
+		const auth = logs.warns.filter((line) => line.includes('provider auth or quota issue'));
+		assert.equal(auth.length, 1);
+		assert.match(auth[0]!, /trying next provider/);
+		assert.match(auth[0]!, /status=401/);
+		assert.match(auth[0]!, /kind=auth/);
+		assert.match(auth[0]!, /invalid api key/);
+		assert.equal(
+			logs.warns.filter((line) => line.includes('provider non-OK')).length,
+			0
+		);
+	});
+
+	it('logs fetch failures with the next candidate and does not say a next hop exists on the last one', async () => {
+		const dispatch = mock.fn(async (route: RouteResult) => {
+			if (route.providerId === 'p1') throw new Error('connect ECONNREFUSED 10.0.0.8:443');
+			return {
+				response: new Response('upstream down', {
+					status: 503,
+					headers: { 'content-type': 'text/plain' },
+				}),
+				usagePromise: Promise.resolve(EMPTY_USAGE),
+				upstreamRequestId: null,
+			};
+		});
+		const logs = captureWarns();
+		try {
+			const result = await failoverDispatch(
+				emptyRepos,
+				[makeRoute('p1', { providerName: 'Alpha' }), makeRoute('p2', { providerName: 'Beta' })],
+				'openai',
+				dispatch,
+				undefined,
+				defaultOptions
+			);
+			assert.equal(result.response.status, 503);
+			const body = await result.response.text();
+			assert.equal(body, 'upstream down');
+		} finally {
+			logs.restore();
+		}
+
+		const fetchLine = logs.warns.find((line) => line.includes('fetch failed'));
+		assert.ok(fetchLine);
+		assert.match(fetchLine!, /trying next candidate/);
+		assert.match(fetchLine!, /kind=fetch/);
+		assert.match(fetchLine!, /circuit=none/);
+		assert.match(fetchLine!, /nextProviderId=p2/);
+		assert.match(fetchLine!, /ECONNREFUSED/);
+
+		const last = logs.warns.find((line) => line.includes('no remaining candidate'));
+		assert.ok(last);
+		assert.match(last!, /providerId=p2/);
+		assert.match(last!, /status=503/);
+		assert.match(last!, /kind=server/);
+		assert.match(last!, /circuit=closed/);
+		assert.match(last!, /next=none/);
+		assert.match(last!, /upstream down/);
+		assert.doesNotMatch(last!, /trying next/);
+	});
+
+	it('does not log a failover hop when the failure must stop immediately', async () => {
+		const dispatch = mock.fn(async () => ({
+			response: new Response(JSON.stringify({ error: { message: 'bad request' } }), {
+				status: 400,
+				headers: { 'content-type': 'application/json' },
+			}),
+			usagePromise: Promise.resolve(EMPTY_USAGE),
+			upstreamRequestId: null,
+		}));
+		const logs = captureWarns();
+		try {
+			const result = await failoverDispatch(
+				emptyRepos,
+				[makeRoute('p1'), makeRoute('p2')],
+				'openai',
+				dispatch,
+				undefined,
+				defaultOptions
+			);
+			assert.equal(result.response.status, 400);
+			assert.equal(dispatch.mock.callCount(), 1);
+		} finally {
+			logs.restore();
+		}
+		assert.equal(
+			logs.warns.filter((line) => line.includes('trying next') || line.includes('no remaining candidate')).length,
+			0
+		);
 	});
 });

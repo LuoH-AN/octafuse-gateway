@@ -127,6 +127,7 @@ export const routePoolStickyBindingsTable = pgTable('route_pool_sticky_bindings'
 	expiresAt: timestamp('expires_at', { withTimezone: true, mode: 'string' }).notNull(),
 	createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' }).notNull(),
 	updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'string' }).notNull(),
+	affinityKey: text('affinity_key'),
 });
 
 export const modelSurfacesTable = pgTable('model_surfaces', {
@@ -164,6 +165,8 @@ export const apiKeyRequestLogsTable = pgTable('api_key_request_logs', {
 	id: text('id').primaryKey(),
 	userId: text('user_id'),
 	apiKeyId: text('api_key_id'),
+	/** 访问令牌调用（OAuth）：此时 api_key_id 为空 */
+	oauthAccessTokenId: text('oauth_access_token_id'),
 	userEmail: text('user_email'),
 	modelId: text('model_id'),
 	providerId: text('provider_id'),

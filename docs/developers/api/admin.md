@@ -82,6 +82,7 @@ Authorization: Bearer sk-admin-<64 hex characters>
 | `/admin/routes` | GET（`?model_id=&provider_id=`）, POST, GET/PATCH/DELETE `/:id` | `model_surfaces`、`route_pools`、`model_routes`（Surface → Pool → Target） | Admin UI |
 | `/admin/routes/pools/:poolId` | PATCH | `route_pools.strategy` / `tier_strategies` / `sticky_routing`（Pool 策略与 Provider 粘性） | Admin UI |
 | `/admin/routes/pools/:poolId/sticky/bindings/summary` | GET | 活跃粘性绑定按 target 聚合（epoch 有效且未过期） | Admin UI |
+| `/admin/routes/pools/:poolId/sticky/bindings` | GET | 分页列出当前粘在 Provider 上的用户（可按 `route_target_id` 筛选） | Admin UI |
 | `/admin/routes/pools/:poolId/sticky/bindings/lookup` | GET | 按 `user_id` / `email` + surface 上下文反查单用户绑定 | Admin UI |
 | `/admin/routes/pools/:poolId/sticky/bindings/:affinityHash` | DELETE | 强制解绑（不校验 `binding_token`） | Admin UI |
 | `/admin/routes/pools/:poolId/sticky/reset` | POST | bump `sticky_epoch`，使本 pool 全部绑定失效 | Admin UI |
@@ -744,7 +745,7 @@ curl "http://localhost:8789/api/admin/keys/uuid-here/logs?page=1&page_size=10" \
 | `StepFun` | `GET /v1/accounts` | `balance` 为可用余额（CNY）。累计充值与累计赠送不写入快照 |
 | `Vercel AI Gateway` | `GET /v1/credits` | `balance` 为剩余额度（USD） |
 | `OpenCode Go` | `GET /zen/go/v1/usage` | `rolling` / `weekly` / `monthly` 的已用百分比与重置时间。`rolling` 记为 `5h`。`status: rate-limited` 视为该窗口已用尽 |
-| `Command Code` | `GET /alpha/billing/credits` | 与 Provider API 同一把 Key。`monthlyCredits`、`purchasedCredits`、`freeCredits` 相加为剩余美元；有 `remainingCredits` 时以它为准。`windowLimits` 的 `fiveHour` / `weekly` 记为 `5h` / `weekly`（`used` / `cap` 为美元）。按量计费套餐可以只有余额、没有窗口 |
+| `Command Code` | `GET /alpha/billing/credits`；成功后再读 `GET /alpha/billing/subscriptions`，需要推算每月上限时再读 `GET /alpha/usage/summary` | 与 Provider API 同一把 Key。`monthlyCredits`、`purchasedCredits`、`freeCredits` 相加为剩余美元；有 `remainingCredits` 时以它为准。`windowLimits` 的 `fiveHour` / `weekly` 记为 `5h` / `weekly`（`used` / `cap` 为美元）。每月窗口优先用 `credits.monthlyCreditsGranted` 作上限，已用为上限减去 `monthlyCredits`。没有该字段、且已有滚动窗口时，用本账期 `totalMonthlyCredits` 加上剩余月度额度作为上限。重置时间取订阅 `currentPeriodEnd`。后两个请求失败或超时不影响已读到的余额和滚动窗口。按量计费且没有滚动窗口时，不编造每月窗口 |
 | `ElevenLabs` | `GET /v1/user/subscription` | 请求头是 `xi-api-key`。响应字段仍是 `character_count` / `character_limit`，产品已改称 credits，数值不变，记为窗口 `credits`。`next_character_count_reset_unix` 为重置时间。`status: free_disabled` 视为已用尽。欧盟等驻留域名与默认 `api.elevenlabs.io` 同一注册域时，请求发往已保存的端点主机 |
 | `MiniMax` | `GET https://www.minimaxi.com/v1/token_plan/remains`，失败时再请求 `GET https://api.minimaxi.com/v1/api/openplatform/coding_plan/remains` | 优先取 `general` 模型的 5 小时与每周窗口。`*_usage_count` 是剩余次数；次数为 0 时改用剩余百分比。两台主机都在 `minimaxi.com` 上 |
 | `Zhipu GLM (Coding Plan)` | `GET /api/monitor/usage/quota/limit` | `CREDIT_LIMIT` / `TOKENS_LIMIT`。`unit=3,number=5` 为 5 小时，`unit=6,number=1` 为每周。`usage` 是上限，`percentage` 是已用百分比 |
@@ -813,6 +814,7 @@ curl "http://localhost:8789/api/admin/keys/uuid-here/logs?page=1&page_size=10" \
 
 - **Sticky 绑定可观测 / 排障**（挂在 `/admin/routes/pools/:poolId/sticky/*`，须在 `/:id` 通配之前注册）：
   - **`GET .../sticky/bindings/summary`** → `{ total_active, stale_count, targets: [{ route_target_id, active_count, share, last_updated_at }] }`。活跃行条件：`pool_epoch = route_pools.sticky_epoch` 且 `expires_at > now`。
+  - **`GET .../sticky/bindings?page=&page_size=&route_target_id=`** → `{ items: [{ affinity_hash, user_id, email, model_id, route_group, protocol, route_target_id, expires_at, remaining_seconds, updated_at }], total, page, page_size }`。按 `updated_at` 倒序；`page_size` 默认 20，上限 100。用户信息来自绑定行的 `affinity_key`（迁移 0034）；该迁移前写入、尚未续期的行 `user_id` / `model_id` 等为 `null`。
   - **`GET .../sticky/bindings/lookup?user_id=&email=&model_id=&route_group=&protocol=&request_operation=`**  
     用 surface 上下文（`resolveModelSurface`）校验属于该 pool，再按 `SHA-256(userId|model|routeGroup|protocol)` 查绑定。`email` 与 `user_id` 二选一。返回 `{ user_id, affinity_hash, affinity_key, binding }`；`binding` 可为 `null`。
   - **`DELETE .../sticky/bindings/:affinityHash`**：强制删除该 hash 行（管理端解绑，无 token CAS）。
@@ -1039,10 +1041,10 @@ curl -sS "$GATEWAY_URL/v1/images/generations" \
 - **`BILLING_CURRENCY`**：仅允许写入 **`USD`** 或 **`CNY`**（大写）；否则返回 `400` 与 `success: false`。
 - **`ROUTE_STRATEGY`**：仅允许 **`hash_affinity`** \| **`weighted_random`** \| **`weight_priority`** \| **`weighted_round_robin`**（小写）；非法 → `400`。这是全局同层路由策略缺省，模型 `route_policy` 与 `route_pools.strategy` 可覆盖。详见 [route-strategies.md](../reference/route-strategies.md)。Proxy 进程内缓存约 **30s**。
 - **`USER_CHARGED_COST_FACTOR_MODE`**：仅允许 **`multiply`** \| **`min`**（小写）；非法 → `400`。控制 `users.charged_cost_factors` 如何与路由 Charged 有效倍率合成最终用户费用：默认 **`multiply`** 为路由用户计费 × 用户倍率；**`min`** 取两者较小值。用户倍率按本次 route group 查找（具体分组，其次 `"*"`，数字覆盖全部分组）。该模型与分组都未配置时两种模式都保持路由价。Proxy 进程内缓存约 **30s**。
-- **`STREAM_FIRST_EVENT_TIMEOUT_MS`**：空 / `0` 关闭；正整数毫秒开启文本流式首个 SSE 事件超时（超时返回 524 并 failover）。覆盖 Chat Completions、Responses、Anthropic Messages、Gemini `streamGenerateContent`。**不**作用于 Images / Audio / Realtime / Tools。未另设 `STREAM_FIRST_EVENT_TIMEOUT_ROUTE_GROUPS` 时只作用于路由组 `default`。Proxy 进程内缓存约 **30s**。
-- **`STREAM_FIRST_EVENT_TIMEOUT_ROUTE_GROUPS`**：空则在超时开启时只作用于 `default`；`*` / `all` 作用于全部路由组；否则为逗号分隔的路由组 id。非法空列表（例如只有逗号）→ `400`。
+- **`STREAM_FIRST_EVENT_TIMEOUT_MS`**：文本流式首个**带内容的 SSE 事件**超时（超时返回 524 并 failover；`:` 注释心跳不算事件；后面没有可切换的候选时不生效）。**未配置或空时默认 60000**；正整数毫秒为自定义值；`0` 关闭。覆盖 Chat Completions、Responses、Anthropic Messages、Gemini `streamGenerateContent`。**不**作用于 Images / Audio / Realtime / Tools。Proxy 进程内缓存约 **30s**。
+- **`STREAM_FIRST_EVENT_TIMEOUT_ROUTE_GROUPS`**：空 / 未配置 / `*` / `all` 作用于全部路由组；否则为逗号分隔的路由组 id。非法空列表（例如只有逗号）→ `400`。
 
-文本流式空闲 / 记账兜底时长（`STREAM_FIRST_CHUNK_TIMEOUT_MS` / `STREAM_IDLE_TIMEOUT_MS` / `USAGE_SAFETY_TIMEOUT_MS`）是代理服务**部署环境变量**，不在本接口。见 [streaming-billing.md](../reference/streaming-billing.md)。
+文本流式响应头 / 空闲 / 记账兜底时长（`STREAM_HEADERS_TIMEOUT_MS` / `STREAM_FIRST_CHUNK_TIMEOUT_MS` / `STREAM_IDLE_TIMEOUT_MS` / `USAGE_SAFETY_TIMEOUT_MS`）是代理服务**部署环境变量**，不在本接口。见 [streaming-billing.md](../reference/streaming-billing.md)。
 
 Agent Tools 也通过该接口维护配置：
 
