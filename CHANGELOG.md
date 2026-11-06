@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Patch Changes
+
+- **Responses 工具轮兼容**：请求回传、JSON 响应和 SSE 输出中，reasoning 项缺失或为 null 的 `summary` 自动补为空数组，避免 GPT 工具调用后的续轮请求报 `Missing required parameter: 'input[n].summary'`；保留已有摘要、加密推理和工具信息。
+
 ## 2.17.0
 
 ### Minor Changes

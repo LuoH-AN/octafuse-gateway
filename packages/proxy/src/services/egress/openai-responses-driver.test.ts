@@ -208,6 +208,171 @@ describe('dispatchOpenAiResponsesRoute', () => {
 		};
 	}
 
+	for (const summary of [undefined, null]) {
+		it(`repairs ${String(summary)} reasoning summary before a tool continuation reaches the upstream`, async () => {
+			const reasoning = { type: 'reasoning', id: 'rs_1', encrypted_content: 'opaque-state', summary };
+			const body = {
+				model: 'public-model',
+				store: false,
+				input: [
+					{ role: 'user', content: 'Check the weather' },
+					{ type: 'message', role: 'assistant', content: [] },
+					reasoning,
+					{ type: 'function_call', call_id: 'call_1', name: 'weather', arguments: '{}' },
+					{ type: 'function_call_output', call_id: 'call_1', output: '{"temperature":20}' },
+				],
+				include: ['reasoning.encrypted_content'],
+				tools: [{ type: 'function', name: 'weather', parameters: { type: 'object' } }],
+			};
+			const original = structuredClone(body);
+			let calls = 0;
+			mock.method(globalThis, 'fetch', async (url: string, init: RequestInit) => {
+				calls += 1;
+				assert.equal(url, 'https://api.openai.com/v1/responses');
+				const wire = JSON.parse(init.body as string);
+				if (!Array.isArray(wire.input[2].summary)) {
+					return Response.json({ error: { message: "Missing required parameter: 'input[2].summary'." } }, { status: 400 });
+				}
+				assert.deepEqual(wire, {
+					...body,
+					model: 'gpt-5',
+					input: body.input.map((item, index) => index === 2 ? { ...reasoning, summary: [] } : item),
+				});
+				return Response.json({ id: 'resp_tool', output: [], usage: { input_tokens: 12, output_tokens: 3 } });
+			});
+			const result = await dispatchOpenAiResponsesRoute(responsesRoute(), body);
+			assert.equal(result.response.status, 200);
+			assert.equal(calls, 1);
+			assert.deepEqual(body, original);
+			assert.equal((await result.usagePromise).input_tokens, 12);
+		});
+	}
+
+	it('normalizes reasoning after route defaults are forcibly merged', async () => {
+		const route = responsesRoute();
+		route.customParams = {
+			body: { input: [{ type: 'reasoning', id: 'rs_default', encrypted_content: 'opaque' }] },
+			force_override: { body: true },
+		};
+		mock.method(globalThis, 'fetch', async (_url: string, init: RequestInit) => {
+			assert.deepEqual(JSON.parse(init.body as string).input, [
+				{ type: 'reasoning', id: 'rs_default', encrypted_content: 'opaque', summary: [] },
+			]);
+			return Response.json({ output: [] });
+		});
+		await dispatchOpenAiResponsesRoute(route, { input: 'client input' });
+		assert.equal('summary' in (route.customParams.body as { input: object[] }).input[0]!, false);
+	});
+
+	it('preserves existing summaries, string input, and tool payloads', async () => {
+		const inputs = [
+			'Hello',
+			[
+				{ type: 'reasoning', id: 'rs_1', summary: [{ type: 'summary_text', text: 'Checking weather' }] },
+				{ type: 'reasoning', id: 'rs_2', summary: [] },
+				{ type: 'reasoning', id: 'rs_invalid', summary: 'invalid value stays visible to upstream validation' },
+				{ type: 'function_call_output', call_id: 'call_1', output: [{ type: 'reasoning', encrypted_content: 'tool data' }] },
+				{ role: 'user', content: [{ type: 'input_text', text: 'Hello' }] },
+				null,
+			],
+		];
+		for (const input of inputs) {
+			mock.method(globalThis, 'fetch', async (_url: string, init: RequestInit) => {
+				assert.deepEqual(JSON.parse(init.body as string).input, input);
+				return Response.json({ output: [] });
+			});
+			await dispatchOpenAiResponsesRoute(responsesRoute(), { input });
+			mock.reset();
+		}
+	});
+
+	it('repairs JSON reasoning outputs and preserves usage and rewrapped headers', async () => {
+		const output = [
+			{ type: 'reasoning', id: 'rs_json', encrypted_content: 'encrypted-json', status: 'completed' },
+			{ type: 'function_call', call_id: 'call_json', name: 'weather', arguments: '{}' },
+		];
+		for (const wrapped of [false, true]) {
+			const responseBody = { id: 'resp_json', output, usage: { input_tokens: 10, output_tokens: 4, output_tokens_details: { reasoning_tokens: 2 } } };
+			const upstream = wrapped ? { response: responseBody, custom: 'keep' } : responseBody;
+			mock.method(globalThis, 'fetch', async () => new Response(JSON.stringify(upstream), {
+				headers: { 'Content-Type': 'application/json', 'Content-Length': '123', 'Content-Encoding': 'gzip', 'x-request-id': 'req_json' },
+			}));
+			const result = await dispatchOpenAiResponsesRoute(responsesRoute(), { input: 'weather' });
+			const normalized = { ...responseBody, output: [{ ...output[0], summary: [] }, output[1]] };
+			assert.deepEqual(await result.response.json(), wrapped ? { response: normalized, custom: 'keep' } : normalized);
+			assert.equal(result.response.headers.get('content-length'), null);
+			assert.equal(result.response.headers.get('content-encoding'), null);
+			assert.equal(result.response.headers.get('x-request-id'), 'req_json');
+			assert.equal(result.upstreamRequestId, 'req_json');
+			const usage = await result.usagePromise;
+			assert.equal(usage.upstreamMessageId, 'resp_json');
+			assert.equal(usage.input_tokens, 10);
+			assert.equal(usage.reasoning_tokens, 2);
+			mock.reset();
+		}
+	});
+
+	it('keeps compliant JSON responses and upstream errors byte-for-byte', async () => {
+		for (const status of [200, 400]) {
+			const text = status === 200
+				? '{ "id": "resp_ok", "output": [{"type":"reasoning","id":"rs_ok","summary":[]}], "usage": {"input_tokens":1} }'
+				: '{ "error": { "message": "other invalid parameter", "output": [{"type":"reasoning"}] } }';
+			mock.method(globalThis, 'fetch', async () => new Response(text, { status, headers: { 'Content-Type': 'application/json' } }));
+			const result = await dispatchOpenAiResponsesRoute(responsesRoute(), { input: 'hello' });
+			assert.equal(result.response.status, status);
+			assert.equal(await result.response.text(), text);
+			mock.reset();
+		}
+	});
+
+	it('repairs SSE reasoning items and terminal output across chunk boundaries for tool replay', async () => {
+		const added = { type: 'reasoning', id: 'rs_stream', encrypted_content: 'partial', status: 'in_progress' };
+		const done = { type: 'reasoning', id: 'rs_stream', encrypted_content: 'complete', status: 'completed' };
+		const summarized = { type: 'reasoning', id: 'rs_summary', summary: [{ type: 'summary_text', text: '天气' }] };
+		const tool = { type: 'function_call', call_id: 'call_stream', name: 'weather', arguments: '{}' };
+		const events = [
+			{ type: 'response.output_item.added', sequence_number: 4, output_index: 0, item: added },
+			{ type: 'response.output_item.done', output_index: 0, item: done },
+			{ type: 'response.output_item.done', sequence_number: 6, output_index: 1, item: summarized },
+			{ type: 'response.output_item.done', output_index: 2, item: tool },
+			{ type: 'response.completed', sequence_number: 8, response: { id: 'resp_stream', output: [done, summarized, tool], usage: { input_tokens: 20, output_tokens: 5 } } },
+		];
+		const sse = events.map((event) => `event: ${event.type}\ndata: ${JSON.stringify(event)}`).join('\n\n');
+		const bytes = new TextEncoder().encode(sse);
+		const stream = new ReadableStream<Uint8Array>({
+			start(controller) {
+				for (let i = 0; i < bytes.length; i += 7) controller.enqueue(bytes.slice(i, i + 7));
+				controller.close();
+			},
+		});
+		mock.method(globalThis, 'fetch', async () => new Response(stream, { headers: { 'Content-Type': 'text/event-stream' } }));
+		const result = await dispatchOpenAiResponsesRoute(responsesRoute(), { input: 'weather', stream: true });
+		const forwarded = (await result.response.text()).split('\n').filter((line) => line.startsWith('data: ')).map((line) => JSON.parse(line.slice(6)));
+		assert.deepEqual(forwarded, [
+			{ ...events[0], item: { ...added, summary: [] } },
+			{ ...events[1], sequence_number: 5, item: { ...done, summary: [] } },
+			events[2],
+			{ ...events[3], sequence_number: 7 },
+			{ ...events[4], response: { ...events[4]!.response, output: [{ ...done, summary: [] }, summarized, tool] } },
+		]);
+		const usage = await result.usagePromise;
+		assert.equal(usage.input_tokens, 20);
+		assert.equal(usage.output_tokens, 5);
+		assert.equal(usage.stream_error, undefined);
+		mock.method(globalThis, 'fetch', async (_url: string, init: RequestInit) => {
+			const wire = JSON.parse(init.body as string);
+			assert.equal(wire.input[0].encrypted_content, 'complete');
+			assert.deepEqual(wire.input[0].summary, []);
+			assert.deepEqual(wire.input[1].summary, summarized.summary);
+			assert.equal(wire.input[2].call_id, wire.input[3].call_id);
+			return Response.json({ id: 'resp_continued', output: [] });
+		});
+		const continuation = await dispatchOpenAiResponsesRoute(responsesRoute(), {
+			input: [...forwarded.at(-1)!.response.output, { type: 'function_call_output', call_id: 'call_stream', output: 'sunny' }],
+		});
+		assert.equal(continuation.response.status, 200);
+	});
+
 	it('returns 524 when the first SSE event exceeds firstEventTimeoutMs', async () => {
 		const hung = new ReadableStream<Uint8Array>({
 			start() {},

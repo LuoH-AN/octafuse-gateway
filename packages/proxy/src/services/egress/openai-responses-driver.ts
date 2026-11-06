@@ -3,6 +3,7 @@ import type { RouteResult } from '../model-router';
 import type { UsageFromStream } from '../proxy';
 import { buildRouteRequestBody } from '../route-default-params';
 import { sanitizeRewrappedHeaders } from './response-headers';
+import { normalizeResponsesInputBody, normalizeResponsesOutputPayload } from './openai-responses-compat';
 import { extractUpstreamRequestId, normalizeUpstreamId } from './upstream-request-id';
 import type { RequestTimingAttempt, RequestTimingCollector } from '../request-timing';
 import {
@@ -24,6 +25,7 @@ import {
  * - SSE 识别 typed events，usage 通常在 `response.completed` / `response.incomplete`
  * - 转发事件；缺失顶层 `sequence_number` 时按连接注入递增序号，已有序号原样保留
  * - 上游静默 EOF 时补一条带序号的 `error`，避免客户端挂死
+ * - 请求/响应的 reasoning 项缺失或为 null 的 `summary` 补为空数组，兼容工具轮回传
  */
 
 const EMPTY_USAGE_LOCAL: UsageFromStream = {
@@ -104,6 +106,7 @@ type ResponsesEvent = {
  *
  * - `data: [DONE]`、非 JSON 行、`event:` 行原样返回（不注入）。
  * - 返回注入后的整行（含 `data: ` 前缀与换行由调用方处理）。
+ * - 同一转发出口补齐 reasoning 项的空 `summary`，防止客户端回传后触发 400。
  */
 export function ensureResponsesSequenceNumber(
 	line: string,
@@ -115,13 +118,14 @@ export function ensureResponsesSequenceNumber(
 	try {
 		const parsed = JSON.parse(payload) as unknown;
 		if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return line;
-		const event = parsed as ResponsesEvent;
+		const normalized = normalizeResponsesOutputPayload(parsed as Record<string, unknown>);
+		const event = normalized as ResponsesEvent;
 		if (typeof event.sequence_number === 'number') {
 			// 上游已带序号：不覆盖，但让计数器至少越过该值，避免后续注入重复。
 			if (event.sequence_number >= nextSeq.value) {
 				nextSeq.value = event.sequence_number + 1;
 			}
-			return line;
+			return normalized === parsed ? line : `data: ${JSON.stringify(normalized)}`;
 		}
 		const injected = { ...event, sequence_number: nextSeq.value };
 		nextSeq.value += 1;
@@ -432,8 +436,9 @@ async function nonStreamResponseWithUsage(
 			usage?: ResponsesUsage;
 			response?: { id?: string; usage?: ResponsesUsage };
 		};
+		const normalized = normalizeResponsesOutputPayload(parsed);
 		return {
-			response: new Response(text, {
+			response: new Response(normalized === parsed ? text : JSON.stringify(normalized), {
 				status: response.status,
 				statusText: response.statusText,
 				headers: sanitizeRewrappedHeaders(response.headers),
@@ -451,7 +456,7 @@ async function nonStreamResponseWithUsage(
 
 /**
  * 向供应商发起 OpenAI 兼容 `POST …/responses`。
- * 未知字段原样透传；仅把 `model` 换成路由上的上游模型名。
+ * 未知字段原样透传；替换上游模型名，并补齐 reasoning 项的空 `summary`。
  */
 export async function dispatchOpenAiResponsesRoute(
 	route: RouteResult,
@@ -465,10 +470,10 @@ export async function dispatchOpenAiResponsesRoute(
 		providerId: route.providerId,
 	});
 	const { secret } = await resolveProviderUpstreamSecret(route.providerApiKey);
-	const requestBody = {
+	const requestBody = normalizeResponsesInputBody({
 		...buildRouteRequestBody(route, body),
 		model: applyVertexOpenAiModelPrefix(url, route.providerModelName),
-	};
+	});
 
 	const response = await fetch(url, {
 		method: 'POST',
