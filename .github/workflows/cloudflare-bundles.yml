@@ -1,0 +1,48 @@
+name: Build Cloudflare bundles
+
+on:
+  push:
+    branches: [codex/upgrade-octafuse-20261106]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      WRANGLER_SEND_METRICS: 'false'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run verify:package-versions
+      - run: npm run test:unit
+      - run: npm run build -w @octafuse/core
+      - name: Bundle Proxy
+        working-directory: packages/proxy
+        run: npx wrangler deploy --dry-run --outdir ../../build-artifact/proxy
+      - name: Build Admin
+        run: npm run build:cf -w @octafuse/admin
+      - run: npm run typecheck:admin
+      - name: Bundle Admin
+        working-directory: packages/admin
+        run: npx wrangler deploy worker.ts --dry-run --outdir ../../build-artifact/admin
+      - name: Package bundles and static assets
+        run: |
+          cp -a packages/admin/.open-next/assets build-artifact/assets
+          git rev-parse HEAD > build-artifact/SOURCE_COMMIT
+          cp package.json build-artifact/source-package.json
+          VERSION=$(node -p "require('./package.json').version")
+          tar -czf "octafuse-${VERSION}-cloudflare.tar.gz" -C build-artifact .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: octafuse-cloudflare
+          path: octafuse-*-cloudflare.tar.gz
+          retention-days: 30

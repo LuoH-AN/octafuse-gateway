@@ -1,5 +1,11 @@
 # @octafuse/tool-engines
 
+## 2.18.0-luoh.1
+
+### Patch Changes
+
+- 同步上游 main（5833b53b），保留 Responses reasoning summary 工具续轮兼容修复；自有 Cloudflare 发布版本。
+
 ## 2.18.0
 
 ### Minor Changes
