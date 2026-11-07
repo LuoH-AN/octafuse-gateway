@@ -88,7 +88,7 @@ function MetricCard({
 					<p className="text-sm font-medium text-gray-500">{label}</p>
 					<p className="mt-2 truncate text-3xl font-semibold tracking-tight text-gray-950 tabular-nums">{value}</p>
 				</div>
-				<div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 ${toneClasses[tone]}`}>
+				<div className={`md-metric-icon flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 ${toneClasses[tone]}`}>
 					{icon}
 				</div>
 			</div>

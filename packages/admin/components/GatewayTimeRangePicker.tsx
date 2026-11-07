@@ -119,7 +119,7 @@ export function GatewayTimeRangePicker({
 			<div
 				className={`flex w-full min-w-0 flex-wrap items-center gap-x-3 gap-y-2 ${end ? 'justify-end' : ''}`}
 			>
-				<div className="hidden max-w-full flex-wrap items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 p-0.5 md:inline-flex">
+				<div className="md-segmented hidden max-w-full flex-wrap items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 p-0.5 md:inline-flex">
 					{presets.map((p) => (
 						<button
 							key={p}
@@ -133,7 +133,7 @@ export function GatewayTimeRangePicker({
 					))}
 				</div>
 				{calendarPresets.length > 0 ? (
-					<div className="hidden max-w-full flex-wrap items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 p-0.5 md:inline-flex">
+					<div className="md-segmented hidden max-w-full flex-wrap items-center gap-0.5 rounded-lg border border-gray-200 bg-gray-50 p-0.5 md:inline-flex">
 						{calendarPresets.map((p) => (
 							<button
 								key={p}

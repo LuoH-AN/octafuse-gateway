@@ -7,13 +7,13 @@ import type { ReactNode } from 'react';
  */
 
 const LABEL_CLASS = 'shrink-0 whitespace-nowrap text-xs text-slate-500';
-const PILL_CLASS = 'rounded-lg bg-slate-100/80 p-1';
+const PILL_CLASS = 'md-filter-control rounded-lg bg-slate-100/80 p-1';
 const ACTIVE_CLASS = 'bg-white font-semibold text-blue-700 shadow-sm';
 const IDLE_CLASS = 'bg-transparent text-slate-500 hover:text-slate-900';
 
 /** 一行筛选：各控件之间留足横向间距，放不下时自动换行。 */
 export function FilterRow({ children, className = '' }: { children: ReactNode; className?: string }) {
-	return <div className={`flex flex-wrap items-center gap-x-5 gap-y-3 ${className}`}>{children}</div>;
+	return <div className={`md-filter-row flex flex-wrap items-center gap-x-5 gap-y-3 ${className}`}>{children}</div>;
 }
 
 /** 同类控件成组：放不下时整组换到下一行，而不是单个控件落单。 */
@@ -37,9 +37,9 @@ export function FilterSegmented({
 	stretch?: boolean;
 }) {
 	return (
-		<div className="flex flex-wrap items-center gap-2" role="group" aria-label={label}>
+		<div className="md-filter-field flex flex-wrap items-center gap-2" role="group" aria-label={label}>
 			<span className={LABEL_CLASS}>{label}</span>
-			<div className={`${stretch ? 'flex' : 'inline-flex'} flex-wrap gap-1 ${PILL_CLASS}`}>
+			<div className={`md-segmented ${stretch ? 'flex' : 'inline-flex'} flex-wrap gap-1 ${PILL_CLASS}`}>
 				{options.map((option) => (
 					<button
 						key={option.value}
@@ -81,7 +81,7 @@ export function FilterSelect({
 }) {
 	const isActive = active ?? Boolean(value);
 	return (
-		<label className="flex min-w-0 max-w-full items-center gap-2">
+		<label className="md-filter-field flex min-w-0 max-w-full items-center gap-2">
 			<span className={LABEL_CLASS}>{label}</span>
 			<div className={`relative min-w-0 ${PILL_CLASS}`}>
 				<select
@@ -122,7 +122,7 @@ export function FilterTextInput({
 	type?: 'text' | 'search';
 }) {
 	return (
-		<label className="flex min-w-0 max-w-full items-center gap-2">
+		<label className="md-filter-field flex min-w-0 max-w-full items-center gap-2">
 			<span className={LABEL_CLASS}>{label}</span>
 			<div className={`min-w-0 ${PILL_CLASS}`}>
 				<input

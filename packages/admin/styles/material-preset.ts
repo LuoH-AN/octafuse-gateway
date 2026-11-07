@@ -1,23 +1,25 @@
 import type { Config } from 'tailwindcss';
 
 /**
- * Material 3 Forest / Tonal Spot, seeded with #2e7d32 as in lyrics-android.
+ * Material 3 with a monochrome primary and neutral surfaces.
  * Keep the existing utility names so upstream screens inherit the theme.
- * Status palettes (red/amber/emerald) and vendor artwork keep their own colors.
+ * Keep semantic error/warning/success colors available to operational screens.
  */
 const neutral = {
-  50: '#f7fbf1',
-  100: '#f1f5eb',
-  200: '#e0e4db',
-  300: '#c2c9bd',
-  400: '#858e80',
-  500: '#626b5e',
-  600: '#50594d',
-  700: '#424940',
-  800: '#2d342a',
-  900: '#242b21',
-  950: '#191d17',
+  50: '#fafafa',
+  100: '#f3f3f3',
+  200: '#e7e7e7',
+  300: '#d1d1d1',
+  400: '#929292',
+  500: '#707070',
+  600: '#555555',
+  700: '#414141',
+  800: '#303030',
+  900: '#202020',
+  950: '#141414',
 };
+
+const primary = { ...neutral, 500: '#404040', 600: '#202020', 700: '#0a0a0a', 800: '#080808', 900: '#050505', 950: '#000000' };
 
 const materialPreset = {
   theme: {
@@ -25,19 +27,13 @@ const materialPreset = {
       colors: {
         gray: neutral,
         slate: neutral,
-        blue: {
-          50: '#eff9e9',
-          100: '#d6e8ce',
-          200: '#bcdfb2',
-          300: '#a1d399',
-          400: '#86b780',
-          500: '#55824f',
-          600: '#3c6939',
-          700: '#245024',
-          800: '#163e17',
-          900: '#0b2f0d',
-          950: '#002204',
-        },
+        blue: primary,
+        indigo: primary,
+        violet: primary,
+        purple: primary,
+        sky: primary,
+        cyan: primary,
+        teal: primary,
       },
       fontFamily: {
         sans: ['Roboto', 'Noto Sans', 'Noto Sans SC', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'sans-serif'],
@@ -45,18 +41,18 @@ const materialPreset = {
       borderRadius: {
         DEFAULT: '0.5rem',
         md: '0.75rem',
-        lg: '1rem',
-        xl: '1.25rem',
+        lg: '0.875rem',
+        xl: '1rem',
         '2xl': '1.5rem',
         '3xl': '1.75rem',
       },
       boxShadow: {
-        sm: '0 1px 2px rgb(25 29 23 / 0.04)',
-        DEFAULT: '0 1px 3px rgb(25 29 23 / 0.08), 0 2px 6px rgb(25 29 23 / 0.04)',
-        md: '0 4px 12px rgb(25 29 23 / 0.06)',
-        lg: '0 6px 20px rgb(25 29 23 / 0.08)',
-        xl: '0 8px 28px rgb(25 29 23 / 0.12)',
-        '2xl': '0 16px 48px rgb(25 29 23 / 0.16)',
+        sm: '0 1px 2px rgb(0 0 0 / 0.025)',
+        DEFAULT: '0 1px 3px rgb(0 0 0 / 0.06), 0 2px 6px rgb(0 0 0 / 0.03)',
+        md: '0 4px 12px rgb(0 0 0 / 0.05)',
+        lg: '0 6px 20px rgb(0 0 0 / 0.07)',
+        xl: '0 8px 28px rgb(0 0 0 / 0.1)',
+        '2xl': '0 16px 48px rgb(0 0 0 / 0.14)',
       },
     },
   },

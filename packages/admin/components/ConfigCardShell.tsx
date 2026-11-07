@@ -24,7 +24,7 @@ export function ConfigCardShell({
     <section
       id={id}
       aria-labelledby={titleId}
-      className="flex min-w-0 flex-col rounded-xl border border-gray-200 bg-white p-4 sm:p-6"
+      className="md-config-card flex min-w-0 flex-col rounded-xl border border-gray-200 bg-white p-4 sm:p-6"
     >
       <div className="mb-5">
         <div className="flex items-center gap-2">

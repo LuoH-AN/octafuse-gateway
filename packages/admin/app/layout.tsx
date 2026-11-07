@@ -9,6 +9,7 @@ import { getLocale, getMessages, getTranslations } from 'next-intl/server';
 import { FeedbackProvider } from '@/components/feedback';
 import AuthWrapper from '@/components/layout/AuthWrapper';
 import DocumentTitle from '@/components/layout/DocumentTitle';
+import MaterialInteractions from '@/styles/MaterialInteractions';
 
 export async function generateMetadata(): Promise<Metadata> {
 	const t = await getTranslations('metadata');
@@ -34,6 +35,7 @@ export default async function RootLayout({
 	return (
 		<html lang={locale} data-scroll-behavior="smooth">
 			<body className="admin-material font-sans h-dvh overflow-hidden">
+				<MaterialInteractions />
 				<NextIntlClientProvider locale={locale} messages={messages}>
 					<FeedbackProvider>
 						<DocumentTitle />

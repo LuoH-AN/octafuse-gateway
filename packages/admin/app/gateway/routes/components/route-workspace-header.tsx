@@ -19,7 +19,7 @@ type Props = {
 	stickyRefreshIntervalMs: StickyRefreshIntervalMs;
 };
 
-const VIEW_SWITCH_GROUP_CLASS = 'inline-flex shrink-0 rounded-lg border border-slate-200 p-0.5';
+const VIEW_SWITCH_GROUP_CLASS = 'md-segmented inline-flex shrink-0 rounded-lg border border-slate-200 p-0.5';
 
 function viewSwitchButtonClass(active: boolean) {
 	return `inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-colors focus-visible:outline-blue-500 ${active ? 'bg-blue-50 text-blue-700' : 'text-slate-500 hover:bg-slate-50'}`;
@@ -32,7 +32,7 @@ export function RouteWorkspaceHeader(props: Props) {
 	const [pathDisplay, setPathDisplay] = useRoutePathDisplay();
 
 	return (
-		<div className="md:sticky md:top-0 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200/80 bg-white/95 px-4 py-3 shadow-sm backdrop-blur-sm sm:px-6">
+		<div className="md-route-toolbar md:sticky md:top-0 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200/80 bg-white/95 px-4 py-3 shadow-sm backdrop-blur-sm sm:px-6">
 			<div className="min-w-0">
 				<h2 className="flex items-center gap-2 text-base font-semibold text-gray-900">{t('title')}<PricingInfoHint kind="routeFactors" align="start" /></h2>
 				<p className="mt-0.5 text-xs tabular-nums text-slate-500" aria-live="polite">{t('surfaceCounts', {models: visibleModelCount, routes: visibleRouteCount})}</p>

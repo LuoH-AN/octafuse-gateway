@@ -3,6 +3,7 @@
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { useTranslations } from 'next-intl';
 import { CatalogViewToggle, type CatalogView } from '../../components/catalog-view-toggle';
+import { FilterSegmented } from '../../components/filter-controls';
 import {
 	PROVIDER_LIST_FILTERS,
 	type ProviderListFilter,
@@ -88,28 +89,16 @@ export function ProviderToolbar(props: ProviderToolbarProps) {
 	};
 
 	const renderFilters = (label: string, filters: ProviderListFilter[]) => (
-		<div className="grid grid-cols-[5rem_minmax(0,1fr)] items-start gap-3" role="group" aria-label={label}>
-			<span className="py-2 text-xs leading-4 text-slate-500">{label}</span>
-			<div className="flex min-w-0 flex-wrap gap-1.5">
-				{filters.map(toOption).map((option) => (
-					<button
-						key={option.value}
-						type="button"
-						aria-pressed={selectedFilter === option.value}
-						onClick={() => onFilterChange(option.value)}
-						className={`inline-flex items-center gap-2 rounded-md px-2.5 py-2 text-xs leading-4 ring-1 ring-inset transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${selectedFilter === option.value ? 'bg-blue-50 font-medium text-blue-700 ring-blue-200' : 'text-slate-600 ring-slate-200 hover:bg-slate-50 hover:text-slate-900'}`}
-					>
-						<span className={`h-1.5 w-1.5 shrink-0 rounded-full ${option.dotClass}`} aria-hidden />
-						{option.label}
-						<span className={`rounded px-1.5 text-[10px] tabular-nums ${selectedFilter === option.value ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-500'}`}>{option.count}</span>
-					</button>
-				))}
-			</div>
-		</div>
+		<FilterSegmented
+			label={label}
+			value={selectedFilter}
+			onChange={(value) => onFilterChange(value as ProviderListFilter)}
+			options={filters.map(toOption)}
+		/>
 	);
 
 	return (
-		<div className="mb-5 space-y-3 rounded-xl border border-slate-200 bg-white p-4">
+		<div className="md-catalog-toolbar mb-5 space-y-3 rounded-xl border border-slate-200 bg-white p-4">
 			<div className="flex flex-wrap items-center gap-3 border-b border-slate-100 pb-3">
 				<div className="relative w-full min-w-0 sm:w-80 xl:w-96">
 					<MagnifyingGlassIcon

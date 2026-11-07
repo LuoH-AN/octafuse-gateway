@@ -60,12 +60,13 @@ export function DashboardTokenTrendChart({ timeseries, granularity, billingCurre
 					<h2 className="text-base font-semibold text-gray-950">{t('trafficTrend')}</h2>
 					<p className="mt-1 text-xs text-gray-500">{t(`trendHints.${view}`)}</p>
 				</div>
-				<div className="inline-flex max-w-full overflow-x-auto rounded-xl bg-gray-100 p-1">
+				<div className="md-segmented inline-flex max-w-full overflow-x-auto rounded-xl bg-gray-100 p-1">
 					{tabs.map((tab) => (
 						<button
 							key={tab}
 							type="button"
 							onClick={() => setView(tab)}
+							aria-pressed={view === tab}
 							className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium transition ${view === tab ? 'bg-white text-gray-950 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
 						>
 							{t(`trendTabs.${tab}`)}
@@ -82,12 +83,12 @@ export function DashboardTokenTrendChart({ timeseries, granularity, billingCurre
 						<ComposedChart key={view} data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
 							<defs>
 								<linearGradient id="dashboardBlue" x1="0" y1="0" x2="0" y2="1">
-									<stop offset="0%" stopColor="#2563eb" stopOpacity={0.24} />
-									<stop offset="100%" stopColor="#2563eb" stopOpacity={0.02} />
+									<stop offset="0%" stopColor="var(--md-chart-primary, #2563eb)" stopOpacity={0.24} />
+									<stop offset="100%" stopColor="var(--md-chart-primary, #2563eb)" stopOpacity={0.02} />
 								</linearGradient>
 								<linearGradient id="dashboardViolet" x1="0" y1="0" x2="0" y2="1">
-									<stop offset="0%" stopColor="#7c3aed" stopOpacity={0.22} />
-									<stop offset="100%" stopColor="#7c3aed" stopOpacity={0.02} />
+									<stop offset="0%" stopColor="var(--md-chart-secondary, #7c3aed)" stopOpacity={0.22} />
+									<stop offset="100%" stopColor="var(--md-chart-secondary, #7c3aed)" stopOpacity={0.02} />
 								</linearGradient>
 							</defs>
 							<CartesianGrid vertical={false} stroke="#eef2f7" />
@@ -97,12 +98,12 @@ export function DashboardTokenTrendChart({ timeseries, granularity, billingCurre
 								contentStyle={{ borderRadius: 12, borderColor: '#e5e7eb', boxShadow: '0 10px 30px rgba(15, 23, 42, 0.08)', fontSize: 12 }}
 								formatter={(value: number, name: string) => [valueFormatter(value), name]}
 							/>
-							{view === 'requests' ? <Area type="monotone" dataKey="requests" name={t('trendTabs.requests')} stroke="#2563eb" fill="url(#dashboardBlue)" strokeWidth={2} /> : null}
-							{view === 'cost' ? <Area type="monotone" dataKey="cost" name={t('trendTabs.cost')} stroke="#7c3aed" fill="url(#dashboardViolet)" strokeWidth={2} /> : null}
-							{view === 'latency' ? <Area type="monotone" dataKey="latency" name={t('trendTabs.latency')} stroke="#d97706" fill="#fef3c7" strokeWidth={2} connectNulls /> : null}
-							{view === 'tokens' ? <Line type="monotone" dataKey="input_tokens" name={t('inputTokens')} stroke="#2563eb" dot={false} strokeWidth={2} /> : null}
-							{view === 'tokens' ? <Line type="monotone" dataKey="output_tokens" name={t('outputTokens')} stroke="#0d9488" dot={false} strokeWidth={2} /> : null}
-							{view === 'tokens' ? <Line type="monotone" dataKey="cache_read_tokens" name={t('cacheReadTokens')} stroke="#d97706" dot={false} strokeWidth={2} /> : null}
+							{view === 'requests' ? <Area type="monotone" dataKey="requests" name={t('trendTabs.requests')} stroke="var(--md-chart-primary, #2563eb)" fill="url(#dashboardBlue)" strokeWidth={2} /> : null}
+							{view === 'cost' ? <Area type="monotone" dataKey="cost" name={t('trendTabs.cost')} stroke="var(--md-chart-secondary, #7c3aed)" fill="url(#dashboardViolet)" strokeWidth={2} /> : null}
+							{view === 'latency' ? <Area type="monotone" dataKey="latency" name={t('trendTabs.latency')} stroke="var(--md-chart-tertiary, #d97706)" fill="var(--md-chart-fill, #fef3c7)" strokeWidth={2} connectNulls /> : null}
+							{view === 'tokens' ? <Line type="monotone" dataKey="input_tokens" name={t('inputTokens')} stroke="var(--md-chart-primary, #2563eb)" dot={false} strokeWidth={2} /> : null}
+							{view === 'tokens' ? <Line type="monotone" dataKey="output_tokens" strokeDasharray="6 3" name={t('outputTokens')} stroke="var(--md-chart-secondary, #0d9488)" dot={false} strokeWidth={2} /> : null}
+							{view === 'tokens' ? <Line type="monotone" dataKey="cache_read_tokens" strokeDasharray="2 3" name={t('cacheReadTokens')} stroke="var(--md-chart-tertiary, #d97706)" dot={false} strokeWidth={2} /> : null}
 						</ComposedChart>
 					</ResponsiveContainer>
 				</div>

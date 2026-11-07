@@ -56,10 +56,11 @@ export function DashboardModelDistributionChart({
 						{view === 'models' ? t('modelBreakdownHint') : t('userBreakdownHint')}
 					</p>
 				</div>
-				<div className="inline-flex rounded-xl bg-gray-100 p-1 text-xs">
+				<div className="md-segmented inline-flex rounded-xl bg-gray-100 p-1 text-xs">
 					<button
 						type="button"
 						onClick={() => setView('models')}
+						aria-pressed={view === 'models'}
 						className={`rounded-lg px-3 py-1.5 font-medium transition ${view === 'models' ? 'bg-white text-gray-950 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
 					>
 						{t('modelDistributionTab')}
@@ -67,6 +68,7 @@ export function DashboardModelDistributionChart({
 					<button
 						type="button"
 						onClick={() => setView('users')}
+						aria-pressed={view === 'users'}
 						className={`rounded-lg px-3 py-1.5 font-medium transition ${view === 'users' ? 'bg-white text-gray-950 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
 					>
 						{t('userLeaderboardTab')}

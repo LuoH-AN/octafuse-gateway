@@ -13,6 +13,7 @@ import { BusinessTimezoneProvider } from '@/components/BusinessTimezoneProvider'
 import { ADMIN_SESSION_EXPIRED_EVENT_NAME } from '@/lib/admin-session-events';
 import { readApiJson, readJson } from '@/lib/api-json';
 import AdminShell from './AdminShell';
+import { ArrowPathIcon } from '@heroicons/react/24/outline';
 
 interface Props {
   children: ReactNode;
@@ -24,6 +25,7 @@ export default function AuthWrapper({ children }: Props) {
   const tCommon = useTranslations('common');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
@@ -67,8 +69,9 @@ export default function AuthWrapper({ children }: Props) {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     setLoginError('');
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     try {
       const response = await fetch('/api/auth/login', {
@@ -90,7 +93,7 @@ export default function AuthWrapper({ children }: Props) {
       setLoginError(tCommon('networkError'));
       console.error('Login error:', error);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -118,7 +121,7 @@ export default function AuthWrapper({ children }: Props) {
             </div>
             <LocaleSwitcher variant="login" />
           </div>
-          <form onSubmit={handleLogin}>
+          <form onSubmit={handleLogin} aria-busy={isSubmitting}>
             <div className="mb-4">
               <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
                 {t('username')}
@@ -131,6 +134,7 @@ export default function AuthWrapper({ children }: Props) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 required
                 autoComplete="username"
+                disabled={isSubmitting}
               />
             </div>
             <div className="mb-6">
@@ -145,19 +149,21 @@ export default function AuthWrapper({ children }: Props) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                 required
                 autoComplete="current-password"
+                disabled={isSubmitting}
               />
             </div>
             {loginError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
+              <div role="alert" className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-600 text-sm">
                 {loginError}
               </div>
             )}
             <button
               type="submit"
-              disabled={isLoading}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isSubmitting}
+              className="inline-flex items-center justify-center gap-2 w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? t('loggingIn') : t('login')}
+              {isSubmitting && <ArrowPathIcon className="h-4 w-4 animate-spin" aria-hidden />}
+              {isSubmitting ? t('loggingIn') : t('login')}
             </button>
           </form>
           <div className="mt-6 border-t border-gray-100 pt-4">

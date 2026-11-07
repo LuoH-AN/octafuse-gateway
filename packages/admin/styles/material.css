@@ -5,19 +5,23 @@
  */
 .admin-material {
   color-scheme: light;
-  --md-primary: #3c6939;
+  --md-primary: #202020;
   --md-on-primary: #ffffff;
-  --md-primary-container: #d6e8ce;
-  --md-on-primary-container: #245024;
-  --md-surface: #f7fbf1;
-  --md-surface-low: #f1f5eb;
-  --md-surface-container: #ecefe6;
-  --md-surface-high: #e6e9e0;
-  --md-on-surface: #191d17;
-  --md-on-surface-variant: #424940;
-  --md-outline: #c2c9bd;
-  --md-outline-variant: #e0e4db;
+  --md-primary-container: #e7e7e7;
+  --md-on-primary-container: #171717;
+  --md-surface: #fafafa;
+  --md-surface-low: #f3f3f3;
+  --md-surface-container: #efefef;
+  --md-surface-high: #e7e7e7;
+  --md-on-surface: #171717;
+  --md-on-surface-variant: #555555;
+  --md-outline: #cccccc;
+  --md-outline-variant: #e7e7e7;
   --md-motion: cubic-bezier(0.2, 0, 0, 1);
+  --md-chart-primary: #202020;
+  --md-chart-secondary: #606060;
+  --md-chart-tertiary: #888888;
+  --md-chart-fill: #eeeeee;
   background: var(--md-surface);
   color: var(--md-on-surface);
 }
@@ -38,7 +42,7 @@
 
 .admin-material :where(button, a) {
   transition: background-color 180ms var(--md-motion), color 180ms var(--md-motion),
-    border-color 180ms var(--md-motion), box-shadow 180ms var(--md-motion);
+    border-color 180ms var(--md-motion), box-shadow 180ms var(--md-motion), scale 180ms var(--md-motion);
 }
 
 /* Desktop navigation drawer and inset workspace. */
@@ -52,7 +56,7 @@
 }
 
 .admin-material .md-brand-bar {
-  height: 5.5rem;
+  height: 4.75rem;
   padding-inline: 1.25rem;
   background: transparent;
 }
@@ -118,6 +122,7 @@
 .admin-material .md-workspace {
   background: var(--md-surface);
   scrollbar-gutter: stable;
+  scroll-padding-top: 1.5rem;
 }
 
 .admin-material .md-workspace > :is(.bg-gray-100\/90, .bg-gray-50, .bg-white) {
@@ -150,7 +155,7 @@
 }
 
 .admin-material #admin-mobile-navigation::backdrop {
-  background: rgb(25 29 23 / 0.4);
+  background: rgb(0 0 0 / 0.4);
 }
 
 /* Menus are shared between the drawer, mobile bar and login page. */
@@ -184,8 +189,13 @@
 }
 
 /* Material filled/outlined buttons, chips and segmented controls. */
-.admin-material :where(button, a):is(.rounded, .rounded-md, .rounded-lg) {
+.admin-material :where(button, a):is(.bg-blue-600, .bg-indigo-600, .bg-gray-900) {
   border-radius: 999px;
+  font-weight: 500;
+}
+
+.admin-material :where(button, a):is(.bg-blue-600, .bg-indigo-600, .bg-gray-900):is(.px-3, .px-4, .px-5, .px-6) {
+  padding-inline: 1.25rem;
 }
 
 .admin-material :where(button, a):is(.py-2, .py-2\.5, .py-3):is(.rounded, .rounded-md, .rounded-lg, .rounded-full) {
@@ -214,7 +224,7 @@
 }
 
 .admin-material :is(input, textarea)::placeholder {
-  color: #72796f;
+  color: #707070;
 }
 
 .admin-material :is(input, select, textarea):focus-visible {
@@ -228,7 +238,7 @@
 }
 
 /* Existing cards retain their geometry and scroll owners. */
-.admin-material :where(div, section, article, form).bg-white:is(.rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl) {
+.admin-material .md-workspace > * > .bg-white:is(.rounded-xl, .rounded-2xl, .rounded-3xl) {
   border-radius: 1.5rem;
 }
 
@@ -247,7 +257,7 @@
 }
 
 .admin-material .admin-data-table > tbody > tr.admin-data-row-open > td:first-child:not([colspan]) {
-  background-color: #eff9e9;
+  background-color: #f0f0f0;
 }
 
 /* A quiet, spacious sign-in surface with the existing brand and translations. */
@@ -261,7 +271,7 @@
   padding: clamp(1.5rem, 5vw, 3rem);
   border: 1px solid var(--md-outline-variant);
   border-radius: 2rem;
-  box-shadow: 0 12px 40px rgb(25 29 23 / 0.04);
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.04);
 }
 
 .admin-material .md-login-card h1 {
@@ -278,6 +288,182 @@
   font-weight: 500;
 }
 
+/* Neutral artwork and data visualization; operational status colors remain semantic. */
+.admin-material img[src='/brand/octafuse-symbol.svg'] {
+  filter: grayscale(1);
+}
+
+.admin-material .md-metric-icon {
+  background: var(--md-surface-container);
+  color: var(--md-on-surface);
+  --tw-ring-color: transparent;
+}
+
+/* Distinct shapes for actions, segments, fields and nested surfaces. */
+.admin-material button:enabled:not([aria-disabled='true']):active,
+.admin-material .md-sidebar nav a:active,
+.admin-material summary:active {
+  scale: 0.975;
+  transition-duration: 80ms;
+}
+
+.admin-material button:disabled,
+.admin-material [aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+.admin-material .md-ripple-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.admin-material .md-ripple-ink {
+  position: absolute;
+  border-radius: 50%;
+  background: currentColor;
+  pointer-events: none;
+}
+
+.admin-material .md-navigation-progress {
+  flex: none;
+  width: 0.875rem;
+  height: 0.875rem;
+  margin-left: auto;
+  border: 1.5px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: md-navigation-spin 700ms linear infinite;
+}
+
+.admin-material .md-segmented {
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 0;
+  border-radius: 1rem;
+  background: var(--md-surface-container);
+}
+
+.admin-material .md-segmented > button {
+  min-height: 2.25rem;
+  gap: 0.5rem;
+  padding-inline: 0.875rem;
+  border-radius: 0.75rem;
+  white-space: nowrap;
+}
+
+.admin-material .md-segmented > button[aria-pressed='true'] {
+  background: white;
+  color: var(--md-on-surface);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.1), 0 0 0 1px rgb(0 0 0 / 0.025);
+}
+
+.admin-material .md-filter-row {
+  align-items: flex-end;
+  gap: 1rem 1.5rem;
+}
+
+.admin-material .md-filter-field {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.admin-material .md-filter-control :is(select, input) {
+  min-height: 2.25rem;
+  background: transparent;
+}
+
+.admin-material .md-catalog-toolbar {
+  padding: 1.25rem;
+  border-color: transparent;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.025);
+}
+
+.admin-material .md-catalog-toolbar > :first-child {
+  align-items: center;
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+}
+
+.admin-material .md-catalog-toolbar input[type='search'] {
+  height: 2.75rem;
+  border-color: transparent;
+  border-radius: 999px;
+  background: var(--md-surface-container);
+  font-size: 0.875rem;
+}
+
+.admin-material .md-config-card {
+  border-color: transparent;
+  border-radius: 1.5rem;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.025);
+}
+
+.admin-material .md-config-card > :last-child:not(:nth-child(2)) {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+}
+
+.admin-material .admin-data-table tbody tr {
+  transition: background-color 150ms var(--md-motion);
+}
+
+.admin-material .md-route-toolbar > :last-child > [role='group'] {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.admin-material .md-route-toolbar > :last-child {
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.admin-material :is(input, textarea, select)[aria-invalid='true'] {
+  border-color: #b3261e;
+  outline-color: #b3261e;
+}
+
+@media (hover: hover) {
+  .admin-material :where(button, a):is(.bg-blue-600, .bg-indigo-600, .bg-gray-900):not(:disabled):hover {
+    box-shadow: 0 3px 8px rgb(0 0 0 / 0.16);
+  }
+
+  .admin-material .md-segmented > button:not([aria-pressed='true']):hover {
+    background: rgb(0 0 0 / 0.05);
+  }
+}
+
+@keyframes md-navigation-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes md-surface-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes md-drawer-enter {
+  from { opacity: 0; transform: translateX(-1rem); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.admin-material :is([role='dialog'], [role='alertdialog'], [role='listbox']) {
+  animation: md-surface-enter 200ms var(--md-motion);
+}
+
+.admin-material #admin-mobile-navigation[open] {
+  animation: md-drawer-enter 240ms var(--md-motion);
+}
+
+.admin-material .md-workspace > * {
+  animation: md-surface-enter 180ms var(--md-motion);
+}
+
 @media (min-width: 1024px) {
   .admin-material .md-sidebar {
     width: 17rem;
@@ -288,6 +474,16 @@
     border: 1px solid var(--md-outline-variant);
     border-radius: 1.75rem;
   }
+
+  .admin-material .md-sidebar nav :is(a, button) {
+    min-height: 2.5rem;
+  }
+}
+
+@media (pointer: coarse) {
+  .admin-material .md-segmented > button {
+    min-height: 2.75rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -296,5 +492,7 @@
   .admin-material *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scale: none !important;
   }
 }

@@ -55,7 +55,7 @@ export function ModelFilterSidebar(props: Props) {
 	const vendorTotal = modelsByVendor.reduce((n, [, items]) => n + items.length, 0);
 
 	return (
-		<section className="mb-5 space-y-3 rounded-xl border border-slate-200 bg-white p-4" aria-label={t('title')}>
+		<section className="md-catalog-toolbar mb-5 space-y-3 rounded-xl border border-slate-200 bg-white p-4" aria-label={t('title')}>
 			<div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
 				<span className="text-xs tabular-nums text-slate-500">{tCommon('showing', { filtered: filteredCount, total: modelCount })}</span>
 				<CatalogViewToggle value={view} onChange={onViewChange} />

@@ -34,6 +34,7 @@ import {
 import { useState } from 'react';
 import { ADMIN_NAV_GROUPS, type AdminNavNameKey } from '@/lib/admin-nav';
 import { adminAppVersion } from '@/lib/app-version';
+import { MaterialLinkFeedback } from '@/styles/MaterialInteractions';
 
 const NAV_ICONS: Record<AdminNavNameKey, React.ComponentType<{ className?: string }>> = {
   dashboard: HomeIcon,
@@ -138,6 +139,7 @@ export default function Sidebar({ mobile = false, onNavigate }: { mobile?: boole
                       ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-white'}
                     `} />
                     {t(`nav.${item.nameKey}`)}
+                    <MaterialLinkFeedback />
                   </Link>
                 );
               })}
