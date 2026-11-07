@@ -106,8 +106,8 @@ export default function AuthWrapper({ children }: Props) {
   // Not authenticated - show login page (no sidebar)
   if (!isAuthenticated) {
     return (
-      <div className="flex h-dvh items-start justify-center overflow-y-auto bg-gray-50 p-4">
-        <div className="my-auto w-full max-w-md rounded-lg bg-white p-5 shadow-md sm:p-8">
+      <div className="md-login flex h-dvh items-start justify-center overflow-y-auto bg-gray-50 p-4">
+        <div className="md-login-card my-auto w-full max-w-md rounded-lg bg-white p-5 shadow-md sm:p-8">
           <div className="mb-6 flex items-start justify-between gap-3">
             <div className="flex min-w-0 items-center gap-3">
               <BrandMark className="h-12 w-12" />

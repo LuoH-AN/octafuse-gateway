@@ -1,9 +1,11 @@
 /**
- * Tailwind：`app/`、`components/`、`lib/` 扫描范围；主题扩展暂为空（随 UI 迭代）。
+ * Tailwind：页面扫描范围与独立 Material 主题预设。
  */
 import type { Config } from "tailwindcss";
+import materialPreset from './styles/material-preset';
 
 const config: Config = {
+  presets: [materialPreset],
   content: [
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",

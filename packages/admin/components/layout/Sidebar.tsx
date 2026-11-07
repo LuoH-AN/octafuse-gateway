@@ -83,10 +83,10 @@ export default function Sidebar({ mobile = false, onNavigate }: { mobile?: boole
   };
 
   return (
-    <aside className={mobile ? 'h-full w-full bg-gray-900' : 'hidden h-dvh w-64 shrink-0 bg-gray-900 lg:block'}>
+    <aside className={mobile ? 'md-sidebar h-full w-full bg-gray-900' : 'md-sidebar hidden h-dvh w-64 shrink-0 bg-gray-900 lg:block'}>
       <div className="flex h-full flex-col">
       {/* Logo / Brand + locale */}
-      <div className="flex h-16 shrink-0 items-center justify-between gap-2 bg-gray-950 px-4 leading-tight">
+      <div className="md-brand-bar flex h-16 shrink-0 items-center justify-between gap-2 bg-gray-950 px-4 leading-tight">
         <Link href="/dashboard" onClick={onNavigate} className="flex min-w-0 items-center gap-2 rounded-md hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-500">
           <BrandMark className="h-8 w-8" />
           <div className="min-w-0">
@@ -158,7 +158,7 @@ export default function Sidebar({ mobile = false, onNavigate }: { mobile?: boole
       </nav>
 
       {/* Footer: links + version */}
-      <div className="shrink-0 space-y-3 border-t border-gray-800 p-4">
+      <div className="md-sidebar-footer shrink-0 space-y-3 border-t border-gray-800 p-4">
         <BrandExternalLinks variant="sidebar" />
         <p className="text-center text-xs text-gray-500">{t('version', { version: adminAppVersion })}</p>
       </div>

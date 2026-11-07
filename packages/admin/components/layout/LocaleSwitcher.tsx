@@ -100,7 +100,7 @@ export default function LocaleSwitcher({ variant }: { variant: Variant }) {
 	return (
 		<div
 			ref={rootRef}
-			className={`relative shrink-0 ${isPending ? 'opacity-70' : ''}`}
+			className={`md-locale relative shrink-0 ${isPending ? 'opacity-70' : ''}`}
 			aria-busy={isPending}
 		>
 			<button

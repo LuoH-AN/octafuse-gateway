@@ -30,10 +30,10 @@ export default function AdminShell({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <div className="flex h-dvh min-w-0 overflow-hidden">
+    <div className="md-shell flex h-dvh min-w-0 overflow-hidden">
       <Sidebar />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <header className="flex h-16 shrink-0 items-center gap-3 bg-gray-950 px-3 text-white lg:hidden">
+        <header className="md-mobile-bar flex h-16 shrink-0 items-center gap-3 bg-gray-950 px-3 text-white lg:hidden">
           <button
             type="button"
             aria-label={t('openMenu')}
@@ -55,7 +55,7 @@ export default function AdminShell({ children }: { children: ReactNode }) {
           <LocaleSwitcher variant="header" />
         </header>
         <MaintenanceBanner />
-        <main className="min-h-0 min-w-0 flex-1 overflow-auto bg-gray-50">
+        <main className="md-workspace min-h-0 min-w-0 flex-1 overflow-auto bg-gray-50">
           {children}
         </main>
       </div>

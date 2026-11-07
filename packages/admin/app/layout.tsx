@@ -2,6 +2,7 @@
  * 全站根布局：系统无衬线字体栈（避免 next/font/google 构建时拉取 Google Fonts，离线/受限网络下可正常 build）。
  */
 import './globals.css';
+import '../styles/material.css';
 import type { Metadata } from 'next';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages, getTranslations } from 'next-intl/server';
@@ -32,7 +33,7 @@ export default async function RootLayout({
 
 	return (
 		<html lang={locale} data-scroll-behavior="smooth">
-			<body className="font-sans h-dvh overflow-hidden">
+			<body className="admin-material font-sans h-dvh overflow-hidden">
 				<NextIntlClientProvider locale={locale} messages={messages}>
 					<FeedbackProvider>
 						<DocumentTitle />

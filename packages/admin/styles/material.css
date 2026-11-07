@@ -1,0 +1,300 @@
+/*
+ * Local Material presentation layer. Import after globals.css.
+ * Shell hooks are explicit; utility adapters cover existing/upstream screens.
+ * Keep page-specific layout and all functional behavior in their original files.
+ */
+.admin-material {
+  color-scheme: light;
+  --md-primary: #3c6939;
+  --md-on-primary: #ffffff;
+  --md-primary-container: #d6e8ce;
+  --md-on-primary-container: #245024;
+  --md-surface: #f7fbf1;
+  --md-surface-low: #f1f5eb;
+  --md-surface-container: #ecefe6;
+  --md-surface-high: #e6e9e0;
+  --md-on-surface: #191d17;
+  --md-on-surface-variant: #424940;
+  --md-outline: #c2c9bd;
+  --md-outline-variant: #e0e4db;
+  --md-motion: cubic-bezier(0.2, 0, 0, 1);
+  background: var(--md-surface);
+  color: var(--md-on-surface);
+}
+
+.admin-material ::selection {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+}
+
+.admin-material :where(button, a, input, select, textarea, summary) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.admin-material :where(button, a, summary):focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 3px;
+}
+
+.admin-material :where(button, a) {
+  transition: background-color 180ms var(--md-motion), color 180ms var(--md-motion),
+    border-color 180ms var(--md-motion), box-shadow 180ms var(--md-motion);
+}
+
+/* Desktop navigation drawer and inset workspace. */
+.admin-material .md-shell {
+  background: var(--md-surface-low);
+}
+
+.admin-material .md-sidebar {
+  background: var(--md-surface-low);
+  color: var(--md-on-surface);
+}
+
+.admin-material .md-brand-bar {
+  height: 5.5rem;
+  padding-inline: 1.25rem;
+  background: transparent;
+}
+
+.admin-material .md-brand-bar > button:hover {
+  background: var(--md-surface-high);
+}
+
+.admin-material .md-sidebar :is(.text-white, .text-gray-300) {
+  color: var(--md-on-surface);
+}
+
+.admin-material .md-sidebar :is(.text-gray-400, .text-gray-500) {
+  color: var(--md-on-surface-variant);
+}
+
+.admin-material .md-sidebar nav {
+  padding-inline: 0.75rem;
+  padding-block: 0.5rem 1.5rem;
+  scrollbar-width: thin;
+}
+
+.admin-material .md-sidebar nav h3 {
+  margin-bottom: 0.5rem;
+  padding-inline: 1rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+}
+
+.admin-material .md-sidebar nav :is(a, button) {
+  min-height: 2.75rem;
+  padding-inline: 1rem;
+  border-radius: 999px;
+  color: var(--md-on-surface-variant);
+}
+
+.admin-material .md-sidebar nav :is(a, button):hover {
+  background: var(--md-surface-high);
+  color: var(--md-on-surface);
+}
+
+.admin-material .md-sidebar nav a[aria-current='page'] {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  font-weight: 600;
+}
+
+.admin-material .md-sidebar nav :is(a, button) svg {
+  color: currentColor;
+}
+
+.admin-material .md-sidebar-footer {
+  margin-inline: 1.25rem;
+  padding: 1rem 0;
+  border-color: var(--md-outline-variant);
+}
+
+.admin-material .md-sidebar-footer a:hover {
+  color: var(--md-primary);
+}
+
+.admin-material .md-workspace {
+  background: var(--md-surface);
+  scrollbar-gutter: stable;
+}
+
+.admin-material .md-workspace > :is(.bg-gray-100\/90, .bg-gray-50, .bg-white) {
+  background: transparent;
+}
+
+.admin-material .md-workspace h1 {
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  line-height: 1.3;
+}
+
+.admin-material .md-mobile-bar {
+  background: var(--md-surface-low);
+  color: var(--md-on-surface);
+}
+
+.admin-material .md-mobile-bar .text-gray-400 {
+  color: var(--md-on-surface-variant);
+}
+
+.admin-material .md-mobile-bar > button:hover {
+  background: var(--md-surface-high);
+}
+
+.admin-material #admin-mobile-navigation {
+  border-radius: 0 1.75rem 1.75rem 0;
+  background: var(--md-surface-low);
+  color: var(--md-on-surface);
+}
+
+.admin-material #admin-mobile-navigation::backdrop {
+  background: rgb(25 29 23 / 0.4);
+}
+
+/* Menus are shared between the drawer, mobile bar and login page. */
+.admin-material .md-locale button {
+  min-height: 2.5rem;
+  color: var(--md-on-surface-variant);
+}
+
+.admin-material .md-locale button > span,
+.admin-material .md-locale button > svg {
+  color: inherit;
+}
+
+.admin-material .md-locale button:hover,
+.admin-material .md-locale button:focus-visible {
+  background: var(--md-surface-high);
+  color: var(--md-on-surface);
+}
+
+.admin-material .md-locale [role='listbox'] {
+  padding: 0.5rem;
+  border: 1px solid var(--md-outline-variant);
+  border-radius: 1.5rem;
+  background: var(--md-surface-low);
+  --tw-ring-color: transparent;
+}
+
+.admin-material .md-locale [aria-selected='true'] {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+}
+
+/* Material filled/outlined buttons, chips and segmented controls. */
+.admin-material :where(button, a):is(.rounded, .rounded-md, .rounded-lg) {
+  border-radius: 999px;
+}
+
+.admin-material :where(button, a):is(.py-2, .py-2\.5, .py-3):is(.rounded, .rounded-md, .rounded-lg, .rounded-full) {
+  min-height: 2.5rem;
+}
+
+.admin-material button[aria-pressed='true']:not([role='switch']) {
+  background-color: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+  border-color: transparent;
+  --tw-ring-color: transparent;
+  --tw-shadow: 0 0 #0000;
+}
+
+/* Preserve field padding (search icons) and compact editors from upstream. */
+.admin-material :is(input:not([type]), input[type='text'], input[type='password'], input[type='search'], input[type='email'], input[type='url'], input[type='number'], input[type='datetime-local'], input[type='date'], select, textarea) {
+  color: var(--md-on-surface);
+  border-color: var(--md-outline);
+  border-radius: 0.75rem;
+  background-color: var(--md-surface);
+  transition: border-color 150ms var(--md-motion), box-shadow 150ms var(--md-motion);
+}
+
+.admin-material :is(input, select, textarea):is(.py-2, .py-2\.5, .py-3) {
+  min-height: 2.75rem;
+}
+
+.admin-material :is(input, textarea)::placeholder {
+  color: #72796f;
+}
+
+.admin-material :is(input, select, textarea):focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 1px;
+  --tw-ring-color: transparent;
+}
+
+.admin-material :is(input[type='checkbox'], input[type='radio'], input[type='range']) {
+  accent-color: var(--md-primary);
+}
+
+/* Existing cards retain their geometry and scroll owners. */
+.admin-material :where(div, section, article, form).bg-white:is(.rounded-lg, .rounded-xl, .rounded-2xl, .rounded-3xl) {
+  border-radius: 1.5rem;
+}
+
+.admin-material :is([role='dialog'], [role='alertdialog']).bg-white {
+  border-radius: 1.75rem;
+  background-color: var(--md-surface-low);
+}
+
+.admin-material .admin-data-table > thead > tr > th:first-child,
+.admin-material .admin-data-table > tbody > tr:hover > td:first-child:not([colspan]) {
+  background-color: var(--md-surface);
+}
+
+.admin-material .admin-data-table > tbody > tr > td:first-child:not([colspan]) {
+  box-shadow: 1px 0 var(--md-outline-variant);
+}
+
+.admin-material .admin-data-table > tbody > tr.admin-data-row-open > td:first-child:not([colspan]) {
+  background-color: #eff9e9;
+}
+
+/* A quiet, spacious sign-in surface with the existing brand and translations. */
+.admin-material .md-login {
+  background: var(--md-surface-low);
+  padding: clamp(1rem, 4vw, 3rem);
+}
+
+.admin-material .md-login .md-login-card {
+  max-width: 30rem;
+  padding: clamp(1.5rem, 5vw, 3rem);
+  border: 1px solid var(--md-outline-variant);
+  border-radius: 2rem;
+  box-shadow: 0 12px 40px rgb(25 29 23 / 0.04);
+}
+
+.admin-material .md-login-card h1 {
+  font-weight: 500;
+  letter-spacing: -0.035em;
+}
+
+.admin-material .md-login-card :is(input, button[type='submit']) {
+  min-height: 3.25rem;
+}
+
+.admin-material .md-login-card button[type='submit'] {
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+@media (min-width: 1024px) {
+  .admin-material .md-sidebar {
+    width: 17rem;
+  }
+
+  .admin-material .md-workspace {
+    margin: 0.75rem 0.75rem 0.75rem 0;
+    border: 1px solid var(--md-outline-variant);
+    border-radius: 1.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-material *,
+  .admin-material *::before,
+  .admin-material *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
