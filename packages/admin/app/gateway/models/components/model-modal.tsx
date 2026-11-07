@@ -25,6 +25,7 @@ import {
 	MODEL_INPUT_MODALITIES,
 	MODEL_OUTPUT_MODALITIES,
 } from '@octafuse/core/db/model-modalities';
+import { EditorDisclosure } from '@/components/editor-disclosure';
 import { InfoHintPopover } from '@/components/InfoHintPopover';
 import { VendorIcon } from '@/components/model-vendor-icon';
 import { ModelModalitiesBadgeFromRaw } from '@/components/model-modalities-badge';
@@ -48,6 +49,8 @@ import { ModelPricingJsonPreview } from './model-pricing-json-preview';
 
 export type ModelModalProps = {
 	open: boolean;
+	detailLoad?: 'loading' | 'error';
+	onRetryDetails?: () => void;
 	editingModel: ModelListItem | null;
 	duplicateSourceModelId: string | null;
 	formData: ModelFormData;
@@ -111,6 +114,8 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 export function ModelModal(props: ModelModalProps) {
 	const {
 		open,
+		detailLoad,
+		onRetryDetails,
 		editingModel,
 		duplicateSourceModelId,
 		formData,
@@ -142,10 +147,11 @@ export function ModelModal(props: ModelModalProps) {
 	const contentRef = useRef<HTMLDivElement>(null);
 	const id = useId();
 	const routesState = useModelRoutes(
-		open && editingModel ? editingModel.id : null,
+		open && editingModel && !detailLoad ? editingModel.id : null,
 		props.onRoutesChanged
 	);
-	const busy = isSaving || isDeleting || routesState.isDeleting;
+	const closeBlocked = isSaving || isDeleting || routesState.isDeleting;
+	const busy = closeBlocked || Boolean(detailLoad);
 	const deleteDisabled =
 		busy || !routesState.ready || routesState.routes.length > 0;
 	const deleteReason = routesState.error
@@ -193,7 +199,6 @@ export function ModelModal(props: ModelModalProps) {
 			label: t('pricingProfile'),
 			icon: AdjustmentsHorizontalIcon,
 		},
-		{ key: 'metadata', label: t('metadataTab'), icon: CodeBracketIcon },
 		...(editingModel
 			? [
 					{
@@ -203,6 +208,7 @@ export function ModelModal(props: ModelModalProps) {
 					} as const,
 			  ]
 			: []),
+		{ key: 'metadata', label: t('metadataTab'), icon: CodeBracketIcon },
 	] as const;
 	const pricingPreview = useMemo(
 		() =>
@@ -276,7 +282,7 @@ export function ModelModal(props: ModelModalProps) {
 	};
 	const handleKeys = (event: KeyboardEvent<HTMLDivElement>) => {
 		if (document.querySelector('[role="alertdialog"]')) return;
-		if (event.key === 'Escape' && !busy) {
+		if (event.key === 'Escape' && !closeBlocked) {
 			event.stopPropagation();
 			onClose();
 		}
@@ -325,7 +331,7 @@ export function ModelModal(props: ModelModalProps) {
 		<div
 			className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-2 sm:p-6"
 			onMouseDown={(event) => {
-				if (event.target === event.currentTarget && !busy) onClose();
+				if (event.target === event.currentTarget && !closeBlocked) onClose();
 			}}
 		>
 			<div
@@ -343,7 +349,7 @@ export function ModelModal(props: ModelModalProps) {
 							id={`${id}-title`}
 							className="text-lg font-semibold text-gray-900"
 						>
-							{editingModel ? t('editTitle') : t('newTitle')}
+							{editingModel || detailLoad ? t('editTitle') : t('newTitle')}
 						</h2>
 						<p className="mt-1.5 text-sm text-gray-500">{t('editHint')}</p>
 						{!editingModel && duplicateSourceModelId ? (
@@ -355,7 +361,7 @@ export function ModelModal(props: ModelModalProps) {
 					<button
 						type="button"
 						onClick={onClose}
-						disabled={busy}
+						disabled={closeBlocked}
 						aria-label={tCommon('close')}
 						className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 disabled:opacity-50"
 					>
@@ -374,6 +380,7 @@ export function ModelModal(props: ModelModalProps) {
 								id={`${id}-${key}-tab`}
 								type="button"
 								role="tab"
+								disabled={Boolean(detailLoad)}
 								aria-selected={activeTab === key}
 								aria-controls={`${id}-${key}-panel`}
 								tabIndex={activeTab === key ? 0 : -1}
@@ -428,14 +435,19 @@ export function ModelModal(props: ModelModalProps) {
 					ref={contentRef}
 					className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
 				>
-					<fieldset disabled={busy} className="m-0 h-full min-w-0 border-0 p-0">
+					{detailLoad ? (
+						<div className="flex min-h-64 flex-col items-center justify-center gap-4 p-6 text-sm text-gray-500" role={detailLoad === 'error' ? 'alert' : 'status'}>
+							{detailLoad === 'loading' ? <><span className="h-6 w-6 animate-spin rounded-full border-2 border-gray-200 border-t-gray-700" aria-hidden />{tCommon('loading')}</> : <>
+								<p>{tCommon('failedToLoadModels')}</p>
+								<button type="button" onClick={onRetryDetails} className="rounded-lg border border-gray-300 px-4 py-2 font-medium text-gray-800">{t('relatedRoutes.retry')}</button>
+							</>}
+						</div>
+					) : <fieldset disabled={busy} className="m-0 h-full min-w-0 border-0 p-0">
 						<section
 							id={`${id}-${activeTab}-panel`}
 							role="tabpanel"
 							aria-labelledby={`${id}-${activeTab}-tab`}
 							className={`min-h-full px-5 py-6 sm:px-7 ${
-								activeTab === 'basic' ? 'md:h-full md:min-h-0' : ''
-							} ${
 								activeTab === 'metadata' ||
 								(activeTab === 'pricing' && showPricingJson)
 									? 'flex flex-col'
@@ -443,8 +455,8 @@ export function ModelModal(props: ModelModalProps) {
 							}`}
 						>
 							{activeTab === 'basic' ? (
-								<div className="grid min-h-full gap-7 md:h-full md:min-h-0 md:grid-cols-[1.1fr_1fr]">
-									<div className="min-w-0 space-y-3 md:min-h-0 md:overflow-y-auto md:overscroll-contain md:pr-1">
+								<div className="grid items-start gap-6 md:grid-cols-[1.1fr_1fr]">
+									<div className="min-w-0 space-y-5">
 										<div className="flex items-start gap-3">
 											<div className="min-w-0 flex-1">
 												<div className="mb-1.5 flex items-center gap-1.5">
@@ -570,6 +582,71 @@ export function ModelModal(props: ModelModalProps) {
 												/>
 											</Field>
 										</div>
+
+										<div>
+											<label
+												htmlFor={`${id}-tag`}
+												className="mb-1.5 block text-xs font-medium text-gray-600"
+											>
+												{t('tags')}
+											</label>
+											{formData.tags.length ? (
+												<div className="mb-2 flex flex-wrap gap-1.5">
+													{formData.tags.map((tag) => (
+														<span
+															key={tag}
+															className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs ${tagBadgeClass(
+																tag
+															)}`}
+														>
+															{tag}
+															<button
+																type="button"
+																onClick={() => onRemoveTag(tag)}
+																aria-label={t('removeTag', { tag })}
+																className="rounded text-gray-400 hover:text-red-600"
+															>
+																<XMarkIcon
+																	className="h-3.5 w-3.5"
+																	aria-hidden
+																/>
+															</button>
+														</span>
+													))}
+												</div>
+											) : null}
+											<div className="flex gap-2">
+												<input
+													id={`${id}-tag`}
+													type="text"
+													value={tagInput}
+													onChange={(event) =>
+														onTagInputChange(event.target.value)
+													}
+													onKeyDown={(event) => {
+														if (event.key === 'Enter' || event.key === ',') {
+															event.preventDefault();
+															onAddTag();
+														}
+													}}
+													className={inputClass}
+													placeholder={t('tagsPlaceholder')}
+												/>
+												<button
+													type="button"
+													onClick={onAddTag}
+													disabled={!tagInput.trim()}
+													className="shrink-0 whitespace-nowrap rounded-lg border border-gray-200 px-3 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+												>
+													{tCommon('add')}
+												</button>
+											</div>
+										</div>
+									</div>
+									<div className="flex min-w-0 flex-col gap-5">
+										<EditorDisclosure title={t('capabilities')}
+											summary={`${t('input')}: ${formData.input_modalities.map((modality) => (t.has(`modalityLabels.${modality}`) ? t(`modalityLabels.${modality}`) : modality)).join(', ')} → ${t('output')}: ${formData.output_modalities.map((modality) => (t.has(`modalityLabels.${modality}`) ? t(`modalityLabels.${modality}`) : modality)).join(', ')}`}>
+											<div className="space-y-4">
 										{!hideTokenLimits ? (
 											<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 												<Field label={t('contextWindow')}>
@@ -684,79 +761,17 @@ export function ModelModal(props: ModelModalProps) {
 												))}
 											</div>
 										</div>
-										<div>
-											<label
-												htmlFor={`${id}-tag`}
-												className="mb-1.5 block text-xs font-medium text-gray-600"
-											>
-												{t('tags')}
-											</label>
-											{formData.tags.length ? (
-												<div className="mb-2 flex flex-wrap gap-1.5">
-													{formData.tags.map((tag) => (
-														<span
-															key={tag}
-															className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs ${tagBadgeClass(
-																tag
-															)}`}
-														>
-															{tag}
-															<button
-																type="button"
-																onClick={() => onRemoveTag(tag)}
-																aria-label={t('removeTag', { tag })}
-																className="rounded text-gray-400 hover:text-red-600"
-															>
-																<XMarkIcon
-																	className="h-3.5 w-3.5"
-																	aria-hidden
-																/>
-															</button>
-														</span>
-													))}
-												</div>
-											) : null}
-											<div className="flex gap-2">
-												<input
-													id={`${id}-tag`}
-													type="text"
-													value={tagInput}
-													onChange={(event) =>
-														onTagInputChange(event.target.value)
-													}
-													onKeyDown={(event) => {
-														if (event.key === 'Enter' || event.key === ',') {
-															event.preventDefault();
-															onAddTag();
-														}
-													}}
-													className={inputClass}
-													placeholder={t('tagsPlaceholder')}
-												/>
-												<button
-													type="button"
-													onClick={onAddTag}
-													disabled={!tagInput.trim()}
-													className="shrink-0 whitespace-nowrap rounded-lg border border-gray-200 px-3 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-40"
-												>
-													{tCommon('add')}
-												</button>
 											</div>
-										</div>
-									</div>
-									<div className="flex min-w-0 flex-col gap-5 md:h-full md:min-h-0">
+										</EditorDisclosure>
 										{intro ? (
-											<div className="flex flex-col rounded-xl border border-gray-200 bg-gray-50/40 p-4 md:min-h-0 md:flex-1">
-												<h3 className="shrink-0 text-xs font-medium text-gray-500">
-													{t('catalogIntro')}
-												</h3>
+											<EditorDisclosure title={t('catalogIntro')}>
 												<p
 													tabIndex={0}
-													className="mt-2 max-h-40 md:min-h-0 md:max-h-none md:flex-1 overflow-y-auto overscroll-contain whitespace-pre-wrap break-words text-sm leading-6 text-gray-700 outline-none focus-visible:ring-2 focus-visible:ring-blue-200"
+													className="whitespace-pre-wrap break-words text-sm leading-6 text-gray-700 outline-none focus-visible:ring-2 focus-visible:ring-blue-200"
 												>
 													{intro}
 												</p>
-											</div>
+											</EditorDisclosure>
 										) : null}
 										<div className="shrink-0">
 											<label
@@ -829,7 +844,7 @@ export function ModelModal(props: ModelModalProps) {
 								</div>
 							)}
 						</section>
-					</fieldset>
+					</fieldset>}
 				</div>
 				<footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-gray-200 bg-gray-50/80 px-5 py-4 sm:px-7">
 					<div>
@@ -854,7 +869,7 @@ export function ModelModal(props: ModelModalProps) {
 						<button
 							type="button"
 							onClick={onClose}
-							disabled={busy}
+							disabled={closeBlocked}
 							className="rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50"
 						>
 							{tCommon('cancel')}

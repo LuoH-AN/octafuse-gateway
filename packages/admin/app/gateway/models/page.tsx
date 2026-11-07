@@ -147,6 +147,8 @@ function ModelsContent() {
 			<ModelModal
 				onRoutesChanged={state.reloadModelsQuietly}
 				open={state.showModal}
+				detailLoad={state.modelDetailLoad?.status}
+				onRetryDetails={state.retryModelDetails}
 				editingModel={state.editingModel}
 				duplicateSourceModelId={state.duplicateSourceModelId}
 				formData={state.formData}

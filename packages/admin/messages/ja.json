@@ -842,6 +842,7 @@
 			"failed": "インポートに失敗しました"
 		},
 		"modal": {
+			"capabilities": "機能と制限",
 			"editTitle": "モデルを編集",
 			"newTitle": "新しいモデル",
 			"prefilledFrom": "{id} から事前入力しました。Model ID には -copy が付いています。保存前に確認してください。",
@@ -1061,6 +1062,8 @@
 		"empty": "モデルまたは Route が見つかりません",
 		"emptyFilteredPrefix": "フィルターを調整するか、",
 		"workspace": {
+			"moreFilters": "その他のフィルター",
+			"displayOptions": "表示設定",
 			"searchPlaceholder": "モデル・上流モデル・プロバイダーを検索…",
 			"removeFilter": "フィルターを解除：{filter}",
 			"densityList": "リスト",
@@ -1291,6 +1294,16 @@
 			}
 		},
 		"modal": {
+			"workflow": {
+				"capability": "ルートの機能",
+				"chooseCapability": "このルートで処理する機能を選択",
+				"capabilityHint": "クライアントが呼び出す機能を選択すると、両側のプロトコルと上流エンドポイントが設定されます。",
+				"searchCapabilities": "機能やプロトコルを検索…",
+				"noCapabilities": "一致する機能がありません。",
+				"protocolDetails": "プロトコルの詳細",
+				"scheduling": "グループとトラフィック優先度",
+				"schedulingSummary": "グループ {group} · 優先度 {priority} · 重み {weight}"
+			},
 			"editor": {
 				"sections": "ルート設定のセクション",
 				"tabs": {
@@ -1799,6 +1812,9 @@
 		"kindAsr": "音声認識",
 		"kindTts": "音声合成",
 		"strategy": {
+			"followInherited": "上位の設定を継承",
+			"inheritedChoice": "現在は「{strategy}」を使用。上位の設定が変わると追従します。",
+			"overrideCount": "個別設定 {count} 件 · その他の機能は上の戦略を使用",
 			"title": "ルート戦略",
 			"protocolLevel": "現在のルートプール戦略",
 			"protocolLevelHint": "空の場合、モデルエンドポイント、モデルプロトコル、モデル既定、グローバル設定、システム既定の順に継承します。",

@@ -99,6 +99,7 @@ export function useModelsPageState() {
 	);
 	const [isLoading, setIsLoading] = useState(true);
 	const [showModal, setShowModal] = useState(false);
+	const [modelDetailLoad, setModelDetailLoad] = useState<{ id: string; status: 'loading' | 'error' } | null>(null);
 	const [editingModel, setEditingModel] = useState<ModelListItem | null>(null);
 	const [duplicateSourceModelId, setDuplicateSourceModelId] = useState<string | null>(null);
 	const [formData, setFormData] = useState<ModelFormData>(EMPTY_MODEL_FORM);
@@ -455,6 +456,7 @@ export function useModelsPageState() {
 	const handleCreate = useCallback(
 		(presetVendorKey?: string, kind: ModelFormKind = 'llm') => {
 			editLoadGenRef.current += 1;
+			setModelDetailLoad(null);
 			setEditingModel(null);
 			setDuplicateSourceModelId(null);
 			setFormKind(kind);
@@ -601,19 +603,20 @@ export function useModelsPageState() {
 			const loadGen = ++editLoadGenRef.current;
 			setDuplicateSourceModelId(null);
 			setEditingModel(model);
-			fillFormFromModel(model);
+			setModelDetailLoad({ id: model.id, status: 'loading' });
+			setSaveError('');
+			setShowModal(true);
 			try {
 				const fullModel = await fetchModelDetail(model.id);
 				if (editLoadGenRef.current !== loadGen) return;
 				setEditingModel(fullModel);
 				fillFormFromModel(fullModel);
+				setModelDetailLoad(null);
 			} catch (error) {
 				if (editLoadGenRef.current !== loadGen) return;
 				console.error('Fetch model details error:', error);
+				setModelDetailLoad({ id: model.id, status: 'error' });
 			}
-			if (editLoadGenRef.current !== loadGen) return;
-			setShowModal(true);
-			setSaveError('');
 		},
 		[fillFormFromModel]
 	);
@@ -817,6 +820,8 @@ export function useModelsPageState() {
 
 	const closeModal = useCallback(() => {
 		if (isSaving || isDeleting) return;
+		editLoadGenRef.current += 1;
+		setModelDetailLoad(null);
 		setShowModal(false);
 	}, [isDeleting, isSaving]);
 
@@ -857,6 +862,8 @@ export function useModelsPageState() {
 		clearFilters,
 		billingCurrency,
 		showModal,
+		modelDetailLoad,
+		retryModelDetails: () => { if (modelDetailLoad && editingModel) void handleEdit(editingModel); },
 		editingModel,
 		duplicateSourceModelId,
 		formData,

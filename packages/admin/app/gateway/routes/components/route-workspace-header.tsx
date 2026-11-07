@@ -1,7 +1,8 @@
 'use client';
 
+import { useId, useState } from 'react';
 import { PricingInfoHint } from '@/components/PricingInfoHint';
-import { ListBulletIcon, QueueListIcon, RectangleGroupIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
+import { AdjustmentsHorizontalIcon, ListBulletIcon, QueueListIcon, RectangleGroupIcon, Squares2X2Icon } from '@heroicons/react/24/outline';
 import { useTranslations } from 'next-intl';
 import type { StickyRefreshIntervalMs } from '../sticky-refresh-preference';
 import type { RouteFlowDensity, RouteWorkspaceView } from '../types';
@@ -30,9 +31,11 @@ export function RouteWorkspaceHeader(props: Props) {
 	const t = useTranslations('routes.workspace');
 	const [pricingDisplay, setPricingDisplay] = useRoutePricingDisplay();
 	const [pathDisplay, setPathDisplay] = useRoutePathDisplay();
+	const [showOptions, setShowOptions] = useState(false);
+	const optionsId = useId();
 
 	return (
-		<div className="md-route-toolbar md:sticky md:top-0 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200/80 bg-white/95 px-4 py-3 shadow-sm backdrop-blur-sm sm:px-6">
+		<div className="md-route-toolbar md:sticky md:top-0 z-10 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200/80 bg-white px-4 py-3 shadow-sm sm:px-6">
 			<div className="min-w-0">
 				<h2 className="flex items-center gap-2 text-base font-semibold text-gray-900">{t('title')}<PricingInfoHint kind="routeFactors" align="start" /></h2>
 				<p className="mt-0.5 text-xs tabular-nums text-slate-500" aria-live="polite">{t('surfaceCounts', {models: visibleModelCount, routes: visibleRouteCount})}</p>
@@ -84,41 +87,49 @@ export function RouteWorkspaceHeader(props: Props) {
 						))}
 					</div>
 				</div>
-				<div className="flex items-center gap-2" role="group" aria-label={t('pricingDisplayLabel')}>
-					<span className="shrink-0 text-xs text-slate-500">{t('pricingDisplayLabel')}</span>
-					<div className={VIEW_SWITCH_GROUP_CLASS}>
-						{(['effective', 'configured'] as const).map(value => (
-							<button
-								key={value}
-								type="button"
-								onClick={() => setPricingDisplay(value)}
-								aria-pressed={pricingDisplay === value}
-								title={t(value === 'effective' ? 'pricingDisplayEffectiveHint' : 'pricingDisplayConfiguredHint')}
-								className={viewSwitchButtonClass(pricingDisplay === value)}
-							>
-								{t(value === 'effective' ? 'pricingDisplayEffective' : 'pricingDisplayConfigured')}
-							</button>
-						))}
+				<button type="button" aria-expanded={showOptions} aria-controls={optionsId} onClick={() => setShowOptions(!showOptions)}
+					className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-600 hover:bg-gray-50">
+					<AdjustmentsHorizontalIcon className="h-4 w-4" aria-hidden />{t('displayOptions')}
+				</button>
+			</div>
+			<div id={optionsId} hidden={!showOptions} className="w-full border-t border-gray-200 pt-3">
+				<div className="flex flex-wrap items-end gap-4">
+					<div className="flex items-center gap-2" role="group" aria-label={t('pricingDisplayLabel')}>
+						<span className="shrink-0 text-xs text-slate-500">{t('pricingDisplayLabel')}</span>
+						<div className={VIEW_SWITCH_GROUP_CLASS}>
+							{(['effective', 'configured'] as const).map(value => (
+								<button
+									key={value}
+									type="button"
+									onClick={() => setPricingDisplay(value)}
+									aria-pressed={pricingDisplay === value}
+									title={t(value === 'effective' ? 'pricingDisplayEffectiveHint' : 'pricingDisplayConfiguredHint')}
+									className={viewSwitchButtonClass(pricingDisplay === value)}
+								>
+									{t(value === 'effective' ? 'pricingDisplayEffective' : 'pricingDisplayConfigured')}
+								</button>
+							))}
+						</div>
 					</div>
-				</div>
-				<div className="flex items-center gap-2" role="group" aria-label={t('pathDisplayLabel')}>
-					<span className="shrink-0 text-xs text-slate-500">{t('pathDisplayLabel')}</span>
-					<div className={VIEW_SWITCH_GROUP_CLASS}>
-						{(['full', 'compact'] as const).map(value => (
-							<button
-								key={value}
-								type="button"
-								onClick={() => setPathDisplay(value)}
-								aria-pressed={pathDisplay === value}
-								title={t(value === 'full' ? 'pathDisplayFullHint' : 'pathDisplayCompactHint')}
-								className={viewSwitchButtonClass(pathDisplay === value)}
-							>
-								{t(value === 'full' ? 'pathDisplayFull' : 'pathDisplayCompact')}
-							</button>
-						))}
+					<div className="flex items-center gap-2" role="group" aria-label={t('pathDisplayLabel')}>
+						<span className="shrink-0 text-xs text-slate-500">{t('pathDisplayLabel')}</span>
+						<div className={VIEW_SWITCH_GROUP_CLASS}>
+							{(['full', 'compact'] as const).map(value => (
+								<button
+									key={value}
+									type="button"
+									onClick={() => setPathDisplay(value)}
+									aria-pressed={pathDisplay === value}
+									title={t(value === 'full' ? 'pathDisplayFullHint' : 'pathDisplayCompactHint')}
+									className={viewSwitchButtonClass(pathDisplay === value)}
+								>
+									{t(value === 'full' ? 'pathDisplayFull' : 'pathDisplayCompact')}
+								</button>
+							))}
+						</div>
 					</div>
+					<StickyRefreshControl intervalMs={stickyRefreshIntervalMs} />
 				</div>
-				<StickyRefreshControl intervalMs={stickyRefreshIntervalMs} />
 			</div>
 		</div>
 	);

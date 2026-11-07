@@ -842,6 +842,7 @@
 			"failed": "가져오기에 실패했습니다"
 		},
 		"modal": {
+			"capabilities": "기능 및 제한",
 			"editTitle": "모델 편집",
 			"newTitle": "새 모델",
 			"prefilledFrom": "{id}에서 미리 채웠습니다. Model ID에 -copy 접미사가 붙어 있습니다. 저장하기 전에 확인하세요.",
@@ -1061,6 +1062,8 @@
 		"empty": "모델 또는 Route가 없습니다",
 		"emptyFilteredPrefix": "필터를 조정하거나",
 		"workspace": {
+			"moreFilters": "추가 필터",
+			"displayOptions": "표시 설정",
 			"searchPlaceholder": "모델, 업스트림 모델 또는 공급자 검색…",
 			"removeFilter": "필터 제거: {filter}",
 			"densityList": "목록",
@@ -1291,6 +1294,16 @@
 			}
 		},
 		"modal": {
+			"workflow": {
+				"capability": "라우트 기능",
+				"chooseCapability": "이 라우트가 처리할 기능 선택",
+				"capabilityHint": "클라이언트에서 호출할 기능을 선택하면 양쪽 프로토콜과 업스트림 엔드포인트가 함께 설정됩니다.",
+				"searchCapabilities": "기능 또는 프로토콜 검색…",
+				"noCapabilities": "일치하는 기능이 없습니다.",
+				"protocolDetails": "프로토콜 상세",
+				"scheduling": "그룹 및 트래픽 우선순위",
+				"schedulingSummary": "그룹 {group} · 우선순위 {priority} · 가중치 {weight}"
+			},
 			"editor": {
 				"sections": "라우트 설정 섹션",
 				"tabs": {
@@ -1799,6 +1812,9 @@
 		"kindAsr": "음성 인식",
 		"kindTts": "음성 합성",
 		"strategy": {
+			"followInherited": "상위 전략 따르기",
+			"inheritedChoice": "현재 {strategy} 사용 중. 상위 설정이 변경되면 자동으로 따릅니다.",
+			"overrideCount": "개별 설정 {count}개 · 나머지 기능은 위 전략을 따름",
 			"title": "라우트 전략",
 			"protocolLevel": "현재 라우트 풀 전략",
 			"protocolLevelHint": "비워 두면 모델 엔드포인트, 모델 프로토콜, 모델 기본값, 전역 설정, 시스템 기본값 순서로 상속합니다.",

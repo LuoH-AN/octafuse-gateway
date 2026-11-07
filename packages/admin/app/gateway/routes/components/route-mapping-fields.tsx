@@ -2,12 +2,13 @@
 
 import { ArrowRightIcon, ComputerDesktopIcon, ServerIcon } from '@heroicons/react/24/outline';
 import { editorInputClass, editorLabelClass, RouteEditorSection } from './route-editor-ui';
+import { EditorDisclosure } from '@/components/editor-disclosure';
+import { RouteCapabilityPicker } from './route-capability-picker';
 import { RouteAdapterGuide } from './route-adapter-guide';
 import { useTranslations, useLocale } from 'next-intl';
 import { liveProviderPickerLabel, sortProvidersByKindThenName } from '@/lib/provider-kind';
 import { UPSTREAM_PROTOCOLS, type UpstreamProtocol } from '@/lib/upstream-protocol';
 import {
-	adapterOptionMappingSuffix,
 	alignRouteScheduleWindowsToCatalog,
 	applyAdapterOptionToForm,
 	catalogScheduleWindowsFromModel,
@@ -55,14 +56,6 @@ export function RouteMappingFields({
 	const tFlow = useTranslations('routes.flow');
 	const tKind = useTranslations('providers.kind');
 	const locale = useLocale();
-	const adapterLabel = (adapter: string) =>
-		t.has(`adapterNames.${adapter}`) ? t(`adapterNames.${adapter}`) : adapter;
-	const adapterOptionLabel = (descriptor: { id: string; labelKey?: string }) => {
-		const key = descriptor.labelKey ?? descriptor.id;
-		return t.has(`adapterNames.${key}`) ? t(`adapterNames.${key}`) : adapterLabel(descriptor.id);
-	};
-	const adapterPurpose = (adapter: string) =>
-		t.has(`adapterGuides.${adapter}.purpose`) ? t(`adapterGuides.${adapter}.purpose`) : null;
 	const requestProtocols = UPSTREAM_PROTOCOLS.filter(
 		(protocol) => requestOperationsForModel(selectedModel, protocol, formData.provider_model_name).length > 0
 	);
@@ -226,78 +219,6 @@ export function RouteMappingFields({
 								</code>
 							</div>
 						</div>
-						{lockTopology ? (
-							<ProtocolSummary
-								label={t('requestProtocol')}
-								protocol={formData.request_protocol}
-								operation={
-									formData.request_operation === 'models.generate'
-										? t('operationModelsGenerate')
-										: formData.request_operation
-								}
-							/>
-						) : (
-							<div className="grid gap-4 sm:grid-cols-2">
-								<div>
-									<label htmlFor="route-field-requestProtocol" className={editorLabelClass}>
-										{t('requestProtocol')}
-									</label>
-									<select
-										id="route-field-requestProtocol"
-										value={formData.request_protocol}
-										onChange={(e) => {
-											const requestProtocol = e.target.value as UpstreamProtocol;
-											const requestOperation =
-												requestOperationsForModel(
-													selectedModel,
-													requestProtocol,
-													formData.provider_model_name
-												)[0] ?? formData.request_operation;
-											onFormChange({
-												...formData,
-												request_protocol: requestProtocol,
-												request_operation: requestOperation,
-											});
-										}}
-										disabled={lockTopology}
-										className={editorInputClass}
-									>
-										{requestProtocols.map((p) => (
-											<option key={p} value={p}>
-												{p}
-											</option>
-										))}
-									</select>
-								</div>
-								<div>
-									<label htmlFor="route-field-requestOperation" className={editorLabelClass}>
-										{t('requestOperation')}
-									</label>
-									<select
-										id="route-field-requestOperation"
-										value={formData.request_operation}
-										onChange={(e) =>
-											onFormChange({
-												...formData,
-												request_operation: e.target.value,
-											})
-										}
-										disabled={lockTopology}
-										className={editorInputClass}
-									>
-										{requestOperations.map((operation) => (
-											<option key={operation} value={operation}>
-												{operation === 'models.generate' ? t('operationModelsGenerate') : operation}
-											</option>
-										))}
-										{formData.request_operation === '*' ? <option value="*">*</option> : null}
-									</select>
-									{selectedModelIsAudio ? (
-										<p className="mt-2 text-xs text-gray-500">{t('audioPublicOperationHint')}</p>
-									) : null}
-								</div>
-							</div>
-						)}
 					</div>
 					<span aria-hidden className="absolute bottom-0 left-1/2 top-0 hidden w-px bg-slate-200 md:block">
 						<span className="absolute left-1/2 top-1/2 flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center bg-white">
@@ -401,6 +322,104 @@ export function RouteMappingFields({
 								required
 							/>
 						</div>
+					</div>
+				</div>
+			</RouteEditorSection>
+			{selectedProvider ? (
+				<RouteCapabilityPicker
+					key={`${formData.model_id}:${formData.provider_id}`}
+					options={visibleAdapterOptions}
+					value={showCurrentAdapter ? null : selectedAdapterOptionKey}
+					legacyValue={showCurrentAdapter ? formData.adapter : undefined}
+					editing={Boolean(editingRoute || duplicateSourceRouteId)}
+					onChange={(value) => onFormChange(applyAdapterOptionToForm(formData, value))}
+				/>
+			) : <p className="px-1 text-sm text-gray-500">{t('protocolHintSelectProvider')}</p>}
+			{selectedProvider && modelUnrecognized ? (
+				<p className="px-1 text-xs text-amber-700">{t('adapterModelUnrecognized')}</p>
+			) : null}
+			{selectedAdapterOption && selectedAdapterOption.missingCapabilities.length > 0 ? (
+				<p className="px-1 text-xs text-amber-700">{t('adapterMissingCapabilities', { capabilities: selectedAdapterOption.missingCapabilities.join(', ') })}</p>
+			) : null}
+			<EditorDisclosure title={t('workflow.protocolDetails')}
+				summary={`${formData.request_protocol} / ${formData.request_operation} → ${formData.upstream_protocol} / ${formData.upstream_operation}`}
+				defaultOpen={Boolean(editingRoute) && !lockTopology}>
+				<div className="grid gap-4 md:grid-cols-2">
+					<div className="min-w-0">
+						{lockTopology ? (
+							<ProtocolSummary
+								label={t('requestProtocol')}
+								protocol={formData.request_protocol}
+								operation={
+									formData.request_operation === 'models.generate'
+										? t('operationModelsGenerate')
+										: formData.request_operation
+								}
+							/>
+						) : (
+							<div className="grid gap-4 sm:grid-cols-2">
+								<div>
+									<label htmlFor="route-field-requestProtocol" className={editorLabelClass}>
+										{t('requestProtocol')}
+									</label>
+									<select
+										id="route-field-requestProtocol"
+										value={formData.request_protocol}
+										onChange={(e) => {
+											const requestProtocol = e.target.value as UpstreamProtocol;
+											const requestOperation =
+												requestOperationsForModel(
+													selectedModel,
+													requestProtocol,
+													formData.provider_model_name
+												)[0] ?? formData.request_operation;
+											onFormChange({
+												...formData,
+												request_protocol: requestProtocol,
+												request_operation: requestOperation,
+											});
+										}}
+										disabled={lockTopology}
+										className={editorInputClass}
+									>
+										{requestProtocols.map((p) => (
+											<option key={p} value={p}>
+												{p}
+											</option>
+										))}
+									</select>
+								</div>
+								<div>
+									<label htmlFor="route-field-requestOperation" className={editorLabelClass}>
+										{t('requestOperation')}
+									</label>
+									<select
+										id="route-field-requestOperation"
+										value={formData.request_operation}
+										onChange={(e) =>
+											onFormChange({
+												...formData,
+												request_operation: e.target.value,
+											})
+										}
+										disabled={lockTopology}
+										className={editorInputClass}
+									>
+										{requestOperations.map((operation) => (
+											<option key={operation} value={operation}>
+												{operation === 'models.generate' ? t('operationModelsGenerate') : operation}
+											</option>
+										))}
+										{formData.request_operation === '*' ? <option value="*">*</option> : null}
+									</select>
+									{selectedModelIsAudio ? (
+										<p className="mt-2 text-xs text-gray-500">{t('audioPublicOperationHint')}</p>
+									) : null}
+								</div>
+							</div>
+						)}
+					</div>
+					<div className="min-w-0">
 						{lockTopology ? (
 							<ProtocolSummary
 								label={t('upstreamProtocol')}
@@ -482,65 +501,11 @@ export function RouteMappingFields({
 						)}
 					</div>
 				</div>
-			</RouteEditorSection>
-			<RouteEditorSection title={t('editor.routingTitle')}>
-				<div className="grid items-start gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,120px)_minmax(0,95px)_minmax(0,95px)]">
-					<div>
-						<label htmlFor="route-field-adapter" className={editorLabelClass}>
-							{t('adapter')}
-						</label>
-						<select
-							id="route-field-adapter"
-							value={selectedAdapterOptionKey ?? ''}
-							onChange={(e) => onFormChange(applyAdapterOptionToForm(formData, e.target.value))}
-							title={formData.adapter}
-							disabled={!selectedProvider}
-							className={editorInputClass}
-						>
-							{!selectedProvider ? (
-								<option value={formData.adapter}>{t('protocolHintSelectProvider')}</option>
-							) : visibleAdapterOptions.length === 0 ? (
-								<option value={formData.adapter}>{t('noCompatibleAdapter')}</option>
-							) : selectedAdapterOptionKey == null ? (
-								<option value="">{t('noCompatibleAdapter')}</option>
-							) : null}
-							{visibleAdapterOptions.map((option) => (
-								<option
-									key={option.descriptor.optionKey}
-									value={option.descriptor.optionKey}
-									title={option.descriptor.id}
-									disabled={!option.available && option.descriptor.optionKey !== selectedAdapterOptionKey}
-								>
-									{adapterOptionLabel(option.descriptor)}
-									{adapterOptionMappingSuffix(option.descriptor)}
-									{!option.available ? ` · ${t('adapterUnavailable')}` : ''}
-								</option>
-							))}
-							{showCurrentAdapter ? (
-								<option value={formData.adapter} title={formData.adapter}>
-									{adapterLabel(formData.adapter)} · {t('currentLegacyValue')}
-								</option>
-							) : null}
-						</select>
-						<p className="mt-2 text-xs text-gray-500">
-							{!selectedProvider
-								? t('protocolHintSelectProvider')
-								: (adapterPurpose(selectedAdapterOption?.descriptor.id ?? formData.adapter) ??
-									t('editor.adapterHint'))}
-						</p>
-						{selectedProvider && modelUnrecognized ? (
-							<p className="mt-2 text-xs text-amber-700">{t('adapterModelUnrecognized')}</p>
-						) : null}
-						{selectedProvider &&
-						selectedAdapterOption &&
-						selectedAdapterOption.missingCapabilities.length > 0 ? (
-							<p className="mt-2 text-xs text-amber-700">
-								{t('adapterMissingCapabilities', {
-									capabilities: selectedAdapterOption.missingCapabilities.join(', '),
-								})}
-							</p>
-						) : null}
-					</div>
+			</EditorDisclosure>
+			<EditorDisclosure title={t('workflow.scheduling')}
+				summary={t('workflow.schedulingSummary', { group: formData.route_group.trim() || 'default', priority: formData.priority, weight: formData.weight })}>
+				<p className="mb-4 text-xs leading-5 text-gray-500">{t('priorityHint')} {t('weightHint')}</p>
+				<div className="grid gap-4 md:grid-cols-3">
 					<div>
 						<label htmlFor="route-field-group" className={editorLabelClass} title={t('routeGroupHint')}>
 							{t('routeGroup')}
@@ -595,16 +560,11 @@ export function RouteMappingFields({
 						</div>
 					</div>
 				</div>
-				{selectedProvider && selectedAdapterOption ? (
-					<RouteAdapterGuide
-						key={selectedAdapterOption.descriptor.optionKey}
-						descriptor={selectedAdapterOption.descriptor}
-						modelId={formData.model_id}
-						routeGroup={formData.route_group}
-						onOpenRequestTab={onOpenRequestTab}
-					/>
-				) : null}
-			</RouteEditorSection>
+			</EditorDisclosure>
+			{selectedProvider && selectedAdapterOption ? (
+				<RouteAdapterGuide key={selectedAdapterOption.descriptor.optionKey} descriptor={selectedAdapterOption.descriptor}
+					modelId={formData.model_id} routeGroup={formData.route_group} onOpenRequestTab={onOpenRequestTab} />
+			) : null}
 		</div>
 	);
 }

@@ -265,6 +265,8 @@ function RoutesContent() {
 			<ModelModal
 				onRoutesChanged={state.modelEdit.handleRoutesChanged}
 				open={state.modelEdit.showModal}
+				detailLoad={state.modelEdit.modelDetailLoad?.status}
+				onRetryDetails={state.modelEdit.retryModelDetails}
 				editingModel={state.modelEdit.editingModel}
 				duplicateSourceModelId={state.modelEdit.duplicateSourceModelId}
 				formData={state.modelEdit.formData}

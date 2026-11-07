@@ -73,9 +73,12 @@ export function RouteFilterSidebar(props: Props) {
 					<input type="search" value={props.searchQuery} onChange={e => props.onSearchChange(e.target.value)} placeholder={tw('searchPlaceholder')} aria-label={tw('searchPlaceholder')} className="h-9 w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 text-xs text-slate-800 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
 				</div>
 			</div>
-			<FilterDisclosure className="px-4 py-3" activeCount={active.length - Number(Boolean(props.searchQuery))}>
+			<div className="px-4 py-3">
 				<FilterRow>
 					{segments.map(segment => <FilterSegmented key={segment.key} label={segment.label} value={segment.value} options={segment.options} onChange={segment.onChange} />)}
+				</FilterRow>
+			</div>
+			<FilterDisclosure className="px-4 pb-3" collapseOnDesktop label={tw('moreFilters')} activeCount={filters.filter(filter => filter.value).length}>
 					<FilterGroup>
 						{filters.map(filter => <FilterSelect key={filter.key} label={filter.label} value={filter.value} onChange={filter.onChange}>
 							<option value="">{t('all')}</option>
@@ -83,7 +86,6 @@ export function RouteFilterSidebar(props: Props) {
 							{filter.options.map(option => <option key={option.value} value={option.value}>{option.label} ({option.count})</option>)}
 						</FilterSelect>)}
 					</FilterGroup>
-				</FilterRow>
 			</FilterDisclosure>
 			{active.length > 0 ? <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50/50 px-4 py-2">
 				{active.map(item => <button key={item.key} type="button" onClick={item.clear} aria-label={tw('removeFilter', {filter: item.label})} className="inline-flex max-w-full items-center gap-1.5 rounded-md bg-blue-50 px-2 py-1 text-[11px] text-blue-700 hover:bg-blue-100 focus-visible:outline-blue-500"><span className="truncate">{item.label}</span><XMarkIcon className="h-3 w-3 shrink-0" aria-hidden /></button>)}

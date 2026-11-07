@@ -842,6 +842,7 @@
 			"failed": "导入失败"
 		},
 		"modal": {
+			"capabilities": "能力与限制",
 			"editTitle": "编辑模型",
 			"newTitle": "新建模型",
 			"prefilledFrom": "已从 {id} 预填。Model ID 已加上 -copy 后缀，保存前请确认。",
@@ -1061,6 +1062,8 @@
 		"empty": "未找到模型或路由",
 		"emptyFilteredPrefix": "请尝试调整筛选或",
 		"workspace": {
+			"moreFilters": "更多筛选",
+			"displayOptions": "显示设置",
 			"searchPlaceholder": "搜索模型、上游模型或供应商…",
 			"removeFilter": "移除筛选：{filter}",
 			"densityList": "列表",
@@ -1291,6 +1294,16 @@
 			}
 		},
 		"modal": {
+			"workflow": {
+				"capability": "路由能力",
+				"chooseCapability": "选择这条路由如何处理请求",
+				"capabilityHint": "选择客户端需要调用的能力，两端协议和上游端点会一起匹配。",
+				"searchCapabilities": "查找能力或协议…",
+				"noCapabilities": "没有匹配的能力。",
+				"protocolDetails": "协议详情",
+				"scheduling": "分组与流量优先级",
+				"schedulingSummary": "分组 {group} · 优先级 {priority} · 权重 {weight}"
+			},
 			"editor": {
 				"sections": "路由配置分区",
 				"tabs": {
@@ -1799,6 +1812,9 @@
 		"kindAsr": "语音识别",
 		"kindTts": "语音合成",
 		"strategy": {
+			"followInherited": "跟随上级策略",
+			"inheritedChoice": "当前使用{strategy}，上级策略变化后会自动跟随。",
+			"overrideCount": "{count} 项单独设置 · 其余能力跟随上方策略",
 			"title": "路由策略",
 			"protocolLevel": "当前路由池策略",
 			"protocolLevelHint": "留空会沿继承链查找模型端点、模型协议、模型默认、全局配置，最后回退到系统默认。",

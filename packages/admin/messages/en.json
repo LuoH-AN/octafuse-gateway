@@ -842,6 +842,7 @@
 			"failed": "Import failed"
 		},
 		"modal": {
+			"capabilities": "Capabilities and limits",
 			"editTitle": "Edit Model",
 			"newTitle": "New Model",
 			"prefilledFrom": "Pre-filled from {id}. Model ID has a -copy suffix; review it before saving.",
@@ -1061,6 +1062,8 @@
 		"empty": "No models or routes found",
 		"emptyFilteredPrefix": "Try adjusting filters or",
 		"workspace": {
+			"moreFilters": "More filters",
+			"displayOptions": "Display options",
 			"searchPlaceholder": "Search model, upstream model or provider…",
 			"removeFilter": "Remove filter: {filter}",
 			"densityList": "List",
@@ -1291,6 +1294,16 @@
 			}
 		},
 		"modal": {
+			"workflow": {
+				"capability": "Route capability",
+				"chooseCapability": "Choose how this route handles requests",
+				"capabilityHint": "Select the client-facing capability. The matching protocols and upstream endpoint are filled in together.",
+				"searchCapabilities": "Find a capability or protocol…",
+				"noCapabilities": "No matching capabilities.",
+				"protocolDetails": "Protocol details",
+				"scheduling": "Group and traffic priority",
+				"schedulingSummary": "Group {group} · Priority {priority} · Weight {weight}"
+			},
 			"editor": {
 				"sections": "Route configuration sections",
 				"tabs": {
@@ -1799,6 +1812,9 @@
 		"kindAsr": "ASR",
 		"kindTts": "TTS",
 		"strategy": {
+			"followInherited": "Follow inherited strategy",
+			"inheritedChoice": "Currently uses {strategy}; follows future changes to the parent policy.",
+			"overrideCount": "{count} capability overrides · Other capabilities follow the strategy above",
 			"title": "Route strategy",
 			"protocolLevel": "Current route pool strategy",
 			"protocolLevelHint": "Leave empty to resolve through model endpoint, model protocol, model default, global config, then the system default.",

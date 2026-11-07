@@ -72,6 +72,7 @@ export function useModelEditModal(options?: Options) {
 	const { currency: billingCurrency } = useBillingCurrency();
 	const editLoadGenRef = useRef(0);
 	const [showModal, setShowModal] = useState(false);
+	const [modelDetailLoad, setModelDetailLoad] = useState<{ id: string; status: 'loading' | 'error' } | null>(null);
 	const [editingModel, setEditingModel] = useState<ModelListItem | null>(null);
 	const [duplicateSourceModelId, setDuplicateSourceModelId] = useState<string | null>(null);
 	const [formData, setFormData] = useState<ModelFormData>(EMPTY_MODEL_FORM);
@@ -138,6 +139,7 @@ export function useModelEditModal(options?: Options) {
 	const handleCreate = useCallback(
 		(presetVendorKey?: string, kind: ModelFormKind = 'llm') => {
 			editLoadGenRef.current += 1;
+			setModelDetailLoad(null);
 			setEditingModel(null);
 			setDuplicateSourceModelId(null);
 			setFormKind(kind);
@@ -294,19 +296,20 @@ export function useModelEditModal(options?: Options) {
 			const loadGen = ++editLoadGenRef.current;
 			setDuplicateSourceModelId(null);
 			setEditingModel(model);
-			fillFormFromModel(model);
+			setModelDetailLoad({ id: model.id, status: 'loading' });
+			setSaveError('');
+			setShowModal(true);
 			try {
 				const fullModel = await fetchModelDetail(model.id);
 				if (editLoadGenRef.current !== loadGen) return;
 				setEditingModel(fullModel);
 				fillFormFromModel(fullModel);
+				setModelDetailLoad(null);
 			} catch (error) {
 				if (editLoadGenRef.current !== loadGen) return;
 				console.error('Fetch model details error:', error);
+				setModelDetailLoad({ id: model.id, status: 'error' });
 			}
-			if (editLoadGenRef.current !== loadGen) return;
-			setShowModal(true);
-			setSaveError('');
 		},
 		[fillFormFromModel]
 	);
@@ -333,20 +336,23 @@ export function useModelEditModal(options?: Options) {
 		async (modelId: string) => {
 			const loadGen = ++editLoadGenRef.current;
 			setDuplicateSourceModelId(null);
+			setEditingModel(null);
 			setSaveError('');
+			setModelDetailLoad({ id: modelId, status: 'loading' });
+			setShowModal(true);
 			try {
 				const fullModel = await fetchModelDetail(modelId);
 				if (editLoadGenRef.current !== loadGen) return;
 				setEditingModel(fullModel);
 				fillFormFromModel(fullModel);
-				setShowModal(true);
+				setModelDetailLoad(null);
 			} catch (error) {
 				if (editLoadGenRef.current !== loadGen) return;
 				console.error('Fetch model details error:', error);
-				notify('error', tCommon('failedToLoadModels'));
+				setModelDetailLoad({ id: modelId, status: 'error' });
 			}
 		},
-		[fillFormFromModel, notify, tCommon]
+		[fillFormFromModel]
 	);
 
 	const handleDelete = useCallback(
@@ -500,6 +506,8 @@ export function useModelEditModal(options?: Options) {
 
 	const closeModal = useCallback(() => {
 		if (isSaving || isDeleting) return;
+		editLoadGenRef.current += 1;
+		setModelDetailLoad(null);
 		setShowModal(false);
 	}, [isDeleting, isSaving]);
 
@@ -510,6 +518,8 @@ export function useModelEditModal(options?: Options) {
 	return {
 		billingCurrency,
 		showModal,
+		modelDetailLoad,
+		retryModelDetails: () => { if (modelDetailLoad) void openEditById(modelDetailLoad.id); },
 		editingModel,
 		duplicateSourceModelId,
 		formData,

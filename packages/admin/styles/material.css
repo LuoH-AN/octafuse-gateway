@@ -32,6 +32,7 @@
 }
 
 .admin-material :where(button, a, input, select, textarea, summary) {
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -41,8 +42,8 @@
 }
 
 .admin-material :where(button, a) {
-  transition: background-color 180ms var(--md-motion), color 180ms var(--md-motion),
-    border-color 180ms var(--md-motion), box-shadow 180ms var(--md-motion), scale 180ms var(--md-motion);
+  transition: background-color 120ms var(--md-motion), color 120ms var(--md-motion),
+    border-color 120ms var(--md-motion), box-shadow 120ms var(--md-motion), scale 120ms var(--md-motion);
 }
 
 /* Desktop navigation drawer and inset workspace. */
@@ -300,11 +301,35 @@
 }
 
 /* Distinct shapes for actions, segments, fields and nested surfaces. */
-.admin-material button:enabled:not([aria-disabled='true']):active,
-.admin-material .md-sidebar nav a:active,
-.admin-material summary:active {
-  scale: 0.975;
-  transition-duration: 80ms;
+.admin-material button:enabled:not([aria-disabled='true'], [aria-pressed], [aria-expanded], [role]):active {
+  scale: 0.99;
+  transition-duration: 0ms;
+}
+
+.admin-material .md-choice-card:has(input:checked) {
+  border-color: var(--md-primary);
+  background: var(--md-surface-container);
+  box-shadow: inset 0 0 0 1px var(--md-primary);
+}
+
+.admin-material .md-choice-card:has(input:focus-visible) {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 3px;
+}
+
+.admin-material .md-choice-card:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.admin-material .md-choice-card:not(:has(input:disabled)):hover,
+.admin-material .md-editor-disclosure > button:hover {
+  background-color: var(--md-surface-low);
+}
+
+.admin-material .md-choice-card,
+.admin-material .md-editor-disclosure > button {
+  transition: background-color 100ms var(--md-motion), border-color 100ms var(--md-motion);
 }
 
 .admin-material button:disabled,
@@ -412,13 +437,13 @@
   transition: background-color 150ms var(--md-motion);
 }
 
-.admin-material .md-route-toolbar > :last-child > [role='group'] {
+.admin-material .md-route-toolbar [role='group'] {
   flex-direction: column;
   align-items: flex-start;
   gap: 0.5rem;
 }
 
-.admin-material .md-route-toolbar > :last-child {
+.admin-material .md-route-toolbar > :nth-child(2) {
   align-items: flex-end;
   gap: 1rem;
 }
@@ -443,7 +468,7 @@
 }
 
 @keyframes md-surface-enter {
-  from { opacity: 0; transform: translateY(8px); }
+  from { opacity: 0; transform: translateY(3px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -453,15 +478,11 @@
 }
 
 .admin-material :is([role='dialog'], [role='alertdialog'], [role='listbox']) {
-  animation: md-surface-enter 200ms var(--md-motion);
+  animation: md-surface-enter 140ms var(--md-motion);
 }
 
 .admin-material #admin-mobile-navigation[open] {
   animation: md-drawer-enter 240ms var(--md-motion);
-}
-
-.admin-material .md-workspace > * {
-  animation: md-surface-enter 180ms var(--md-motion);
 }
 
 @media (min-width: 1024px) {

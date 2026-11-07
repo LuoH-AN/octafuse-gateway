@@ -7,6 +7,7 @@ import {
 	isPromptCacheSensitiveCapability,
 } from '../route-utils';
 import type { RoutePolicyDialogState, RoutePolicyFormState } from '../types';
+import { EditorDisclosure } from '@/components/editor-disclosure';
 import { RouteStrategyPicker } from './route-strategy-picker';
 
 type Props = {
@@ -34,8 +35,8 @@ export function RoutePolicyDialog(props: Props) {
 			const inherited =
 				isTierMode
 					? tierInheritStrategy
-					: dialog.inheritedStrategy;
-			return `${t('inherit')} → ${inherited}`;
+					: form.protocolStrategy || dialog.inheritedStrategy;
+			return `${t('inherit')} → ${t.has(`display.${inherited}`) ? t(`display.${inherited}`) : inherited}`;
 		}
 		if (value === 'hash_affinity') return t('display.hash_affinity');
 		if (value === 'weighted_random') return t('display.weighted_random');
@@ -87,7 +88,7 @@ export function RoutePolicyDialog(props: Props) {
 				</div>
 				<div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
 					{error && (
-						<div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
+						<div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">
 							{error}
 						</div>
 					)}
@@ -96,21 +97,53 @@ export function RoutePolicyDialog(props: Props) {
 							{t('tierRequiresPool')}
 						</div>
 					) : null}
-					{capabilities.length > 0 ? (
+
+					{isTierMode ? (
 						<div>
-							<div className="mb-2 text-sm font-medium text-gray-700">
-								{t('capabilityLevel')}
+							<div className="mb-1">
+								<p className="mt-0.5 text-xs text-gray-500">{t('tierLevelHint')}</p>
 							</div>
+							<RouteStrategyPicker
+								value={form.tierStrategy}
+								onChange={(next) => onFormChange({ ...form, tierStrategy: next })}
+								allowInherit
+								inheritedStrategy={tierInheritStrategy}
+								disabled={saving || !dialog.poolId}
+								className="mt-3"
+							/>
+						</div>
+					) : (
+						<div>
+							<div className="mb-1">
+								<h3 className="text-sm font-semibold text-gray-900">{t('title')}</h3>
+								<p className="mt-0.5 text-xs text-gray-500">{t('guideHint')}</p>
+							</div>
+							<RouteStrategyPicker
+								value={form.protocolStrategy}
+								onChange={(next) => onFormChange({ ...form, protocolStrategy: next })}
+								allowInherit
+								inheritedStrategy={dialog.inheritedStrategy}
+								disabled={saving}
+								className="mt-3"
+							/>
+						</div>
+					)}
+					{capabilities.length > 0 ? (
+						<EditorDisclosure title={t('capabilityLevel')}
+							summary={t('overrideCount', { count: capabilities.filter((cap) => form.capabilityStrategies[cap]).length })}
+							defaultOpen={capabilities.some((cap) => Boolean(form.capabilityStrategies[cap]))}>
 							<p className="mb-3 text-xs leading-relaxed text-gray-500">
 								{t('capabilityHint')}
 							</p>
-							<div className="space-y-3">
+							<div className="grid gap-4 sm:grid-cols-2">
 								{capabilities.map((cap) => (
 									<div key={cap}>
-										<label className="mb-1 block font-mono text-xs font-medium text-gray-600">
+										<label htmlFor={`strategy-cap-${cap}`} className="mb-1 block font-mono text-xs font-medium text-gray-600">
 											{cap}
 										</label>
 										<select
+											id={`strategy-cap-${cap}`}
+											disabled={saving}
 											value={form.capabilityStrategies[cap] ?? ''}
 											onChange={(e) =>
 												onFormChange({
@@ -137,48 +170,11 @@ export function RoutePolicyDialog(props: Props) {
 									</div>
 								))}
 							</div>
-						</div>
+						</EditorDisclosure>
 					) : null}
-
-					{isTierMode ? (
-						<div>
-							<div className="mb-1">
-								<p className="mt-0.5 text-xs text-gray-500">{t('tierLevelHint')}</p>
-							</div>
-							<RouteStrategyPicker
-								value={form.tierStrategy}
-								onChange={(next) => onFormChange({ ...form, tierStrategy: next })}
-								allowInherit
-								inheritedStrategy={tierInheritStrategy}
-								disabled={saving || !dialog.poolId}
-								className="mt-3"
-							/>
-						</div>
-					) : (
-						<div>
-							<div className="mb-1">
-								<h3 className="text-sm font-semibold text-gray-900">{t('guideTitle')}</h3>
-								<p className="mt-0.5 text-xs text-gray-500">{t('guideHint')}</p>
-							</div>
-							<RouteStrategyPicker
-								value={form.protocolStrategy}
-								onChange={(next) => onFormChange({ ...form, protocolStrategy: next })}
-								allowInherit
-								inheritedStrategy={dialog.inheritedStrategy}
-								disabled={saving}
-								className="mt-3"
-							/>
-						</div>
-					)}
-					<div
-						role="note"
-						className="rounded-lg border border-sky-200 bg-sky-50/70 px-4 py-3"
-					>
-						<p className="text-sm font-semibold text-sky-900">{t('cacheHitGuideTitle')}</p>
-						<p className="mt-1 text-xs leading-relaxed text-sky-800">
-							{t('cacheHitGuideBody')}
-						</p>
-					</div>
+					<EditorDisclosure title={t('cacheHitGuideTitle')}>
+						<p className="text-xs leading-5 text-gray-600">{t('cacheHitGuideBody')}</p>
+					</EditorDisclosure>
 				</div>
 				<div className="flex shrink-0 justify-end gap-2 border-t border-gray-200 bg-gray-50/60 px-6 py-3.5">
 					<button

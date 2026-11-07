@@ -20,7 +20,7 @@ export default function MaterialInteractions() {
     function ripple(target: EventTarget | null, x?: number, y?: number) {
       if (reducedMotion.matches || !(target instanceof Element)) return;
       const control = target.closest<HTMLElement>('button, .md-sidebar nav a, summary');
-      if (!control?.closest('.admin-material') || control.matches(':disabled, [aria-disabled="true"], [aria-busy="true"]')) return;
+      if (!control?.closest('.admin-material') || control.matches(':disabled, [aria-disabled="true"], [aria-busy="true"], [role="tab"], [role="radio"], [role="switch"], [aria-pressed], [aria-expanded]')) return;
       const rect = control.getBoundingClientRect();
       if (!rect.width || !rect.height || rect.height > 100) return;
 
@@ -46,7 +46,7 @@ export default function MaterialInteractions() {
         { transform: 'scale(0.12)', opacity: 0.16 },
         { transform: 'scale(0.8)', opacity: 0.1, offset: 0.55 },
         { transform: 'scale(1)', opacity: 0 },
-      ], { duration: 420, easing: 'cubic-bezier(0.2, 0, 0, 1)' });
+      ], { duration: 260, easing: 'cubic-bezier(0.2, 0, 0, 1)' });
       let removed = false;
       const cancel = () => {
         if (removed) return;
