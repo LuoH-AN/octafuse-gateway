@@ -120,6 +120,125 @@ describe('import catalog pricing preview follows billing currency', () => {
 		assert.equal(listStaticModelPresets().some((p) => p.id === 'gemini-4-barium'), false);
 	});
 
+	it('includes gemini-4-hydrogen at the flat standard list price', () => {
+		const usd = listStaticModelPresetCatalogForAdmin('USD').find((r) => r.id === 'gemini-4-hydrogen');
+		const cny = listStaticModelPresetCatalogForAdmin('CNY').find((r) => r.id === 'gemini-4-hydrogen');
+		assert.ok(usd);
+		assert.ok(cny);
+		assert.equal(usd!.kind, 'llm');
+		assert.equal(cny!.kind, 'llm');
+		assert.equal(usd!.display_name, 'Gemini 4 Hydrogen');
+		assert.equal(usd!.context_window, 1000000);
+		assert.equal(usd!.max_tokens, 64000);
+		const preset = listStaticModelPresets().find((p) => p.id === 'gemini-4-hydrogen');
+		assert.ok(preset);
+		assert.equal(preset!.vendor, 'google');
+		assert.equal(preset!.released, '2026-11-12');
+		assert.equal(preset!.retired, undefined);
+		assert.deepEqual(preset!.modalities?.input, ['text', 'image', 'audio', 'video', 'file']);
+		assert.deepEqual(preset!.modalities?.output, ['text']);
+		const profile = parsePricingProfile(coerceModelPricingProfileInput(pickPresetPricingRawForBillingCurrency(preset!, 'USD'))!);
+		assert.equal(profile?.tiers.length, 1);
+		assert.equal(profile?.tiers[0]?.input_price, 1.5);
+		assert.equal(profile?.tiers[0]?.output_price, 7.5);
+		assert.equal(profile?.tiers[0]?.cache_read_price, 0.075);
+		assert.equal(profile?.tiers[0]?.cache_write_price, null);
+		const cnyProfile = parsePricingProfile(coerceModelPricingProfileInput(pickPresetPricingRawForBillingCurrency(preset!, 'CNY'))!);
+		assert.equal(cnyProfile?.tiers[0]?.input_price, 10.5);
+		assert.equal(cnyProfile?.tiers[0]?.output_price, 52.5);
+		assert.equal(cnyProfile?.tiers[0]?.cache_read_price, 0.525);
+		assert.equal(cnyProfile?.tiers[0]?.cache_write_price, null);
+		const note = '人民币价为美元刊例价 ×7 的换算占位价，非官方人民币刊例。';
+		for (const text of [preset!.description, preset!.i18n?.en, preset!.i18n?.zh, preset!.i18n?.ja, preset!.i18n?.ko]) {
+			assert.equal(text?.endsWith(note), true);
+			assert.match(text ?? '', /1M/);
+			assert.match(text ?? '', /64K/);
+			assert.match(text ?? '', /xhigh/);
+			assert.doesNotMatch(text ?? '', /1000000|64000|65536|1048576/);
+		}
+	});
+
+	it('includes gemini-4-carbon at the standard list price, not the introductory rate', () => {
+		const usd = listStaticModelPresetCatalogForAdmin('USD').find((r) => r.id === 'gemini-4-carbon');
+		const cny = listStaticModelPresetCatalogForAdmin('CNY').find((r) => r.id === 'gemini-4-carbon');
+		assert.ok(usd);
+		assert.ok(cny);
+		assert.equal(usd!.kind, 'llm');
+		assert.equal(cny!.kind, 'llm');
+		assert.equal(usd!.display_name, 'Gemini 4 Carbon');
+		assert.equal(usd!.context_window, 1000000);
+		assert.equal(usd!.max_tokens, 64000);
+		assert.equal(usd!.pricing_label, '$4 / $20 /M');
+		assert.equal(cny!.pricing_label, '¥28 / ¥140 /M');
+		const preset = listStaticModelPresets().find((p) => p.id === 'gemini-4-carbon');
+		assert.ok(preset);
+		assert.equal(preset!.vendor, 'google');
+		assert.equal(preset!.released, '2026-11-10');
+		assert.equal(preset!.retired, undefined);
+		assert.deepEqual(preset!.modalities?.input, ['text', 'image', 'audio', 'video', 'file']);
+		assert.deepEqual(preset!.modalities?.output, ['text']);
+		const profile = parsePricingProfile(coerceModelPricingProfileInput(pickPresetPricingRawForBillingCurrency(preset!, 'USD'))!);
+		assert.equal(profile?.tiers.length, 1);
+		assert.equal(profile?.tiers[0]?.input_price, 4);
+		assert.equal(profile?.tiers[0]?.output_price, 20);
+		assert.equal(profile?.tiers[0]?.cache_read_price, 0.2);
+		assert.equal(profile?.tiers[0]?.cache_write_price, null);
+		assert.notEqual(profile?.tiers[0]?.input_price, 2);
+		assert.notEqual(profile?.tiers[0]?.output_price, 10);
+		assert.notEqual(profile?.tiers[0]?.cache_read_price, 0.1);
+		const cnyProfile = parsePricingProfile(coerceModelPricingProfileInput(pickPresetPricingRawForBillingCurrency(preset!, 'CNY'))!);
+		assert.equal(cnyProfile?.tiers[0]?.input_price, 28);
+		assert.equal(cnyProfile?.tiers[0]?.output_price, 140);
+		assert.equal(cnyProfile?.tiers[0]?.cache_read_price, 1.4);
+		assert.equal(cnyProfile?.tiers[0]?.cache_write_price, null);
+		const note = '人民币价为美元刊例价 ×7 的换算占位价，非官方人民币刊例。';
+		for (const text of [preset!.description, preset!.i18n?.en, preset!.i18n?.zh, preset!.i18n?.ja, preset!.i18n?.ko]) {
+			assert.equal(text?.endsWith(note), true);
+			assert.doesNotMatch(text ?? '', /introductory|入门价|導入価格|도입 가격|2026-11-30|\$2 \/ \$10/);
+			assert.match(text ?? '', /1M/);
+			assert.match(text ?? '', /64K/);
+			assert.doesNotMatch(text ?? '', /1000000|64000|65536|1048576/);
+		}
+		assert.match(preset!.description ?? '', /cannot be turned off/);
+		assert.equal(listStaticModelPresets().some((p) => p.id === 'gemini-omni-1.2-flash'), false);
+	});
+
+	it('includes qwen4-max-preview aligned to qwen3.8-max pricing, with its official preview end as retired', () => {
+		const usd = listStaticModelPresetCatalogForAdmin('USD').find((r) => r.id === 'qwen4-max-preview');
+		const cny = listStaticModelPresetCatalogForAdmin('CNY').find((r) => r.id === 'qwen4-max-preview');
+		const prev = listStaticModelPresetCatalogForAdmin('USD').find((r) => r.id === 'qwen3.8-max');
+		assert.ok(usd);
+		assert.ok(cny);
+		assert.ok(prev);
+		assert.equal(usd!.kind, 'llm');
+		assert.equal(usd!.display_name, 'Qwen4 Max Preview');
+		assert.equal(usd!.context_window, 1000000);
+		assert.equal(usd!.max_tokens, 393216);
+		assert.equal(usd!.pricing_label, prev!.pricing_label);
+		const preset = listStaticModelPresets().find((p) => p.id === 'qwen4-max-preview');
+		const prevPreset = listStaticModelPresets().find((p) => p.id === 'qwen3.8-max');
+		assert.ok(preset);
+		assert.ok(prevPreset);
+		assert.equal(preset!.vendor, 'aliyun');
+		assert.equal(preset!.released, '2026-11-11');
+		assert.equal(preset!.retired, '2026-11-26');
+		assert.deepEqual(preset!.modalities?.input, ['text', 'image', 'video']);
+		assert.deepEqual(preset!.modalities?.output, ['text']);
+		for (const currency of ['USD', 'CNY'] as const) {
+			const profile = parsePricingProfile(coerceModelPricingProfileInput(pickPresetPricingRawForBillingCurrency(preset!, currency))!);
+			const prevProfile = parsePricingProfile(coerceModelPricingProfileInput(pickPresetPricingRawForBillingCurrency(prevPreset!, currency))!);
+			assert.equal(profile?.tiers.length, 1);
+			assert.deepEqual(profile?.tiers, prevProfile?.tiers);
+		}
+		for (const text of [preset!.description, preset!.i18n?.en, preset!.i18n?.zh, preset!.i18n?.ja, preset!.i18n?.ko]) {
+			assert.match(text ?? '', /Token Plan/);
+			assert.match(text ?? '', /qwen3\.8-max/);
+			assert.match(text ?? '', /1M/);
+			assert.match(text ?? '', /393K/);
+			assert.doesNotMatch(text ?? '', /1000000|393216/);
+		}
+	});
+
 	it('includes gemini-3.8-flash with Gemini API Standard list prices', () => {
 		const usd = listStaticModelPresetCatalogForAdmin('USD').find((r) => r.id === 'gemini-3.8-flash');
 		const cny = listStaticModelPresetCatalogForAdmin('CNY').find((r) => r.id === 'gemini-3.8-flash');
@@ -130,6 +249,15 @@ describe('import catalog pricing preview follows billing currency', () => {
 		assert.equal(usd!.max_tokens, 64000);
 		assert.equal(usd!.pricing_label, '$1.5 / $7.5 /M');
 		assert.equal(cny!.pricing_label, '¥10.5 / ¥52.5 /M');
+	});
+
+	it('keeps gemini-4-argon and gemini-3.8-flash max output at 64000', () => {
+		for (const id of ['gemini-4-argon', 'gemini-3.8-flash'] as const) {
+			const preset = listStaticModelPresets().find((p) => p.id === id);
+			assert.ok(preset, id);
+			assert.equal(preset!.max_tokens, 64000, id);
+			assert.equal(preset!.context_window, 1000000, id);
+		}
 	});
 
 	it('includes Qwen-Audio 3.1 ASR and TTS at official token list prices', () => {
@@ -241,6 +369,47 @@ describe('import catalog pricing preview follows billing currency', () => {
 		assert.equal(profile?.tiers[0]?.output_price, 10);
 		assert.equal(profile?.tiers[0]?.cache_read_price, 0.2);
 		assert.equal(profile?.tiers[0]?.cache_write_price, 2.5);
+	});
+
+	it('includes claude-fable-5-2 at the $8 / $40 list price with 5-minute cache writes', () => {
+		const usd = listStaticModelPresetCatalogForAdmin('USD').find((r) => r.id === 'claude-fable-5-2');
+		const cny = listStaticModelPresetCatalogForAdmin('CNY').find((r) => r.id === 'claude-fable-5-2');
+		assert.ok(usd);
+		assert.ok(cny);
+		assert.equal(usd!.display_name, 'Claude Fable 5.2');
+		assert.equal(usd!.context_window, 1000000);
+		assert.equal(usd!.max_tokens, 128000);
+		assert.equal(usd!.pricing_label, '$8 / $40 /M');
+		assert.equal(cny!.pricing_label, '¥56 / ¥280 /M');
+		const preset = listStaticModelPresets().find((p) => p.id === 'claude-fable-5-2');
+		assert.ok(preset);
+		assert.equal(preset!.vendor, 'anthropic');
+		assert.equal(preset!.released, '2026-11-09');
+		assert.equal(preset!.retired, undefined);
+		assert.deepEqual(preset!.modalities, {
+			input: ['text', 'image', 'file'],
+			output: ['text'],
+		});
+		const profile = parsePricingProfile(coerceModelPricingProfileInput(pickPresetPricingRawForBillingCurrency(preset!, 'USD'))!);
+		assert.equal(profile?.tiers.length, 1);
+		assert.equal(profile?.tiers[0]?.upto, null);
+		assert.equal(profile?.tiers[0]?.input_price, 8);
+		assert.equal(profile?.tiers[0]?.output_price, 40);
+		assert.equal(profile?.tiers[0]?.cache_read_price, 0.2);
+		assert.equal(profile?.tiers[0]?.cache_write_price, 10);
+		const cnyProfile = parsePricingProfile(coerceModelPricingProfileInput(pickPresetPricingRawForBillingCurrency(preset!, 'CNY'))!);
+		assert.equal(cnyProfile?.tiers.length, 1);
+		assert.equal(cnyProfile?.tiers[0]?.upto, null);
+		assert.equal(cnyProfile?.tiers[0]?.input_price, 56);
+		assert.equal(cnyProfile?.tiers[0]?.output_price, 280);
+		assert.equal(cnyProfile?.tiers[0]?.cache_read_price, 1.4);
+		assert.equal(cnyProfile?.tiers[0]?.cache_write_price, 70);
+		const note = '人民币价为美元刊例价 ×7 的换算占位价，非官方人民币刊例。';
+		for (const text of [preset!.description, preset!.i18n?.en, preset!.i18n?.zh, preset!.i18n?.ja, preset!.i18n?.ko]) {
+			assert.equal(text?.endsWith(note), true);
+		}
+		assert.equal(listStaticModelPresets().some((p) => p.id === 'claude-mythos-5-2'), false);
+		assert.equal(listStaticModelPresets().some((p) => p.id === 'claude-fable-5-2-fast'), false);
 	});
 
 	it('includes claude-fable-5-1 with cheaper cache-read list prices', () => {
@@ -1260,6 +1429,12 @@ describe('2026-11-03 model catalog巡检 additions', () => {
 		assert.equal(listStaticModelPresetCatalogForAdmin('CNY').find((r) => r.id === 'gpt-5.2-pro')!.pricing_label, '¥147 / ¥1176 /M');
 	});
 
+	it('marks gpt-image-2 retired on the official shutdown date', () => {
+		const preset = doubaoPreset('gpt-image-2');
+		assert.equal(preset.released, '2026-04-01');
+		assert.equal(preset.retired, '2027-02-10');
+	});
+
 	it('adds gpt-image-1.5 with $10 text output and $32 image output', () => {
 		const preset = doubaoPreset('gpt-image-1.5');
 		assert.equal(preset.display_name, 'GPT Image 1.5');
@@ -1385,6 +1560,75 @@ describe('2026-11-03 model catalog巡检 additions', () => {
 		assert.deepEqual(doubaoPreset('glm-5-turbo').modalities?.input, ['text']);
 	});
 
+	it('adds glm-5v-turbo with official BigModel CNY tiers and no USD list price', () => {
+		const preset = doubaoPreset('glm-5v-turbo');
+		assert.equal(preset.display_name, 'GLM-5V-Turbo');
+		assert.equal(preset.vendor, 'zhipu');
+		assert.equal(preset.context_window, 200000);
+		assert.equal(preset.max_tokens, 128000);
+		assert.equal(preset.released, undefined);
+		assert.equal(preset.retired, undefined);
+		assert.deepEqual(preset.modalities?.input, ['text', 'image', 'video', 'file']);
+		assert.deepEqual(preset.modalities?.output, ['text']);
+		assert.match(preset.description ?? '', /200K/);
+		assert.match(preset.description ?? '', /128K/);
+		assert.match(preset.description ?? '', /does not understand files, video, and images at the same time/);
+		assert.match(preset.description ?? '', /no USD price/);
+		assert.doesNotMatch(preset.description ?? '', /200000|128000/);
+		assert.match(preset.i18n?.zh ?? '', /200K/);
+		assert.match(preset.i18n?.zh ?? '', /128K/);
+		assert.match(preset.i18n?.zh ?? '', /不支持同时理解文件、视频和图像/);
+		assert.match(preset.i18n?.zh ?? '', /没有美元刊例价/);
+		assert.doesNotMatch(preset.i18n?.zh ?? '', /200000|128000/);
+		assert.match(preset.i18n?.ja ?? '', /200K/);
+		assert.match(preset.i18n?.ko ?? '', /200K/);
+		const pricing = preset.pricing as { usd?: unknown; cny?: { tiers: Array<Record<string, unknown>> } };
+		assert.equal(pricing.usd, undefined);
+		assert.equal(Object.keys(pricing).includes('usd'), false);
+		assert.deepEqual(Object.keys(pricing.cny!.tiers[0]!).sort(), TOKEN_TIER_KEYS);
+		assert.deepEqual(
+			doubaoTiers(preset.id, 'CNY').map((t) => [
+				t.upto,
+				t.input_price,
+				t.output_price,
+				t.cache_read_price,
+				t.cache_write_price,
+			]),
+			[
+				[32000, 5, 22, 1.2, null],
+				[null, 7, 26, 1.8, null],
+			]
+		);
+
+		const usd = listStaticModelPresetCatalogForAdmin('USD').find((r) => r.id === preset.id);
+		const cny = listStaticModelPresetCatalogForAdmin('CNY').find((r) => r.id === preset.id);
+		assert.ok(usd);
+		assert.ok(cny);
+		assert.equal(usd!.kind, 'llm');
+		assert.equal(cny!.kind, 'llm');
+		assert.equal(usd!.context_window, 200000);
+		assert.equal(usd!.max_tokens, 128000);
+		assert.equal(usd!.pricing_available, false);
+		assert.equal(usd!.pricing_label, null);
+		assert.equal(cny!.pricing_label, '¥5 / ¥22 /M');
+		assert.equal(cny!.context_window, 200000);
+		assert.equal(cny!.max_tokens, 128000);
+	});
+
+	it('marks gemini-2.5-pro and gemini-2.5-flash retired on 2026-12-01 and leaves flash-lite undated', () => {
+		assert.equal(doubaoPreset('gemini-2.5-pro').retired, '2026-12-01');
+		assert.equal(doubaoPreset('gemini-2.5-flash').retired, '2026-12-01');
+		assert.equal(doubaoPreset('gemini-2.5-flash-lite').retired, undefined);
+		assert.equal(doubaoPreset('gemini-4-argon').max_tokens, 64000);
+		assert.equal(doubaoPreset('gemini-3.8-flash').max_tokens, 64000);
+		assert.equal(doubaoPreset('gemini-4-argon').context_window, 1000000);
+		assert.equal(doubaoPreset('gemini-3.8-flash').context_window, 1000000);
+		assert.equal(doubaoTiers('gemini-4-argon', 'USD')[0]?.input_price, 4);
+		assert.equal(doubaoTiers('gemini-4-argon', 'USD')[0]?.output_price, 20);
+		assert.equal(doubaoTiers('gemini-3.8-flash', 'USD')[0]?.input_price, 1.5);
+		assert.equal(doubaoTiers('gemini-3.8-flash', 'USD')[0]?.output_price, 7.5);
+	});
+
 	it('adds the StepFun Step 5 Preview / 3.5 Flash / 1o Turbo Vision presets', () => {
 		for (const [id, ctx, max, usdIn, usdOut, usdCache, cnyIn, cnyOut, cnyCache, input] of [
 			['step-5-preview', 1000000, 64000, 1, 2.7, 0.1, 7, 20, 0.7, ['text', 'image', 'video']],
@@ -1508,6 +1752,88 @@ describe('GPT Image 2.6 catalog list prices', () => {
 			assert.equal(cny.tiers[0]?.image_input_price, 56);
 			assert.equal(cny.tiers[0]?.image_input_cache_price, 14);
 			assert.equal(cny.tiers[0]?.image_output_price, 210);
+		}
+	});
+});
+
+describe('MiniMax H3 Image catalog list prices', () => {
+	it('stores official token rates, including domestic CNY that is not USD × 7', () => {
+		const cases = [
+			{
+				id: 'minimax-h3-image',
+				displayName: 'MiniMax H3 Image',
+				upstream: 'MiniMax-H3-Image',
+				usdImageIn: 1.5,
+				usdImageOut: 3.8,
+				cnyImageIn: 10,
+				cnyImageOut: 25,
+				usdLabel: '$2.3 / $1.5 / $3.8 /M',
+				cnyLabel: '¥15 / ¥10 / ¥25 /M',
+			},
+			{
+				id: 'minimax-h3-image-highspeed',
+				displayName: 'MiniMax H3 Image Highspeed',
+				upstream: 'MiniMax-H3-Image-Highspeed',
+				usdImageIn: 3,
+				usdImageOut: 7.6,
+				cnyImageIn: 20,
+				cnyImageOut: 50,
+				usdLabel: '$2.3 / $3 / $7.6 /M',
+				cnyLabel: '¥15 / ¥20 / ¥50 /M',
+			},
+		] as const;
+		for (const row of cases) {
+			const preset = doubaoPreset(row.id);
+			assert.equal(preset.display_name, row.displayName);
+			assert.equal(preset.vendor, 'minimax');
+			assert.equal(preset.released, '2026-11-10');
+			assert.equal(preset.retired, undefined);
+			assert.equal(preset.context_window, undefined);
+			assert.equal(preset.max_tokens, undefined);
+			assert.deepEqual(preset.modalities?.input, ['text', 'image']);
+			assert.deepEqual(preset.modalities?.output, ['image']);
+			const usdRow = listStaticModelPresetCatalogForAdmin('USD').find((item) => item.id === row.id);
+			const cnyRow = listStaticModelPresetCatalogForAdmin('CNY').find((item) => item.id === row.id);
+			assert.equal(usdRow?.kind, 'image');
+			assert.equal(cnyRow?.kind, 'image');
+			assert.equal(usdRow?.context_window, null);
+			assert.equal(usdRow?.max_tokens, null);
+			assert.equal(usdRow?.pricing_label, row.usdLabel);
+			assert.equal(cnyRow?.pricing_label, row.cnyLabel);
+			const usd = parsePricingProfile(coerceModelPricingProfileInput(pickPresetPricingRawForBillingCurrency(preset, 'USD'))!)!;
+			const cny = parsePricingProfile(coerceModelPricingProfileInput(pickPresetPricingRawForBillingCurrency(preset, 'CNY'))!)!;
+			assert.equal(usd.image_billing_mode, 'token');
+			assert.equal(cny.image_billing_mode, 'token');
+			assert.equal(usd.tiers[0]?.input_price, 2.3);
+			assert.equal(usd.tiers[0]?.output_price, 0);
+			assert.equal(usd.tiers[0]?.cache_read_price, null);
+			assert.equal(usd.tiers[0]?.cache_write_price, null);
+			assert.equal(usd.tiers[0]?.image_input_price, row.usdImageIn);
+			assert.equal(usd.tiers[0]?.image_input_cache_price, null);
+			assert.equal(usd.tiers[0]?.image_output_price, row.usdImageOut);
+			assert.equal(cny.tiers[0]?.input_price, 15);
+			assert.equal(cny.tiers[0]?.output_price, 0);
+			assert.equal(cny.tiers[0]?.cache_read_price, null);
+			assert.equal(cny.tiers[0]?.cache_write_price, null);
+			assert.equal(cny.tiers[0]?.image_input_price, row.cnyImageIn);
+			assert.equal(cny.tiers[0]?.image_input_cache_price, null);
+			assert.equal(cny.tiers[0]?.image_output_price, row.cnyImageOut);
+			assert.notEqual(cny.tiers[0]?.input_price, 2.3 * 7);
+			assert.notEqual(cny.tiers[0]?.image_input_price, row.usdImageIn * 7);
+			assert.notEqual(cny.tiers[0]?.image_output_price, row.usdImageOut * 7);
+			for (const text of [preset.description, preset.i18n?.en, preset.i18n?.zh, preset.i18n?.ja, preset.i18n?.ko]) {
+				assert.match(text ?? '', new RegExp(row.upstream.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+				assert.match(text ?? '', /\/v1\/images\/generations/);
+				assert.match(text ?? '', /\/v1\/images\/edits/);
+				assert.match(text ?? '', /api\.minimax\.io\/v1/);
+				assert.match(text ?? '', /api\.minimax\.cn\/v1/);
+				assert.match(text ?? '', /disable_prompt_enhanced=true/);
+				assert.match(text ?? '', /4K/);
+				assert.match(text ?? '', /32K/);
+				assert.doesNotMatch(text ?? '', /×7|占位价/);
+				assert.doesNotMatch(text ?? '', /limited-time|限时|期間限定|기간 한정|50% off|五折/);
+				assert.doesNotMatch(text ?? '', /32000|4096|20000000|1000000/);
+			}
 		}
 	});
 });

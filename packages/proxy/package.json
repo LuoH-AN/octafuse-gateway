@@ -1,6 +1,6 @@
 {
 	"name": "@octafuse/proxy",
-	"version": "2.18.0-luoh.1",
+	"version": "2.19.0",
 	"private": true,
 	"type": "module",
 	"scripts": {
@@ -18,7 +18,7 @@
 		"test": "npm run test:unit"
 	},
 	"dependencies": {
-		"@hono/node-server": "^2.1.5",
+		"@hono/node-server": "^2.1.8",
 		"@modelcontextprotocol/sdk": "^1.32.1",
 		"@octafuse/core": "*",
 		"@octafuse/tool-engines": "*",
