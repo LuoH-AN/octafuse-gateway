@@ -63,7 +63,7 @@ Routes 工作台支持**总览（Overview）**与**按模型（By model）**两�
 4. 保持路由组为 `default`；只有明确需要免费组、套餐组时再增加其他分组。
 5. 保存后先用调试台验证单条上游路由，再用模拟器验证用户 Key、完整选路、计费和日志。
 
-从模型目录导入 `kimi-k3.1-pro`、`kimi-k3.1-pro-highspeed`、`claude-haiku-5-5`、`gemini-nano-banana-2.1`、`claude-sonnet-5-5`、`claude-fable-5-2`、`gemini-4-hydrogen`、`gemini-4-carbon`、`minimax-h3-image`、`minimax-h3-image-highspeed`、`hy4`、`hy4-preview`、`qwen3.8-flash`、`glm-5.3-flash`、`glm-5.3-flashx`、`glm-5v-turbo` 等预设时，只会创建模型记录，不会自动维护模型标签。需要按供应商、套餐或用途分类时，请在导入后自行添加标签。
+从模型目录导入 `kimi-k3.1-pro`、`kimi-k3.1-pro-highspeed`、`claude-haiku-5-5`、`gemini-nano-banana-2.1`、`claude-sonnet-5-5`、`claude-fable-5-2`、`gemini-4-neon`、`gemini-4-hydrogen`、`gemini-4-carbon`、`minimax-h3-image`、`minimax-h3-image-highspeed`、`hy4-flash`、`hy4`、`hy4-preview`、`qwen3.8-flash`、`glm-5.3-flash`、`glm-5.3-flashx`、`glm-5v-turbo` 等预设时，只会创建模型记录，不会自动维护模型标签。需要按供应商、套餐或用途分类时，请在导入后自行添加标签。
 
 ### 3.1 选择协议适配器
 
@@ -134,13 +134,13 @@ Routes 工作台支持**总览（Overview）**与**按模型（By model）**两�
 
 - 每种工具以供应商卡片展示各引擎；点击卡片后在右侧抽屉维护凭证与三账本单价：**目录标准价（Standard）/ 用户计费（Charged）/ 供应成本（Metered）**。
 - 当前工具与引擎：
-  - **Web Search**：博查、Tavily、阿里云 CleverSee、腾讯云联网搜索 WSA
-  - **Web Fetch**：Firecrawl、Tavily Extract、Jina Reader
-  - **Web Deep Search**：Firecrawl Search、Jina Search
+  - **Web Search**：博查、Tavily、阿里云 CleverSee、腾讯云联网搜索 WSA、DeepSeek Search
+  - **Web Fetch**：Firecrawl、Tavily Extract、Jina Reader、DeepSeek Fetch
+  - **Web Deep Search**：Firecrawl Search、Jina Search、DeepSeek Search
   - **AI 率检测（AI Detection）**：多引擎 catalog，当前仅腾讯云 TMS 已实现；按 `billingUnitChars` 字符单元计费
 - **仅保存配置**不会切换线上引擎；**保存并启用**会保存当前草稿并把该供应商设为此工具唯一的活跃引擎（Active）。未实现或凭证不完整的引擎不可启用。
 - 卡片会提示活跃、未保存、缺少凭证、暂不可用与亏损定价（`charged < metered`）等状态。清空当前活跃引擎的凭证前，应先切换到另一个凭证完整的引擎。
-- 成功请求分别按三种绝对单价写入 `metered_cost` / `standard_cost` / `charged_cost`，仅 **charged** 累加用户预算；上游失败三列均为 0。智能体工具不应用模型路由倍率或分时时段。币种由 `BILLING_CURRENCY` 决定，调用记录见 **智能体工具 → 工具调用记录（Tools → Invocations）**（与请求日志同源）。
+- 成功请求分别按三种绝对单价写入 `metered_cost` / `standard_cost` / `charged_cost`，仅 **charged** 累加用户预算；上游失败三列均为 0。智能体工具不应用模型路由倍率或分时时段。币种由 `BILLING_CURRENCY` 决定，调用记录在请求日志（Request Logs）中查看：在类型（Type）里勾选 REST 工具（REST tools），或只勾其中某个工具。
 
 字段与引擎白名单见 [developers/api/user.md](../developers/api/user.md) 中各 Tools 章节。
 

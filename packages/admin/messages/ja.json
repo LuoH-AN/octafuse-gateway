@@ -1,4 +1,14 @@
 {
+	"proxyConnection": {
+		"source": {
+			"browser": "ブラウザーの上書き · REST・シミュレーター・MCP で共用",
+			"deployment": "デプロイ設定 GATEWAY_PROXY_URL を使用",
+			"local": "ローカル開発の既定 URL を使用",
+			"unset": "Proxy URL 未設定。GATEWAY_PROXY_URL を設定できます。"
+		},
+		"reset": "既定 URL に戻す",
+		"hint": "REST・シミュレーター・MCP で共用します。既定値は GATEWAY_PROXY_URL。手動変更はこのブラウザーだけに適用します。"
+	},
 	"autoRefresh": {
 		"paused": "一時停止",
 		"everySeconds": "{seconds} 秒ごと",
@@ -137,15 +147,22 @@
 		"login": "ログイン",
 		"loggingIn": "ログイン中...",
 		"loggingOut": "ログアウト中...",
-		"logout": "ログアウト"
+		"logout": "ログアウト",
+		"lockedOutTitle": "試行回数が多すぎます",
+		"lockedOutDescription": "ログインは一時的にロックされています。カウントダウン後に再試行してください。",
+		"lockedOutCountdown": "あと {time} で再試行できます",
+		"lockoutAcknowledge": "了解",
+		"loginBusy": "ログイン処理中です。しばらくしてから再試行してください。"
 	},
 	"sidebar": {
 		"openMenu": "ナビゲーションメニューを開く",
 		"navigation": "メインナビゲーション",
 		"groups": {
 			"overview": "概要",
-			"inference": "推論",
+			"models": "モデル",
+			"testing": "テスト",
 			"user": "ユーザー",
+			"logs": "ログ",
 			"tools": "ツール",
 			"analytics": "分析",
 			"integration": "システム連携",
@@ -163,7 +180,6 @@
 			"requestLogs": "リクエストログ",
 			"auditLogs": "監査ログ",
 			"toolsConfig": "REST サービス",
-			"toolInvocations": "呼び出し履歴",
 			"mcpServers": "MCP サーバー",
 			"modelUsage": "モデル使用量",
 			"providerUsage": "プロバイダー使用量",
@@ -425,7 +441,7 @@
 			"comparePrevious": "直前の同じ長さの期間と比較",
 			"newActivity": "新規",
 			"ttftP95": "初回応答 P95",
-			"latencyP95": "成功時の総所要時間 P95",
+			"latencyP95": "リクエスト所要時間 P95",
 			"timingContext": "中央値 {median} · {count} サンプル",
 			"ttftHint": "計測済みの成功ストリーム。最初の推論 Token、なければ本文 Token。P95 は 95% のサンプルが収まる時間。少数サンプルは参考値です。",
 			"latencyHint": "リクエスト種別をまたぐ成功時の総所要時間。生サンプルから P95 を計算し、モデル別分位数は平均しません。少数サンプルは参考値です。",
@@ -568,6 +584,7 @@
 			"routes": "{count} Route",
 			"routesPlural": "{count} Routes",
 			"activeRoutes": "{count} 件有効",
+			"enabledRouteRatio": "{active} / {total} 件のルートが有効",
 			"routesTitle": "{routes}；{active}",
 			"placeholder": "プレースホルダ",
 			"copyApiKey": "API キーをコピー",
@@ -712,6 +729,18 @@
 			"legacyPerActionNotice": "旧設定には生成とストリーミングの個別エンドポイントがあります。保存時にそのまま維持します。",
 			"basicInfo": "基本情報",
 			"endpointSettings": "エンドポイント",
+			"paramsSettings": "カスタムパラメータ",
+			"paramsSettingsHint": "アップストリームプロトコルごとに分類されたデフォルトのヘッダーと body フィールドで、このプロバイダー配下のすべてのルートに適用されます。ルート側で個別に上書きでき、上書きしないルートはそのままこのデフォルト値を継承します。",
+			"paramsTabsAria": "カスタムパラメータのプロトコル",
+			"paramsHeadersLabel": "リクエストヘッダー",
+			"paramsHeadersHint": "このプロトコルのすべてのリクエストに付与されるアカウントレベルのヘッダー（例: 一部のチャネルが要求する固定の Referer や Title）。Authorization や Content-Type などの保護対象ヘッダーはここでは設定できません。",
+			"paramsHeaderNamePlaceholder": "ヘッダー名",
+			"paramsHeaderValuePlaceholder": "ヘッダーの値",
+			"paramsAddHeader": "ヘッダーを追加",
+			"paramsRemoveHeader": "このヘッダーを削除",
+			"paramsBodyLabel": "リクエストボディ（JSON）",
+			"paramsBodyPlaceholder": "例: '{\"max_tokens\": 4096}'",
+			"paramsBodyHint": "デフォルトのリクエストボディフィールド。クライアントのリクエストおよびルート側の上書きとマージされます（クライアントとルートの優先度が高い）。フィールド名はアップストリームプロトコルに依存します（例: OpenAI は max_tokens、Gemini は generationConfig.maxOutputTokens）。",
 			"modalTabs": "プロバイダー設定",
 			"editHint": "アカウント、プロトコルのエンドポイント、関連ルートを管理します。",
 			"newHint": "アカウント情報を入力してから、必要なエンドポイントを設定してください。",
@@ -977,7 +1006,7 @@
 		"import": {
 			"title": "静的カタログからインポート",
 			"subtitle": "モデルを選んでインポートします。同じ ID の既存モデルは保持されます。料金は {currency} 表示です。",
-			"searchPlaceholder": "Model ID または表示名を検索",
+			"searchPlaceholder": "モデル ID または表示名を検索",
 			"clearSearch": "検索をクリア",
 			"clearSelection": "選択をクリア",
 			"reloadCatalog": "カタログを再読み込み",
@@ -994,7 +1023,7 @@
 			"catalogEmpty": "カタログは空です",
 			"noMatch": "条件に一致するモデルはありません",
 			"selectColumn": "選択",
-			"modelId": "Model ID",
+			"modelId": "モデル ID",
 			"displayName": "表示名",
 			"vendor": "ベンダー",
 			"context": "コンテキスト",
@@ -1018,7 +1047,7 @@
 		"modal": {
 			"editTitle": "モデルを編集",
 			"newTitle": "新しいモデル",
-			"prefilledFrom": "{id} から事前入力しました。Model ID には -copy が付いています。保存前に確認してください。",
+			"prefilledFrom": "{id} から事前入力しました。モデル ID には -copy が付いています。保存前に確認してください。",
 			"copyDisplayName": "{name}（コピー）",
 			"kind": "種類",
 			"kindLlm": "LLM",
@@ -1029,7 +1058,7 @@
 			"kindHintImage": "画像生成モデル：出力に image を含み、Image token 料金を使用します。context/max tokens はありません。",
 			"kindHintAsr": "音声を入力してテキストを返します。秒単位または Token 課金に対応します。",
 			"kindHintTts": "テキストを入力して音声を返します。文字単位で課金します。",
-			"modelIdRequired": "Model ID *",
+			"modelIdRequired": "モデル ID *",
 			"modelIdPlaceholder": "gpt-4o",
 			"displayName": "表示名",
 			"displayNamePlaceholder": "GPT-4o",
@@ -1084,6 +1113,9 @@
 			"editHint": "モデル情報、入出力、料金と関連ルートを管理します。",
 			"modalities": "入力と出力",
 			"backToForm": "フォームに戻る",
+			"pricingViewLabel": "料金表示",
+			"pricingFormView": "フォーム",
+			"pricingJsonView": "JSON",
 			"metadataHint": "モデルに保存する任意の JSON データです。空欄にすると削除されます。",
 			"pricingJsonHint": "未保存の単価と時間帯設定を含む、現在のフォームの pricing_profile です。",
 			"jsonCopyFailed": "コピーできませんでした。選択されたテキストを手動でコピーできます。",
@@ -1255,8 +1287,7 @@
 		"empty": "モデルまたは Route が見つかりません",
 		"emptyFilteredPrefix": "フィルターを調整するか、",
 		"workspace": {
-			"coverageTitle": "利用可能な設定",
-			"coverageHint": "ルートとプロバイダーの両方が有効です。現在のフィルター内の設定状態であり、リアルタイムの稼働状況ではありません。",
+			"searchLabel": "検索",
 			"searchPlaceholder": "モデル・上流モデル・プロバイダーを検索…",
 			"removeFilter": "フィルターを解除：{filter}",
 			"densityList": "リスト",
@@ -1268,6 +1299,9 @@
 			"filteredBy": "フィルター：{summary}",
 			"allModelsRoutes": "すべてのモデルと Route",
 			"organizationLabel": "構成",
+			"modelLayoutLabel": "レイアウトモード",
+			"modelLayoutCompact": "コンパクト",
+			"modelLayoutTiled": "タイル",
 			"displayLabel": "表示形式",
 			"viewGroupAria": "ルート表示方式",
 			"viewOverview": "総覧",
@@ -1297,6 +1331,14 @@
 			"displaySettings": "表示設定"
 		},
 		"flow": {
+			"controls": {
+				"entry": "入口",
+				"group": "グループ",
+				"model": "モデル",
+				"modelHelpLabel": "リクエストで指定するモデル ID",
+				"modelHelp": "呼び出し時に指定するモデル ID",
+				"sticky": "固定"
+			},
 			"requestNode": "リクエスト入口",
 			"catalogColumnSurface": "リクエスト入口",
 			"catalogColumnModel": "モデル",
@@ -1337,11 +1379,14 @@
 			"availabilityAvailableTooltip": "ルートとプロバイダーが有効です。リアルタイムの接続確認ではありません。",
 			"availabilityRouteDisabledTooltip": "ルートが無効のため、リクエストは割り当てられません。",
 			"availabilityProviderDisabledTooltip": "プロバイダーが無効のため、このルートはリクエストを受信できません。",
+			"groupAvailableCount": "利用可能なルート数：{active}（ルートとプロバイダーが有効）",
 			"tierAvailableTooltip": "利用可能 {active} / 全 {total} ルート（ルートとプロバイダーが有効）",
 			"enabledShort": "有効",
 			"disabledShort": "無効",
+			"toggleRouteStatus": "ルート {model} を有効にする",
 			"addRoute": "ルートを追加",
 			"noProviders": "利用可能なプロバイダーがありません",
+			"listPriority": "優先度",
 			"firstAttempt": "最初の試行",
 			"fallback": "失敗時に続行",
 			"fallbackLayer": "フォールバック",
@@ -1361,10 +1406,13 @@
 			"paramsBody": "ボディ",
 			"paramsHeadersTooltip": "カスタムヘッダー設定済み。クライアントの同名ヘッダーが優先されます。クリックして編集。",
 			"paramsBodyTooltip": "カスタムボディ設定済み。ディープマージではクライアントの同名フィールドが優先されます。クリックして編集。",
+			"providerRoutes": "プロバイダールート設定",
 			"routeGroupProviders": "ルートグループ {group} のプロバイダー",
 			"listProvider": "プロバイダー / 上流モデル",
 			"listProviderAccount": "プロバイダー",
 			"listUpstreamModel": "上流モデル",
+			"uniformPricingPeriod": "全時間帯共通",
+			"pricingDetails": "時間帯別の料金詳細",
 			"pricingPeriod": "時間帯",
 			"pricingProviderFactor": "プロバイダ",
 			"pricingBillingMultiplier": "請求",
@@ -1632,10 +1680,7 @@
 				},
 				"dashscope-asr-fun-file": {
 					"purpose": "fun-asr-realtime 系列の非リアルタイムファイル API 用。",
-					"mapping": [
-						"language と prompt は 400 を返します。",
-						"format は MIME または拡張子から推定します。"
-					]
+					"mapping": ["language と prompt は 400 を返します。", "format は MIME または拡張子から推定します。"]
 				},
 				"dashscope-asr-qwen-file-async": {
 					"purpose": "qwen3-asr-flash-filetrans 用。プロバイダーには送信とタスク照会の両方のエンドポイントが必要です。",
@@ -2201,6 +2246,14 @@
 		}
 	},
 	"playground": {
+		"inspectionInvalidBody": "入力の JSON を修正すると、実際のリクエスト本文をプレビューできます。",
+		"inspectionBodyInput": "リクエスト本文（入力）",
+		"inspectionBodyActual": "リクエスト本文（実際）",
+		"inspectionSourceProvider": "プロバイダーのカスタムパラメーター",
+		"inspectionSourceRoute": "ルートのカスタムパラメーター",
+		"inspectionSourceProtocol": "プロトコル既定値",
+		"inspectionFieldSources": "設定フィールドの出所",
+		"inspectionUnavailable": "上流リクエストをプレビューできません。",
 		"title": "プレイグラウンド",
 		"subtitle": "単一ルートのリクエストと上流レスポンスを確認",
 		"usageNote": "テストはゲートウェイのユーザー課金とリクエストログの対象外です。",
@@ -2302,9 +2355,6 @@
 		"audioInputMode": "音声入力",
 		"audioInputFile": "音声ファイル",
 		"audioInputMicrophone": "ブラウザのマイク",
-		"mode": "モード",
-		"modeRoutes": "Routes",
-		"modeTools": "Tools",
 		"toolsSubtitle": "ツールとエンジンのリクエストと実行結果を確認",
 		"toolsSection": "ツールとエンジン",
 		"toolsHint": "設定済みの認証情報でツールとエンジンをテスト",
@@ -2399,7 +2449,43 @@
 		"kindEmbedding": "埋め込み",
 		"actualRequest": "実際のリクエスト"
 	},
+	"modelToolMode": {
+		"label": "呼び出し種別",
+		"models": "モデル",
+		"tools": "ツール"
+	},
 	"simulator": {
+		"inspection": {
+			"gatewayHeaders": "ゲートウェイへのリクエストヘッダー",
+			"inputBody": "リクエスト本文（入力）",
+			"actualBody": "リクエスト本文（実際）",
+			"gateway": "ゲートウェイへ",
+			"upstream": "上流へ",
+			"preview": "プレビュー",
+			"submitted": "送信済み",
+			"modelInPath": "model（URL パス）",
+			"modelInQuery": "{field}（URL クエリ）",
+			"inputSource": "その他の JSON フィールドは入力に由来します。ゲートウェイはルート選択後に上流の設定を適用します。",
+			"multipartSource": "対応する JSON フィールドと選択したファイルからフォームを作成します。",
+			"frameSource": "入力と選択したモデルから接続 URL と初期フレームを作成します。",
+			"upstreamAfterSend": "送信後、ゲートウェイが選択した上流と適用された設定を確認できます。",
+			"waitingForLog": "ゲートウェイのリクエストログを待っています…",
+			"snapshotUnavailable": "このリクエストの上流スナップショットは利用できません。",
+			"upstreamSnapshot": "ゲートウェイのリクエストログから取得したマスキング済みスナップショットです。",
+			"upstreamHeaderSources": "上流のカスタムヘッダーの出所",
+			"upstreamBodySources": "上流の設定フィールドの出所",
+			"sourcesUnavailable": "このログにはパラメーターの出所が記録されていません。",
+			"openThisLog": "このリクエストのログを開く",
+			"source": {
+				"key": "選択した API キー",
+				"protocol": "プロトコル既定値",
+				"selection": "選択したモデルとルートグループ",
+				"input": "受信リクエスト",
+				"provider": "プロバイダーのカスタム設定",
+				"route": "ルートのカスタム設定"
+			}
+		},
+		"toolsSubtitle": "ユーザーの API キーでツールを呼び出し、認証・課金・呼び出しログを検証します。",
 		"title": "シミュレーター",
 		"subtitle": "ユーザーの API キーでクライアントのリクエストを再現し、認証、ルーティング、フェイルオーバーを検証します。",
 		"connection": "接続設定",
@@ -2509,15 +2595,14 @@
 		"audioPreview": "合成音声",
 		"downloadAudio": "音声をダウンロード",
 		"audioResponseReceived": "{bytes} バイトの合成音声を受信しました。",
-		"kindTool": "Tools",
+		"kindTool": "ツール",
 		"tool": "ツール",
 		"toolHint": "選択した API キーで Proxy POST /v1/tools/{id} を呼び出します（認証・課金・ログ）。",
-		"toolNoRoutes": "Agent Tools は model_routes に束縛されません。このモードではモデルとルートグループを非表示にします。",
+		"toolNoRoutes": "ゲートウェイのツールはモデルルートに紐づきません。ツールモードではモデルとルートグループを表示しません。",
 		"toolEndpoint": "Proxy パス",
-		"toolProtocolHidden": "Tools は常に JSON POST /v1/tools/* です。プロトコル選択は不要です。",
+		"toolProtocolHidden": "ツールは JSON POST /v1/tools/* を使用します。プロトコルの選択は不要です。",
 		"readyNeedTool": "ツールを選択してください。",
 		"errSelectTool": "送信前にツールを選択してください。",
-		"openToolsInvocations": "Tools Invocations を開く",
 		"clientHint": "実クライアントと同じ経路です。Proxy Base URL とユーザー API キーを使い、認証・failover・課金・リクエストログが適用されます。",
 		"routingTargetHint": "クライアントが送る catalog モデルと Route group を選びます。上流は Proxy が選び、ここでは単一 Route を固定しません。",
 		"noMatchingModels": "現在の検索に一致するモデルはありません。",
@@ -2812,7 +2897,7 @@
 	},
 	"oauthAccessTokensPage": {
 		"title": "OAuth アクセストークン",
-		"subtitle": "OAuth 同意後にサードパーティの MCP クライアント（ChatGPT、Codex など）へ発行されるトークンです。/mcp にのみアクセスでき、モデル API は呼べません。ユーザーの API キーとは別に管理されます。有効期間は 1 時間で、クライアントはリフレッシュトークンで更新します。",
+		"subtitle": "アプリケーションはユーザーが接続するクライアント（ChatGPT、Codex など）です。複数のインスタンスを登録でき、認可はユーザーごとです。アクセストークンは 1 時間有効で /mcp のみ利用でき、リフレッシュトークンで更新されます。",
 		"cleanup": "期限切れを削除",
 		"cleanupHint": "失効または期限切れから 30 日を超えた記録を削除します",
 		"cleanupTitle": "古いトークンの整理",
@@ -2829,7 +2914,8 @@
 		"status": {
 			"active": "有効",
 			"expired": "期限切れ",
-			"revoked": "失効"
+			"revoked": "失効",
+			"renewable": "更新可能"
 		},
 		"table": {
 			"user": "ユーザー",
@@ -2856,7 +2942,84 @@
 		"userSectionEmpty": "このユーザーはサードパーティアプリを認可していません。",
 		"viewAll": "すべて表示",
 		"logCredential": "OAuth アプリ：{name}",
-		"logCredentialUnknown": "OAuth アクセストークン {id}"
+		"logCredentialUnknown": "OAuth アクセストークン {id}",
+		"apps": {
+			"title": "アプリケーション",
+			"empty": "アプリケーションがまだありません。追加するかプリセットをインポートしてください。コールバック URL がどのアプリにも一致しないクライアントは登録できません。",
+			"add": "アプリを追加",
+			"importPreset": "プリセットをインポート",
+			"viewGrants": "このアプリの認可を表示",
+			"disabledBadge": "無効",
+			"statUsers": "{count} ユーザー",
+			"statClients": "{count} インスタンス",
+			"edit": "編集",
+			"enable": "有効化",
+			"disable": "無効化",
+			"delete": "削除",
+			"deleteTitle": "アプリを削除",
+			"deleteConfirm": "「{name}」の有効な認可 {count} 件をすべて取り消し、このアプリ用に手動発行したクライアントを削除し、その他の登録済みインスタンスの紐付けを解除します。以後このアプリは登録できません。続行しますか？",
+			"deleted": "アプリを削除しました",
+			"unattributedTitle": "未所属の認可",
+			"unattributedHint": "アプリに関連付けられていない過去の認可です。認可モードを切り替えても削除されず、状態ごとの確認や取り消しができます。",
+			"unattributedBadge": "未所属",
+			"filteringBy": "表示中：{name} の認可",
+			"manualCredentials": "手動認証情報",
+			"manual": {
+				"title": "手動認証情報 · {name}",
+				"hint": "動的登録に対応していないプラットフォーム（サーバー側の client_id / client_secret を求めるコネクタなど）向けに固定の認証情報を発行します。認証情報はこのアプリに属し、アプリを無効化・削除すると使えなくなります。",
+				"issuedTitle": "認証情報を発行しました",
+				"issuedHint": "client_secret は一度しか表示されません。今すぐ相手のプラットフォームにコピーしてください。紛失した場合は再発行が必要です。",
+				"authorizeUrl": "認可 URL",
+				"tokenUrl": "トークン URL",
+				"mcpUrl": "MCP URL",
+				"issuerMissing": "内蔵認可サーバーの URL（Issuer）が未設定です。保存するとここに認可 URL とトークン URL が表示されます。",
+				"authMethodHint": "トークンエンドポイントは client_secret_basic と client_secret_post に対応します。手動クライアントは PKCE を省略でき、送信された場合は S256 で検証します。",
+				"createTitle": "新しい認証情報を発行",
+				"name": "名前（同意ページに表示）",
+				"redirectUris": "コールバックルール（任意、1 行に 1 つ）",
+				"redirectUrisHint": "空の場合はアプリのコールバック許可リストを使います。構文はアプリの許可リストと同じで、https://*.example.com のワイルドカードも使えます。",
+				"create": "発行",
+				"createFailed": "発行に失敗しました",
+				"listTitle": "発行済みの認証情報",
+				"empty": "手動認証情報はまだありません。",
+				"inheritRedirects": "アプリのコールバック許可リストを使用",
+				"createdAt": "作成 {time}",
+				"liveGrants": "有効な認可 {count} 件",
+				"rotate": "secret を再発行",
+				"rotateTitle": "client_secret を再発行",
+				"rotateConfirm": "「{name}」の旧 secret はすぐに無効になり、相手のプラットフォームで新しい secret に切り替える必要があります。既存の認可は維持されます。続行しますか？",
+				"rotateFailed": "再発行に失敗しました",
+				"deleteTitle": "認証情報を削除",
+				"deleteConfirm": "「{name}」を削除し、有効な認可 {count} 件を取り消します。相手のプラットフォームは再設定が必要です。続行しますか？",
+				"deleteFailed": "削除に失敗しました",
+				"deleted": "認証情報を削除しました"
+			},
+			"form": {
+				"createTitle": "アプリを追加",
+				"editTitle": "アプリを編集",
+				"hint": "アプリは登録時のコールバック URL で識別されます。名前はユーザーに表示されます。",
+				"name": "名前",
+				"slug": "識別子",
+				"slugHint": "小文字、数字、ハイフン。作成後は変更できません。",
+				"redirectUris": "許可するコールバック URL（1 行に 1 件）",
+				"redirectUrisHint": "具体的な URL は完全一致。http://127.0.0.1、http://localhost、http://[::1] はポートを無視します（RFC 8252）。カスタムスキーム（cursor://… など）も可。ワイルドカード：https://*.example.com は任意のサブドメインとパスに一致し、末尾の * は前方一致です（例 http://127.0.0.1/*）。ワイルドカードはここでのみ使え、クライアント登録時には使えません。",
+				"patterns": "クライアント名のキーワード（任意、1 行に 1 件）",
+				"patternsHint": "複数のアプリが同じコールバック URL を共有する場合のみ必要です。登録名にキーワードを含むクライアントがこのアプリに割り当てられます。クライアント名はそれ以外の用途では信頼されません。",
+				"save": "保存",
+				"saved": "アプリを保存しました",
+				"saveFailed": "アプリを保存できませんでした"
+			}
+		},
+		"managementTitle": "アプリとユーザー認可",
+		"globalScope": "Gateway 全体の記録 · サービス範囲や認可サーバー URL で絞り込みません",
+		"relationshipHint": "アプリは内蔵認可サーバーが許可するクライアントを定義します。1 つのアプリに複数のクライアントインスタンスとユーザーを関連付けられます。同意後、トークンは Gateway ユーザーとインスタンスを結び、呼び出しにはそのユーザーの権限と予算が適用されます。サーバーを切り替えても記録は削除されません。",
+		"grantsTitle": "ユーザー認可",
+		"grantsHint": "各記録は Gateway ユーザーからクライアントインスタンスへの認可です。左のアプリを選択して確認できます。",
+		"appsRoleHint": "内蔵認可サーバーはアプリのルールでクライアントを許可します。1 つのアプリに複数のインスタンスを登録できます。",
+		"searchApps": "アプリ名または識別子で検索",
+		"selectApp": "アプリを選択",
+		"allGrants": "すべての認可",
+		"noMatchingApps": "該当するアプリはありません"
 	},
 	"keysPage": {
 		"title": "API キー",
@@ -2992,7 +3155,99 @@
 			"showLatest": "最新を表示"
 		},
 		"title": "リクエストログ",
-		"subtitle": "時間、ユーザー、モデルでリクエストを絞り込み、呼び出しの詳細、料金、エラーの原因を確認します。",
+		"subtitle": "時間、種類、ユーザー、モデル、ツールでリクエストを絞り込み、呼び出しの詳細、料金、エラーの原因を確認します。",
+		"kindFilter": {
+			"label": "種類",
+			"all": "すべての種類",
+			"model": "モデル",
+			"invocation": "ツール",
+			"tool": "REST ツール",
+			"mcp": "MCP ツール",
+			"hint": "複数選択できます。いずれかに一致するログを表示します。モデルの種類は一覧の種類タグと同じ基準です。",
+			"clear": "種類を限定しない",
+			"serversLoading": "MCP サーバーを読み込み中…",
+			"noServers": "MCP サーバーはまだありません",
+			"toolChip": "特定のツール",
+			"modelOnly": "選択中の種類はツール呼び出しのみです。ツール呼び出しはモデルルーティングを経由しないため、この絞り込みは使えません。"
+		},
+		"modelFilter": {
+			"search": "ベンダーまたはモデルを検索…",
+			"empty": "一致するモデルがありません",
+			"hint": "複数選択できます。いずれかに一致するログを表示します。ベンダーを選ぶと、そのすべてのモデルが対象になります。",
+			"clear": "モデルを限定しない",
+			"limit": "個別に選択できるモデルは {max} 個までです。それ以上はベンダーごと選択してください。"
+		},
+		"providerFilter": {
+			"all": "すべてのプロバイダー",
+			"search": "種類またはプロバイダーを検索…",
+			"empty": "一致するプロバイダーがありません",
+			"hint": "複数選択できます。いずれかに一致するログを表示します。種類を選ぶと、その種類のすべてのプロバイダーが対象になります。",
+			"clear": "プロバイダーを限定しない",
+			"limit": "個別に選択できるプロバイダーは {max} 個までです。それ以上は種類ごと選択してください。"
+		},
+		"invocation": {
+			"requestView": "リクエスト表示",
+			"responseView": "レスポンス表示",
+			"dataPreview": "プレビュー",
+			"dataOriginal": "元データ",
+			"restTitle": "REST ツール呼び出し",
+			"mcpTitle": "MCP ツール呼び出し",
+			"engineLatency": "エンジン所要時間",
+			"upstreamLatency": "上流所要時間",
+			"latencyHint": "Gateway が呼び出しを送ってから結果を受け取るまでの時間です。認証と会計処理は含みません。",
+			"overview": "呼び出しの概要",
+			"request": "リクエスト",
+			"response": "レスポンス",
+			"accounting": "会計",
+			"tool": "ツール",
+			"engine": "エンジン",
+			"server": "MCP サーバー",
+			"upstreamTool": "上流ツール",
+			"query": "クエリ",
+			"url": "URL",
+			"results": "結果数",
+			"pageTitle": "ページタイトル",
+			"contentLength": "本文の長さ",
+			"contentPreview": "本文の冒頭",
+			"charCount": "{count} 文字",
+			"overallScore": "全体の AI 率",
+			"totalChars": "検出した文字数",
+			"segmentCount": "セグメント数",
+			"segment": "セグメント",
+			"segmentChars": "文字数",
+			"segmentScore": "AI 率",
+			"aiDetectionNote": "AI 率検出では送信された本文を記録しません。文字数とスコアだけを保存します。",
+			"noArguments": "この呼び出しには引数がありません。",
+			"requestRaw": "リクエスト概要（生データ）",
+			"mcpRequestRaw": "上流へ送った呼び出し（生データ）",
+			"responseRaw": "レスポンス概要（生データ）",
+			"mcpResponseRaw": "上流が返した結果（生データ）",
+			"contentBlock": "コンテンツ {index}",
+			"structuredContent": "構造化コンテンツ",
+			"upstreamIsError": "上流がエラーとして返却",
+			"emptyResult": "上流が返した結果に内容がありません。",
+			"truncated": "結果がログの保存上限を超えているため、冒頭だけを表示しています。",
+			"noResponseFailed": "結果を返す前に呼び出しが失敗したため、表示できるレスポンスがありません。",
+			"noResponseStored": "この記録にはレスポンス概要が保存されていません。",
+			"failureRest": "エンジン {engine} の呼び出しに失敗しました。ツール設定で、このエンジンの認証情報、利用枠、稼働状況を確認してください。",
+			"failureRestUnknownEngine": "エンジンの呼び出しに失敗しました。ツール設定で、エンジンの認証情報、利用枠、稼働状況を確認してください。",
+			"failureMcpToolError": "上流の MCP サーバーがこのツールを実行し、エラーを返しました。原因は下のレスポンスを確認してください。",
+			"failureMcpInvalidResult": "上流が返した内容は MCP ツール結果の形式に合わないため、Gateway はクライアントに渡していません。元の内容は下のレスポンスを確認してください。",
+			"failureMcpTimeout": "上流の MCP サーバーがタイムアウト時間内に応答しませんでした。このサーバーの接続設定で URL とタイムアウトを確認してください。",
+			"failureMcpUpstream": "上流の MCP サーバーからツール結果を受け取れませんでした。このサーバーの接続設定で URL、認証情報、稼働状況を確認してください。",
+			"openToolConfig": "ツール設定を開く",
+			"openMcpServer": "MCP サーバーを開く",
+			"billingUnits": "課金単位数",
+			"unitPriceCharged": "請求単価",
+			"unitPriceMetered": "原価単価",
+			"unitPriceStandard": "カタログ単価",
+			"pricingSource": "価格の出所",
+			"pricingSourceItem": "このツールに設定した価格",
+			"pricingSourceServer": "サービスの既定価格",
+			"preflightUnits": "見積もり課金単位数",
+			"settledUnits": "確定課金単位数",
+			"notCharged": "呼び出しが失敗したため、今回は課金していません。単価は呼び出し時点で有効だった価格です。"
+		},
 		"filters": {
 			"protocol": "プロトコル",
 			"routeGroup": "Route Group",
@@ -3040,6 +3295,15 @@
 			"failover": "切替"
 		},
 		"usage": {
+			"input": "入力",
+			"inputImages": "参照",
+			"outputImages": "生成",
+			"total": "合計",
+			"reasoning": "推論",
+			"output": "出力",
+			"cacheRead": "読取",
+			"cacheWrite": "書込",
+			"noTokens": "このリクエストの Token 使用量は記録されていません",
 			"tokens": "tok",
 			"images": "枚",
 			"seconds": "秒",
@@ -3049,7 +3313,8 @@
 			"model": "Gateway モデル名、プロトコル、Route Group",
 			"route": "入口：プロトコルエンドポイント、モデル ID、Route Group。上流：プロトコルエンドポイント、モデル ID、プロバイダー",
 			"tags": "リクエスト特性：モデル種別、ストリーム、推論、フェイルオーバー",
-			"usage": "このリクエストの課金使用量。モデルにより Token、枚数、秒数、文字数のいずれか",
+			"usage": "リクエスト使用量：Token、画像枚数、秒数、文字数。LLM 入力はキャッシュ読取・書込を除外し、各項目が対応する単価に適用されます。",
+			"billableInput": "入力合計 {input} − キャッシュ読取 {read} − キャッシュ書込 {write}。キャッシュは入力からのみ除外し、出力は変更しません。料金段階は入力合計に基づきます。キャッシュが入力合計を超える場合は算出できません。",
 			"tag": {
 				"llm": "テキスト / マルチモーダル対話モデル",
 				"image": "画像生成",
@@ -3067,7 +3332,7 @@
 			"profit": "請求額 − 原価額。インフラ費用・税金などは含みません。",
 			"rowDetail": "クリックしてリクエストの流れと各段階の詳細を表示",
 			"inputOutputTokens": "Input / output tokens",
-			"imagePerImageUsage": "入力 × 出力画像数（画像単位課金）",
+			"imagePerImageUsage": "画像単位課金：参照画像と生成画像の枚数を個別に記録",
 			"audioPerSecondUsage": "課金対象の音声時間（秒単位課金）",
 			"audioPerCharacterUsage": "音声合成の課金文字数",
 			"cacheTokens": "Cache read / cache write tokens",
@@ -3168,10 +3433,12 @@
 			"responseNote": "レスポンス本文は保存されていません。記録済みの状態、追跡 ID、時間、使用量を表示します。",
 			"catalogAmount": "カタログ金額",
 			"inputTokens": "入力トークン",
+			"uncachedInputTokens": "非キャッシュ入力 Token",
 			"outputTokens": "出力トークン",
 			"cacheRead": "キャッシュ読み取りトークン",
 			"cacheWrite": "キャッシュ書き込みトークン",
 			"reasoningTokens": "推論トークン",
+			"totalTokens": "合計 Token",
 			"billingKind": "課金種別",
 			"inputImages": "入力画像数",
 			"outputImages": "出力画像数",
@@ -3662,7 +3929,7 @@
 		},
 		"config": {
 			"title": "REST サービス",
-			"subtitle": "検索、Web抽出、コンテンツ検出サービスを管理",
+			"subtitle": "ツールのプロバイダーと料金を設定し、API・Agent の連携ドキュメントを確認します。",
 			"viewInvocations": "呼び出し履歴を表示 →",
 			"saveWebSearch": "Web Search を保存",
 			"saveWebFetch": "Web Fetch を保存",
@@ -3698,54 +3965,17 @@
 			"catalogProvider": "エンジン",
 			"noKey": "Key なし",
 			"needKeyToActivate": "保存する前に、少なくとも 1 つのエンジンに API Key を追加してください。",
-			"providerGuideLink": "エンジンガイド",
 			"providerDocs": "Docs & API Key →",
 			"cost": "成功時の charged（{currency}）",
-			"apiKey": "Provider API Key",
+			"apiKey": "API Key",
 			"apiKeyPlaceholder": "エンジンの API Key を貼り付け",
 			"apiKeyHint": "ツールでトラフィックを受け付けるために必須です。削除した Key は環境変数にフォールバックしません。",
 			"providers": {
 				"bocha": "Bocha（博查）",
 				"tavily": "Tavily",
 				"cleversee": "Alibaba CleverSee（开析）",
-				"tencent_wsa": "Tencent Cloud WSA"
-			},
-			"providerGuide": {
-				"title": "検索エンジンガイド",
-				"subtitle": "各エンジンのインデックス / ソースと適した用途。Baidu または Google の API を直接使用するものではありません。",
-				"disclaimer": "いずれも Baidu または Google の公式検索 API を呼び出しません。各社または提携先の Web インデックスを使用しているため、結果 URL が baidu.com、google.com などを指す場合はあります。",
-				"selected": "現在選択中",
-				"docsLink": "Docs & API Key →",
-				"labels": {
-					"sources": "ソース",
-					"bestFor": "適した用途"
-				},
-				"items": {
-					"bocha": {
-						"badge": "中国向け推奨",
-						"summary": "独自の大規模 Web インデックスを持つ AI 向け中国語検索エンジン（中国国内向け Bing Search API 代替として提供）。",
-						"sources": "数億から約 100 億の Web ページと提携コンテンツ（ニュース、百科事典、ショート動画、天気、学術情報など）。Baidu/Google ではありません。",
-						"bestFor": "中国地域のユーザー、中国語クエリ、中国国内のコンプライアンス要件。"
-					},
-					"tavily": {
-						"badge": "国際向け推奨",
-						"summary": "LLM 向けの検索レイヤーで、検索・抽出・ランキングを 1 回の呼び出しで実行します。従来型の SERP 一覧ではなく、Agent / RAG 向けです。",
-						"sources": "独自クローラーとサードパーティ集約（Brave など独立系インデックスとの関連がよく言及されます）。Google/Baidu の公式 API ではありません。",
-						"bestFor": "国際地域、英語での調査、Agent ワークフロー。"
-					},
-					"cleversee": {
-						"badge": "",
-						"summary": "Alibaba CleverSee（开析）の AI ネイティブ Web Search。mainland_china / global の地域モードに対応します。",
-						"sources": "Alibaba 独自の AI 検索インデックス。Docs では Baidu または Google をバックエンドとしているとは説明されていません。Gateway のデフォルトは mainland_china で、ドメイン許可リストを設定すると global に切り替わります。",
-						"bestFor": "Alibaba Cloud 上で中国 / グローバル地域を明示的に切り替える必要がある場合。"
-					},
-					"tencent_wsa": {
-						"badge": "",
-						"summary": "Tencent Cloud Web Search API（WSA）。公式には Sogou Search を基盤としています。",
-						"sources": "Sogou 経由の公開 Web と Tencent エコシステム（Tencent News、Sogou Baike、Penguin アカウント）。上位 tier では VR / 権威性の高い分野別ソースも追加されます。",
-						"bestFor": "中国語 Web 検索で Bocha の代替が必要な場合。Sogou/Tencent コンテンツに強みがあります。"
-					}
-				}
+				"tencent_wsa": "Tencent Cloud WSA",
+				"deepseek": "DeepSeek Search"
 			}
 		},
 		"webFetch": {
@@ -3759,13 +3989,14 @@
 			"needKeyToActivate": "保存する前に、少なくとも 1 つの Provider に API Key を追加してください。",
 			"providerDocs": "Docs & API Key →",
 			"cost": "成功時の charged（{currency}）",
-			"apiKey": "Provider API Key",
+			"apiKey": "API Key",
 			"apiKeyPlaceholder": "Provider API Key を貼り付け",
 			"apiKeyHint": "ツールでトラフィックを受け付けるために必須です。削除した Key は環境変数にフォールバックしません。",
 			"providers": {
 				"firecrawl": "Firecrawl",
 				"tavily": "Tavily Extract",
-				"jina": "Jina Reader"
+				"jina": "Jina Reader",
+				"deepseek": "DeepSeek Fetch"
 			}
 		},
 		"webDeepSearch": {
@@ -3777,11 +4008,12 @@
 			"needKeyToActivate": "保存する前に、少なくとも 1 つの Provider に API Key を追加してください。",
 			"providerDocs": "Docs & API Key →",
 			"cost": "成功時の charged（{currency}）",
-			"apiKey": "Provider API Key",
+			"apiKey": "API Key",
 			"apiKeyPlaceholder": "Provider API Key を貼り付け",
 			"providers": {
 				"firecrawl": "Firecrawl Search",
-				"jina": "Jina Search"
+				"jina": "Jina Search",
+				"deepseek": "DeepSeek Search（本文つき）"
 			}
 		},
 		"aiDetection": {
@@ -3810,52 +4042,6 @@
 			"billingUnitHint": "端数は1課金単位に切り上げます。",
 			"billingUnitInvalid": "文字数は正の整数を入力してください。"
 		},
-		"invocations": {
-			"title": "呼び出し履歴",
-			"subtitle": "REST と MCP ツールの呼び出し履歴を表示し、リクエスト、応答、料金を確認します。",
-			"configureTools": "REST サービス →",
-			"source": "ソース",
-			"allSources": "すべて",
-			"sourceRest": "REST",
-			"sourceMcp": "MCP",
-			"serverFilter": "MCP サーバー",
-			"allServers": "すべてのサーバー",
-			"openInRequestLogs": "リクエストログで開く",
-			"toolFilter": "Tool",
-			"allTools": "すべての Tools",
-			"status": "ステータス",
-			"empty": "この期間に Tool 呼び出しはありません。",
-			"columns": {
-				"time": "時刻",
-				"tool": "Tool",
-				"query": "クエリ",
-				"user": "ユーザー",
-				"status": "ステータス",
-				"results": "結果",
-				"latency": "レイテンシ",
-				"provider": "エンジン",
-				"profit": "粗利（{currency}）",
-				"standard": "標準（{currency}）",
-				"charged": "ユーザー課金（{currency}）",
-				"metered": "供給（{currency}）"
-			},
-			"detail": {
-				"request": "リクエスト",
-				"response": "レスポンス",
-				"responseFormat": "レスポンス形式",
-				"formatList": "リスト",
-				"formatJson": "JSON",
-				"noListResults": "リスト表示できる項目はありません。raw payload がある場合は JSON に切り替えてください。",
-				"noResponseStored": "レスポンス概要は保存されていません（古い行にはクエリのみが保存されているか、結果を返す前に呼び出しが失敗しています）。",
-				"hint": "運用確認用にレスポンス概要は切り詰められています。完全な chat transcript はクライアントに保持されます。"
-			},
-			"titles": {
-				"profit": "ユーザー課金 − 供給コスト（1回）",
-				"standard": "標準（カタログ）",
-				"charged": "ユーザー課金",
-				"metered": "供給コスト"
-			}
-		},
 		"errors": {
 			"invalidWebSearchProvider": "検索エンジンは実装済みの選択肢から選んでください。",
 			"invalidWebSearchCost": "標準価格と2つの倍率には0以上の有限数を入力してください。空欄は不可で、計算金額も範囲内である必要があります。",
@@ -3875,8 +4061,145 @@
 			"metered": "供給",
 			"lossHint": "ユーザー課金が供給単価を下回っています（赤字）"
 		},
+		"apiGuide": {
+			"authLabel": "ユーザー認証",
+			"baseRequired": "「接続先 URL」で Proxy URL を設定してください。",
+			"copyCode": "{name} をコピー",
+			"docs": "API ドキュメント",
+			"openDocs": "{name} API ドキュメント",
+			"title": "{name} · API 接続",
+			"copyUrl": "完全な呼び出し URL をコピー",
+			"copyPath": "エンドポイントのパスをコピー",
+			"copyFailed": "コピーに失敗しました。テキストを選択してください",
+			"proxyBase": "Proxy URL",
+			"proxyHint": "REST・シミュレーター・MCP で共用します。既定値は GATEWAY_PROXY_URL。手動変更はこのブラウザーだけに適用します。",
+			"invalidBase": "/v1、API パス、認証情報、クエリのない http(s) ベース URL を指定してください。",
+			"authHint": "ユーザー API Key を使用：Authorization: Bearer USER_API_KEY。Agent に管理キーや上流エンジンの認証情報を渡す必要はありません。",
+			"views": "ドキュメント表示",
+			"reference": "API 仕様",
+			"curl": "cURL サンプル",
+			"agent": "Agent ツール",
+			"request": "リクエスト · JSON",
+			"response": "レスポンス · 200",
+			"required": "必須",
+			"defaultValue": "既定値 {value}",
+			"optionalHint": "? 省略可能",
+			"errors": "主なエラー",
+			"curlHint": "実行前にユーザー API Key を OCTAFUSE_API_KEY に設定してください。有効なエンジンを呼び出し、成功時は保存済みの設定で課金されます。",
+			"agentHint": "名前と引数は Gateway の契約に従います。Agent のプロトコルを選択してください。定義だけでは HTTP リクエストは実行されず、MCP サーバーにもなりません。",
+			"definition": "ツール登録 · JSON",
+			"executor": "ツール実行 · TypeScript / Node.js 18+",
+			"executorHint": "Agent のサーバーで実行します。OCTAFUSE_API_KEY にユーザー API Key を設定し、OCTAFUSE_BASE_URL で URL を上書きできます。引数を渡すと Gateway の data を返します。キーを定義やモデルのコンテキストに含めないでください。",
+			"fields": {
+				"query": "前後の空白を除き 2 文字以上の検索語",
+				"count": "結果数 1〜10 件",
+				"allowed_domains": "対象ドメイン。blocked_domains との併用不可",
+				"blocked_domains": "除外ドメイン。allowed_domains との併用不可",
+				"url": "公開 http(s) URL。localhost・私設 IP・メタデータホストは不可",
+				"text": "検出対象の本文。前後の空白を除き空にできません"
+			},
+			"responseFields": {
+				"results": "検索結果一覧",
+				"title": "ページタイトル",
+				"url": "ページ URL（リダイレクト先の場合あり）",
+				"snippet": "短い概要",
+				"summary": "補足概要",
+				"content": "ページ本文（通常 Markdown）",
+				"cost": "ゲートウェイ課金通貨でのユーザー請求額",
+				"overall_score": "文字数で重み付けした AI 傾向スコア（0〜100）",
+				"total_chars": "検出文字数",
+				"segments": "分割結果：index、chars、score、excerpt",
+				"score": "区間 AI 傾向スコア（0〜100）",
+				"billing_units": "文字数 ÷ 課金単位を切り上げ"
+			},
+			"errorsByStatus": {
+				"400": "パラメーターまたは JSON 形式が無効。",
+				"401": "ユーザー API Key がない、または無効。",
+				"403": "予算不足またはアクセス拒否。",
+				"502": "上流リクエストに失敗。",
+				"503": "ツールが無効、認証情報不足、または設定が無効。"
+			},
+			"agentFlow": "ツール登録 → REST 実行 → 結果を返す",
+			"format": "定義形式",
+			"officialDocs": "公式ドキュメント",
+			"formats": {
+				"generic": "汎用定義（SDK に適合）",
+				"responses": "OpenAI Responses",
+				"chat": "OpenAI Chat Completions",
+				"anthropic": "Anthropic Messages"
+			},
+			"formatHints": {
+				"generic": "独自 Agent 向けです。inputSchema は全 SDK 共通の登録形式ではありません。",
+				"responses": "リクエストの tools 配列に追加します。strict: false を明示し、REST 引数の省略可能性を維持します。",
+				"chat": "function の構造を保ち、tools 配列に追加します。モデルや互換サービスがツール呼び出しに対応している必要があります。",
+				"anthropic": "Messages リクエストの tools 配列に追加します。input_schema は生成される input を定義します。"
+			},
+			"handler": "呼び出し結果を返す",
+			"handlerCode": "呼び出し連携 · TypeScript",
+			"handlerHints": {
+				"generic": "解析済み引数で handleToolCall を呼び出し、結果を Agent フレームワークに渡します。",
+				"responses": "output の function_call のみを渡します。推論項目を含む元のモデル出力を保持し、返却項目を次の input に追加します。",
+				"chat": "message.tool_calls の関数呼び出しのみを渡します。assistant メッセージを保持し、返された tool メッセージを messages に追加します。",
+				"anthropic": "content の tool_use のみを渡します。assistant メッセージを保持し、返却ブロックを直後の user メッセージの content に入れます。"
+			},
+			"agentRuntimeHint": "完全な Agent ループではなく連携用の断片です。SDK で引数を検証し、呼び出し ID を対応させてモデル処理を続けてください。タイムアウトやエラーは実行側で処理し、課金済みの可能性がある呼び出しを無条件に再試行しないでください。説明は用途に合わせて調整し、名前は実行関数と一致させます。"
+		},
+		"workspace": {
+			"documentation": "接続ドキュメント",
+			"providersHelp": "プロバイダー・料金の説明",
+			"noMatches": "一致するツールはありません",
+			"intro": "クライアントは共通のツール API を呼び出し、Gateway が有効なプロバイダーを選択して設定料金を適用します。",
+			"addressSettings": "接続先 URL",
+			"directory": "ツール一覧",
+			"selectTool": "ツールを選択",
+			"configured": "設定済み",
+			"testTool": "ツールをテスト",
+			"appliedProvider": "有効な設定",
+			"setupHint": "有効なプロバイダーなし",
+			"setupAction": "プロバイダーを設定",
+			"views": "ツール作業領域",
+			"tabs": {
+				"providers": "プロバイダー・料金",
+				"api": "API 連携",
+				"agent": "Agent 接続"
+			},
+			"providersHint": "ツールごとに 1 つのプロバイダー（上流エンジン）を有効にし、認証情報と料金を個別に設定します。切り替えてもツール定義と URL は変わりません。変更は保存後に反映されます。",
+			"input": "入力",
+			"output": "出力",
+			"inputs": {
+				"webSearch": "検索語、任意の結果数とドメインフィルター",
+				"webFetch": "読み取る公開ページの URL",
+				"webDeepSearch": "検索語と結果数",
+				"aiDetection": "検出対象の本文"
+			},
+			"outputs": {
+				"webSearch": "ページのタイトル、リンク、概要の一覧",
+				"webFetch": "ページ本文とページ情報",
+				"webDeepSearch": "ページ本文を含む検索結果",
+				"aiDetection": "全体スコア、分割結果、課金単位数"
+			}
+		},
+		"toolGroups": {
+			"webSearch": "ウェブを検索し、タイトル・リンク・概要を取得",
+			"webFetch": "指定したページの本文をモデルで利用できる形式で抽出",
+			"webDeepSearch": "ウェブ検索と本文取得で、詳細な検索・分析を支援",
+			"aiDetection": "テキストが AI 生成された可能性を検出"
+		},
 		"serviceList": {
-			"search": "サービスやツールの種類を検索",
+			"filteredEngineCount": "{visible} / {total} エンジン",
+			"configHint": "このツールのプロバイダーの認証情報と料金を設定します。",
+			"toolConfig": "{name} の設定",
+			"engineHint": "ツールごとに有効なエンジンは 1 つです。認証情報と料金は個別に設定し、保存後に反映されます。",
+			"testActive": "現在のエンジンをテスト",
+			"configureEngine": "{name} を設定",
+			"configure": "設定",
+			"engineCount": "{count} エンジン",
+			"currentEngine": "現在のエンジン · {name}",
+			"enginesForTool": "{name} の上流エンジン",
+			"engines": "プロバイダー",
+			"overview": "{tools} ツール · {engines} 上流エンジン",
+			"tools": "ツール",
+			"search": "ツール・プロバイダーを検索",
 			"toolType": "ツール種類",
 			"status": "状態",
 			"name": "サービス",
@@ -3884,7 +4207,7 @@
 			"allStatuses": "すべての状態",
 			"clearFilters": "絞り込みを解除",
 			"noResults": "一致する REST サービスはありません。",
-			"count": "{total} 件中 {visible} 件を表示",
+			"count": "該当エンジン {visible} / {total} 件",
 			"currency": "請求通貨：{currency}",
 			"openHint": "サービス行をクリックして設定と管理操作を表示",
 			"perRequest": "リクエストごとに課金",
@@ -3892,7 +4215,36 @@
 			"backToConfig": "サービス設定に戻る",
 			"connection": "接続設定",
 			"pricing": "課金ルール",
-			"credentialsRequired": "認証情報を入力すると保存して有効化できます。設定だけ先に保存することもできます。"
+			"credentialsRequired": "認証情報を保存してから一覧で有効化できます",
+			"usageStatus": "利用状態",
+			"actions": "操作",
+			"savedConfigHint": "保存済み設定 · ツールごとに1つのプロバイダーを有効化",
+			"credentialsSaved": "認証情報設定済み",
+			"credentialsMissing": "認証情報なし",
+			"enableEngine": "{name} を有効化",
+			"enable": "有効化",
+			"inUse": "使用中",
+			"standby": "有効化待ち",
+			"needsSetup": "未設定",
+			"needsCredentials": "認証情報に問題",
+			"unavailable": "利用不可",
+			"enableProvider": "このプロバイダーを有効化",
+			"switchHint": "有効化すると、今後のリクエストで {current} の代わりに {name} を使用します。",
+			"firstEnableHint": "有効化すると、このツールは {name} を使用します。",
+			"activeHint": "このツールで使用中です。保存すると接続と料金が更新されます。",
+			"credentialHint": "認証情報を入力すると有効化できます。設定のみの保存も可能です。",
+			"pricingHint": "課金単位ごとに標準価格を設定し、倍率で請求額とコストを決定します。",
+			"saveOnlyHint": "接続と料金を保存します。有効化は一覧の利用状態列で行います。",
+			"usageSelectionHint": "各ツールは1つのプロバイダーを使用します。設定済みの別のプロバイダーを選ぶと切り替わります。",
+			"activateSavedHint": "保存済みの接続と料金設定を使用",
+			"switching": "切り替え中…",
+			"enabledFeedback": "{name} を有効化しました",
+			"activationBlocked": {
+				"missing": "先に認証情報を設定して保存してください",
+				"unsaved": "先にこのプロバイダーの変更を保存または元に戻してください",
+				"unavailable": "このプロバイダーは利用できません"
+			},
+			"engineDetails": "{name} のエンジン説明"
 		},
 		"ui": {
 			"notConfigured": "未設定",
@@ -3902,11 +4254,77 @@
 			"test": "サービスをテスト",
 			"testSavedConfig": "調整画面で保存済みの設定をテスト",
 			"discard": "変更を元に戻す",
-			"draftHint": "変更は保存するまでこのページに保持されます。テストには保存済みの設定を使用します",
-			"saveHint": "このサービスのみ保存します。有効にすると同じ種類のサービスを置き換えます",
+			"draftHint": "未保存。テストには保存済み設定を使用します",
+			"saveHint": "有効化すると、このツールのプロバイダーが切り替わります",
 			"activationFailed": "設定は保存されましたが、有効化に失敗しました：{message}",
 			"loadFailed": "サービス設定を読み込めませんでした",
 			"retry": "再読み込み"
+		},
+		"engineGuide": {
+			"docs": "公式サイト・資料",
+			"integration": "接続時の注意",
+			"items": {
+				"webSearch": {
+					"bocha": {
+						"summary": "Bocha Web Search でページのタイトル、リンク、概要を取得します。",
+						"note": "件数とドメインの許可・拒否リストを上流に渡します。"
+					},
+					"tavily": {
+						"summary": "Tavily Search でウェブ検索結果を取得します。",
+						"note": "検索深度は basic。件数とドメインフィルターに対応します。"
+					},
+					"cleversee": {
+						"summary": "Alibaba Cloud CleverSee でウェブ検索を実行します。",
+						"note": "既定は mainland_china。ドメイン許可リストがある場合は global を使用し、最大30件を渡します。"
+					},
+					"tencent_wsa": {
+						"summary": "Tencent Cloud WSA の検索結果を共通のツール形式で返します。",
+						"note": "サービスの API Key を使用。許可リストの先頭を上流に渡し、その後ゲートウェイで全条件を適用します。"
+					},
+					"deepseek": {
+						"summary": "DeepSeek Search でタイトル、リンク、概要を取得します。",
+						"note": "クエリは128文字まで。ドメイン条件は site: 構文を使用し、長さが足りない場合はローカルで絞り込みます。"
+					}
+				},
+				"webFetch": {
+					"firecrawl": {
+						"summary": "Firecrawl Scrape で指定ページを Markdown として抽出します。",
+						"note": "1回につき1つの URL を取得し、上流のタイトルとページアドレスを返します。"
+					},
+					"tavily": {
+						"summary": "Tavily Extract で指定ページの本文を抽出します。",
+						"note": "1回につき1つの URL を送信し、raw_content、content の順で本文を取得します。"
+					},
+					"jina": {
+						"summary": "Jina Reader でページのタイトル、アドレス、本文を読み取ります。",
+						"note": "Markdown を要求し、設定済みの Jina API Key で認証します。"
+					},
+					"deepseek": {
+						"summary": "DeepSeek Fetch でタイトルと Markdown 本文を読み取ります。",
+						"note": "最終リダイレクト先は返されないため、応答の URL は要求時のアドレスです。"
+					}
+				},
+				"webDeepSearch": {
+					"firecrawl": {
+						"summary": "Firecrawl Search で検索し、結果の Markdown 本文を要求します。",
+						"note": "タイトル、リンク、概要と取得できた本文を共通形式で返します。本文の有無は上流結果に依存します。"
+					},
+					"jina": {
+						"summary": "Jina Search で検索し、結果ページの本文を取得します。",
+						"note": "Markdown を要求し、件数を指定数に制限します。本文がない場合もあります。"
+					},
+					"deepseek": {
+						"summary": "DeepSeek Search の1回の要求で検索と本文取得を行います。",
+						"note": "need_content を有効化し、クエリを128文字までに制限します。本文がない場合もあります。"
+					}
+				},
+				"aiDetection": {
+					"tencent_tms": {
+						"summary": "Tencent Cloud TMS でテキストの AI 生成傾向を検出します。",
+						"note": "SecretId と SecretKey が必要です。Region の既定値は ap-guangzhou、BizType は任意。課金単位の文字数で切り上げます。"
+					}
+				}
+			}
 		}
 	},
 	"pricing": {
@@ -3917,23 +4335,24 @@
 			"add": "追加",
 			"preview": "プレビュー",
 			"noTiers": "tier はまだありません。",
-			"upto": "upto",
-			"input": "input",
-			"output": "output",
-			"cacheRead": "cache read",
-			"cacheWrite": "cache write",
+			"upto": "入力上限",
+			"input": "入力",
+			"output": "出力",
+			"cacheRead": "キャッシュ読取",
+			"cacheWrite": "キャッシュ書込",
 			"textInput": "Text Input",
 			"cachedText": "Cached Text",
 			"imageInput": "Image Input",
 			"cachedImageInput": "Cached Image Input",
 			"imageOutput": "Image Output",
-			"imageHint": "アップストリームの Images usage × 以下の $/1M 料金で課金します。さらに Route factor が適用されます。",
+			"imageHint": "画像の使用量は下記の {currency}/百万 Token 単価で計算し、その後ルート倍率を適用します。",
 			"footer": "{currency}/1M。input_tokens に基づきます（最終行は上限なし）。tier なしで保存 → null（請求 0）。",
 			"footerImage": "単位：{currency}/1M tokens · Text Input / Cached Text / Image Input / Cached Image Input / Image Output。最終行は上限なし。",
 			"removeTier": "この tier を削除",
 			"lastTierOpenEnded": "最終 tier は上限なし（JSON upto: null）のため編集できません",
 			"unitPerM": "{currency}/100万トークン",
-			"unitPerImage": "{currency}/枚"
+			"unitPerImage": "{currency}/枚",
+			"tierField": "段階 {tier} · {field}"
 		},
 		"readOnlyTable": {
 			"inputRange": "入力範囲",
@@ -4000,7 +4419,7 @@
 			},
 			"simulator": {
 				"title": "シミュレーターの課金",
-				"body": "シミュレーターは選択したAPI Keyで実際のゲートウェイリクエストを送信し、課金とログ記録を行います。\n応答内の使用量は使用量の表示のみです。請求額と原価額はリクエストログで、Agent ToolsはTools呼び出し記録で確認してください。"
+				"body": "シミュレーターは選択したAPI Keyで実際のゲートウェイリクエストを送信し、課金とログ記録を行います。\n応答内の使用量は使用量の表示のみです。請求額と原価額はリクエストログで、ツールの呼び出しは呼び出し履歴で確認してください。"
 			}
 		}
 	},
@@ -4027,6 +4446,15 @@
 		"followHint": "プレビューと同時に更新します。上にスクロールすると追従を一時停止します。"
 	},
 	"mcp": {
+		"workspace": {
+			"directory": "サービス一覧",
+			"search": "サービスやアドレスを検索",
+			"selectService": "MCP サービスを選択",
+			"catalogPricing": "カタログと料金",
+			"copyEndpoint": "接続先 URL をコピー",
+			"editDefaultPricing": "デフォルト料金を編集",
+			"loading": "サービスを読み込み中"
+		},
 		"clientEndpoint": "クライアント接続先",
 		"sections": {
 			"label": "MCP 管理",
@@ -4035,7 +4463,14 @@
 		},
 		"clientAccess": {
 			"title": "クライアント接続",
-			"description": "API Key または OAuth 2.0 で外部 MCP クライアントをゲートウェイに接続します。接続ガイドからクライアント設定をコピーするか、ゲートウェイが公開するカタログをテストできます。"
+			"description": "サービス範囲と認証方式を選び、クライアント設定のコピーやカタログの確認ができます。",
+			"authCategories": "接続方法",
+			"keyTitle": "API Key 接続",
+			"oauthTitle": "OAuth 2.0 認可接続",
+			"guideTitle": "クライアント設定",
+			"keyDescription": "Gateway のユーザー API Key を使い、クライアント用の設定をコピーして接続します。",
+			"oauthDescription": "API Key を入力せず、ブラウザーでログインして接続を認可します。",
+			"documentation": "クライアント接続ドキュメント"
 		},
 		"title": "MCP サーバー",
 		"subtitle": "リモート MCP サーバーを接続し、ツールを確認・有効化して、共通のエンドポイントからクライアントに提供します。",
@@ -4055,31 +4490,61 @@
 		"edit": "編集",
 		"viewInvocations": "呼び出し履歴を見る",
 		"oauth": {
-			"title": "OAuth 2.0 ログイン（任意）",
-			"hint": "OAuth 2.0 のみ対応のクライアント（ChatGPT コネクタなど）向けで、API Key のコピーは不要です。無効のままでも API Key で接続できます。",
-			"description": "ChatGPT コネクタなどの MCP クライアントにログイン認可を提供するポータルの origin（system_config.MCP_OAUTH_AUTHORIZATION_SERVER）。設定すると、/mcp* は未認証リクエストに 401 + WWW-Authenticate を返し、/.well-known/oauth-protected-resource を公開します。Gateway 自体はトークンを発行しません。https が必須です（http は localhost のみ）。空欄で無効になります。",
-			"label": "認可サーバーの origin",
+			"title": "OAuth 2.0 サインイン（任意）",
+			"hint": "OAuth 2.0 のみ対応のクライアント（ChatGPT コネクタなど）向け。API キーでの接続も引き続き使えます。",
+			"description": "ChatGPT コネクタなどの MCP クライアントがユーザーをサインインさせる方法。内蔵：この Gateway が OAuth 認可サーバーとなり（system_config.MCP_OAUTH_ISSUER）、/mcp* でのみ使えるアクセストークンを発行します。外部：Gateway はクライアントを別の認可サーバーへ案内するだけです（MCP_OAUTH_AUTHORIZATION_SERVER）。オフ：OAuth ディスカバリーを公開しません。https 必須（localhost のみ http 可）。",
+			"label": "認可サーバーのオリジン",
 			"placeholder": "https://soloent.ai",
-			"howTitle": "有効にした後の流れ",
-			"how1": "クライアントが資格情報なしで /mcp にアクセスすると、ゲートウェイは 401 を返し、認可サーバーの場所を伝えます。",
-			"how2": "クライアントは認可サーバーでログイン・認可し、/mcp のみ利用できるアクセス資格情報を受け取ります。",
-			"how3": "ゲートウェイ自体はログインも資格情報の発行も行いません。従来の API Key 方式はそのまま使えます。",
-			"requirement": "認可サーバーは動的クライアント登録、PKCE（S256）、/.well-known/oauth-authorization-server に対応し、許可するコールバック URL を自身で管理する必要があります。SoloEnt ポータルは対応済みで、https://soloent.ai を入力します。コールバックはポータル管理画面の Integrations → Third-party apps で管理します。",
-			"statusOn": "有効：未認証の /mcp リクエストには 401 が返り、上の認可サーバーへ誘導されます（リソースメタデータ：{path}）。",
+			"howTitle": "有効にすると",
+			"how1": "クライアントが認証情報なしで /mcp を呼ぶと、ゲートウェイは 401 を返し、認可サーバーの場所を伝えます。",
+			"how2": "クライアントが登録し、ユーザーがサインインして承認すると、/mcp のみで使えるアクセストークンが発行されます。",
+			"how3": "API キー方式は引き続き使えます。ユーザーはいつでもアプリの認可を取り消せます。",
+			"requirement": "内蔵サーバーは動的クライアント登録、PKCE（S256）、リフレッシュトークン、/.well-known/oauth-authorization-server に対応します。アプリはコールバック URL で識別されるため、下の「アプリケーション」で追加してください。",
+			"statusOn": "有効：未認証の /mcp リクエストには 401 が返り、上記サーバーへ案内されます（リソースメタデータ：{path}）。",
 			"openGuide": "接続方法を見る",
 			"metadataLink": "認可サーバーのメタデータ",
-			"save": "OAuth 認可サーバーを保存",
-			"invalid": "認可サーバーが不正です。https の origin を指定してください（http は localhost のみ）。",
-			"enable": "OAuth 2.0 ログインを有効にする",
-			"required": "先に認可サーバーの URL を入力してください。",
-			"learnMore": "仕組みと要件"
+			"save": "OAuth 設定を保存",
+			"invalid": "サーバー URL が無効です。https のオリジンを指定してください（localhost のみ http 可）。",
+			"enable": "OAuth 2.0 サインインを有効にする",
+			"required": "先にサーバー URL を入力してください。",
+			"learnMore": "仕組みと要件",
+			"modeLabel": "OAuth モード",
+			"modes": {
+				"builtin": {
+					"title": "内蔵認可サーバー",
+					"hint": "Gateway 自身がクライアント登録、トークンの発行と更新を行います。サインインと同意は内蔵の API キー確認ページ、または自社サイトで行えます。"
+				},
+				"external": {
+					"title": "外部認可サーバー",
+					"hint": "Gateway はリソースメタデータを返し、運用中の認可サーバーへ案内するだけです。既存構成を維持する場合に選びます。"
+				},
+				"off": {
+					"title": "オフ",
+					"hint": "OAuth ディスカバリーを公開せず、クライアントは API キーで接続します。"
+				}
+			},
+			"issuerLabel": "この Gateway の公開 URL（issuer）",
+			"issuerPlaceholder": "https://api.example.com",
+			"issuerHint": "クライアントがこの Gateway にアクセスするオリジン。リバースプロキシで /oauth/* と /.well-known/oauth-authorization-server をプロキシサービスへ転送してください。",
+			"consentLabel": "サインイン・同意ページ（任意）",
+			"consentPlaceholder": "https://portal.example.com/oauth/consent",
+			"consentHint": "ユーザーがサインインして承認する場所。Gateway は request_id を付与します。空の場合は内蔵ページを使い、API キーで承認します。",
+			"cimdLabel": "クライアント ID メタデータドキュメント（CIMD）を受け付ける",
+			"cimdHint": "クライアントが https URL を client_id として使えるようにし、動的登録の代わりに Gateway がその URL のメタデータドキュメントを取得します（MCP 2025-11-25）。コールバックは有効なアプリに一致する必要があります。既定はオフ。オンにすると Gateway が外部 URL にアクセスします。",
+			"consentInvalid": "同意ページの URL が無効です。認証情報やフラグメントを含まない https URL を指定してください（localhost のみ http 可）。",
+			"serverTitle": "認可サーバー",
+			"scope": {
+				"builtin": "すべての MCP サービスに適用される共通設定です。Gateway がアプリの許可、クライアント登録、トークン発行を管理します。",
+				"external": "共通設定です。ログインと登録は外部サーバーが管理し、以下には Gateway に保存された記録を表示します。",
+				"off": "OAuth の検出は無効です。API Key 接続は引き続き利用できます。既存の認可記録は保持され、発行済みトークンは自動的には取り消されません。"
+			}
 		},
 		"connectGuide": {
 			"button": "接続ガイド",
 			"title": "クライアント接続ガイド",
 			"subtitle": "クライアントを選んで設定をコピーします。Agent に必要なのはゲートウェイ URL とユーザー API Key だけで、上流のシークレットは不要です。",
 			"proxyUrl": "Proxy URL",
-			"proxyHint": "Proxy のベース URL を入力してください。/mcp は自動で付きます。「公開カタログのテスト」と共有します。",
+			"proxyHint": "REST・シミュレーター・MCP で共用します。既定値は GATEWAY_PROXY_URL。手動変更はこのブラウザーだけに適用します。",
 			"proxyInvalid": "URL が無効です。/mcp パス・認証情報・クエリを含まない http(s) のベース URL を指定してください。",
 			"scope": "サービスの範囲",
 			"allServices": "すべてのサービス（集約）",
@@ -4234,7 +4699,7 @@
 		"removeHeader": "このヘッダーを削除",
 		"removedHeadersWarning": "保存時に削除されるヘッダー：{names}",
 		"advancedSettings": "詳細設定",
-		"defaultPriceHint": "ツールは既定でこのサービスの呼び出し単価を使用します。",
+		"defaultPriceHint": "個別料金のないツールに適用されます。",
 		"timeoutHint": "1,000〜120,000ミリ秒。既定値は30秒です。",
 		"maxBytesHint": "1,000〜8,000,000バイト。",
 		"slugReserved": "builtinは予約済みです。別の識別子を指定してください。",
@@ -4245,7 +4710,8 @@
 		"testSummary": "接続成功：ツール{tools}件・プロンプト{prompts}件・リソース{resources}件。カタログは未更新です。",
 		"batchEnableTitle": "カタログ項目を一括有効化",
 		"batchDisableTitle": "カタログ項目を一括無効化",
-		"batchStatusConfirm": "{count}件の項目を更新します。有効な項目はサーバーが有効なときに公開されます。",
+		"batchEnableConfirm": "{count} 件の項目を有効にします。クライアントで利用するには、サービス自体も有効である必要があります。",
+		"batchDisableConfirm": "{count} 件の項目を無効にします。クライアントはゲートウェイ経由でこれらの項目を利用できなくなります。",
 		"confirmDeleteNamed": "「{name}」とカタログ全体を削除しますか？既存のクライアントからこのサーバーを呼び出せなくなります。",
 		"selectItem": "{name}を選択",
 		"noDescription": "説明なし",
@@ -4276,6 +4742,35 @@
 		"checkConnection": "接続設定を確認",
 		"noAuthHeaders": "認証ヘッダーなし",
 		"reviewHint": "新規項目は初期状態で無効です。確認後、個別または一括で有効化できます。定義の変更は項目ごとに承認してください。",
+		"acceptAllTitle": "すべての変更を採用",
+		"acceptAllConfirm": "上流の定義変更 {count} 件を採用しますか？クライアントはすぐに新しい定義を使用します。",
+		"acceptedMany": "{count} 件の変更を採用しました",
+		"acceptAllChanges": "すべての変更を採用（{count}）",
+		"enableAllNewCount": "新規項目をすべて有効化（{count}）",
+		"reviewBannerTitle": "{count} 件のカタログ項目が確認待ちです",
+		"reviewBannerDetail": "変更 {changed} 件 · 新規 {added} 件",
+		"reviewBannerHint": "定義の変更は採用するまで反映されず、クライアントは現在の定義を使い続けます。新規項目は初期状態で無効で、有効化すると公開されます。",
+		"reviewStart": "確認を開始",
+		"reviewItem": "変更を確認",
+		"reviewChangedInline": "上流の定義が変更されました。採用するまで現在の定義を使用します",
+		"reviewDialogTitle": "カタログの変更を確認",
+		"reviewQueue": "確認待ち",
+		"reviewPosition": "{index} / {total}",
+		"reviewPrev": "前へ",
+		"reviewNext": "次へ",
+		"reviewSkip": "スキップ",
+		"reviewChangedNote": "採用するまで、クライアントは現在の定義を使い続けます。",
+		"reviewNewNote": "新規項目は初期状態で無効で、有効化すると公開されます。",
+		"reviewChangedFields": "変更されたフィールド",
+		"reviewDone": "確認が完了しました",
+		"reviewDoneHint": "確認待ちの項目はありません。",
+		"reviewNothingToEnable": "有効化できる新規項目はありません。",
+		"diffStats": "+{added} −{removed} 行",
+		"diffUnchangedLines": "{count} 行は変更なし",
+		"diffExpandAll": "すべて展開",
+		"diffCollapse": "変更なしの部分を折りたたむ",
+		"diffNoChanges": "実質的な差異はありません。上流がフィールドの順序を変えただけの可能性があります。採用すると変更マークが消えます。",
+		"reviewDefinition": "定義",
 		"discardTitle": "未保存の変更を破棄しますか？",
 		"discardMessage": "フォームの変更は未保存です。閉じると変更が失われます。",
 		"discard": "変更を破棄",
@@ -4286,7 +4781,7 @@
 			"title": "公開カタログのテスト",
 			"subtitle": "Proxy に直接リクエストし、Agent が受け取る MCP カタログとレスポンスを確認します。",
 			"proxyUrl": "Proxy のベース URL",
-			"proxyHint": "Proxy のベース URL を入力してください。/mcp は自動追加されます。管理画面の URL や完全な MCP パスは使用しないでください。",
+			"proxyHint": "REST・シミュレーター・MCP で共用します。既定値は GATEWAY_PROXY_URL。手動変更はこのブラウザーだけに適用します。",
 			"scope": "サービスの範囲",
 			"allServices": "すべてのサービス",
 			"disabled": "無効",
@@ -4346,7 +4841,7 @@
 			"pricing": "課金ルール",
 			"advanced": "詳細設定"
 		},
-		"advancedHint": "通常は既定値を使用できます。上流の応答が遅い場合や応答が大きい場合に調整してください。既定のタイムアウトは30秒、最大応答は1 MiBです。",
+		"advancedHint": "上流の応答が遅い場合や、大きなレスポンスを扱う場合に調整します。",
 		"pricing": {
 			"simpleDefaultHint": "個別の価格が設定されていないツールは、この既定設定を使用します。",
 			"needsReview": "設定を確認してください",
@@ -4393,15 +4888,14 @@
 		"title": "課金ルール",
 		"perUnitMode": "単位ごとの課金",
 		"charactersUnit": "{count} 文字",
-		"requestUnit": "回"
+		"requestUnit": "回",
+		"standardLabel": "標準価格"
 	},
 	"remainingUi": {
 		"effectiveFactor": "対象レコードの金額を標準金額で割った実効倍率",
 		"allStatuses": "すべての状態",
 		"loadFailed": "データを読み込めませんでした",
 		"retry": "再読み込み",
-		"invocationDetails": "呼び出し詳細",
-		"providerScope": "プロバイダーの範囲",
 		"modelPrefix": "サービスモデルの接頭辞",
 		"discardTitle": "未保存の変更を破棄しますか？",
 		"discardHint": "変更はまだ反映されていません。閉じると下書きを破棄します",
@@ -4433,7 +4927,6 @@
 			"maintenance": "メンテナンス"
 		},
 		"wholeMinutes": "1 分以上の整数を入力してください",
-		"requestLogs": "リクエストログ",
 		"writeIncludesRead": "書き込みには同じリソースの読み取りを含みます。認証情報には別途権限が必要です"
 	}
 }

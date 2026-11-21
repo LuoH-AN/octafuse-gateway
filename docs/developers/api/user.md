@@ -72,7 +72,7 @@ Gateway 会根据 `model_id + route_group + request_protocol + request_operation
 ### 6. 输出长度（`max_tokens` / `maxOutputTokens`）
 
 - Gateway **不会**根据 D1 **`models.max_tokens`** 改写或截断用户请求；该字段在 `GET /v1/models` 等处仅作**目录/展示参考**。
-- 实际上游请求体由 **`model_routes.custom_params`** 与客户端 JSON **深度合并**得到（实现见 `buildRouteRequestBody`）。默认 **客户端显式提供的字段优先**；若该路由信封里 **`force_override.body`** 为 true（管理后台自定义参数请求体旁的「强制覆盖（Force override）」），则 **路由字段优先**。HTTP 头在 **`headers`** 中，由 **`force_override.headers`** 单独控制，见 [Route 默认参数合并](#route-默认参数合并)。
+- 实际上游请求体由 **`model_routes.custom_params`** 与客户端 JSON **深度合并**得到（实现见 `buildRouteRequestBody`）。默认 **客户端显式提供的字段优先**；若该路由信封里 **`force_override.body`** 为 true（管理后台自定义参数请求体旁的「强制覆盖（Force override）」），则 **路由字段优先**。HTTP 头在 **`headers`** 中，由 **`force_override.headers`** 单独控制，见 [Route 默认参数合并](#route-默认参数合并)。Route 未配置的字段还可能继承自 **`providers.custom_params`** 这一层更低优先级的默认值，见 [Provider 级默认参数](#provider-级默认参数)。
 - 若客户端不传 `max_tokens`（OpenAI Chat、Anthropic Messages）或不传 `generationConfig.maxOutputTokens`（Gemini），则由路由 JSON 中的默认值或**上游服务商的 API 默认**决定。
 - 运维若希望为某条路由提供默认最大输出，可在该路由的 **`custom_params`** 中配置，例如 OpenAI/Anthropic 顶层 `"max_tokens": 4096`，Gemini 使用嵌套 `"generationConfig": { "maxOutputTokens": 8192 }`。
 - 若需要在客户端已显式传入时仍强制使用路由值（例如硬封顶 `max_tokens`），在该路由开启强制覆盖。未开启时合并规则仍为客户端优先。
@@ -653,14 +653,14 @@ Authorization: Bearer <USER_API_KEY>
 
 1. 校验用户 API Key；周期额度与永久额度的总余额不足 → **403** `{ "error": "Budget exceeded" }`
 2. 从 Admin `system_config` 读取搜索配置（无环境变量回退）：
-   - `WEB_SEARCH_ACTIVE`（白名单：`bocha` | `tavily` | `cleversee` | `tencent_wsa`；非法值 → **503**）
+   - `WEB_SEARCH_ACTIVE`（白名单：`bocha` | `tavily` | `cleversee` | `tencent_wsa` | `deepseek`；非法值 → **503**）。`deepseek` 引擎的上游查询词最长 128 个字符，超出部分由 Gateway 截断
    - `WEB_SEARCH_CATALOG`（JSON：按引擎存 `{ "apiKey", "metered", "standard", "charged" }`；可带兼容键 `cost`（= charged）；Active 引擎必须有非空 `apiKey`，否则 **503**）
    - 默认单价（catalog 未写价格时）三列均为 **0.001**，单位随 `BILLING_CURRENCY`
    - 兼容：若尚无 `WEB_SEARCH_CATALOG`，仍可读旧三键 `WEB_SEARCH_PROVIDER` / `WEB_SEARCH_API_KEY` / `WEB_SEARCH_COST`（仅读取，Admin 不再写入）
 3. 调用 Active 引擎；**仅成功**后按该引擎 **charged** 单价计入 `users.budget_spent`
 4. 上游失败不扣费
 
-运营侧在 Admin → **Tools → Configuration** 按引擎维护 catalog 并选择 Active；调用记录见 **Tools → Invocations**（与 Request Logs 同源，`provider_id=octafuse-tools`）。
+运营侧在 Admin → **Tools → Configuration** 按引擎维护 catalog 并选择 Active；调用记录见 **Logs → Request Logs**（Type 选 **REST tools**，`provider_id=octafuse-tools`）。
 
 ### 响应
 
@@ -713,7 +713,7 @@ Authorization: Bearer <USER_API_KEY>
 
 1. 校验用户 API Key；周期额度与永久额度的总余额不足 → **403** `{ "error": "Budget exceeded" }`
 2. 从 Admin `system_config` 读取抓取配置（无环境变量回退）：
-   - `WEB_FETCH_ACTIVE`（白名单：`firecrawl` | `tavily` | `jina`；默认 `firecrawl`；非法值 → **503**）
+   - `WEB_FETCH_ACTIVE`（白名单：`firecrawl` | `tavily` | `jina` | `deepseek`；默认 `firecrawl`；非法值 → **503**）
    - `WEB_FETCH_CATALOG`（JSON：按引擎存 `{ "apiKey", "metered", "standard", "charged" }`；可带兼容键 `cost`；Active 引擎必须有非空 `apiKey`，否则 **503**）
    - 默认单价（catalog 未写价格时）三列均为 **0.002**，单位随 `BILLING_CURRENCY`
    - 兼容：若尚无 `WEB_FETCH_CATALOG`，仍可读旧三键 `WEB_FETCH_PROVIDER` / `WEB_FETCH_API_KEY` / `WEB_FETCH_COST`（仅读取，Admin 不再写入）
@@ -721,7 +721,7 @@ Authorization: Bearer <USER_API_KEY>
 4. 调用 Active 引擎；**仅成功**后按该引擎单价计入 `users.budget_spent`
 5. 上游失败不扣费；上游 **401/403** 映射为 **502**（勿透出成用户 Key 无效）
 
-运营侧在 Admin → **Tools → Configuration** 按引擎维护 catalog 并选择 Active；调用记录见 **Tools → Invocations**（与 Request Logs 同源，`provider_id=octafuse-tools`）。
+运营侧在 Admin → **Tools → Configuration** 按引擎维护 catalog 并选择 Active；调用记录见 **Logs → Request Logs**（Type 选 **REST tools**，`provider_id=octafuse-tools`）。
 
 ### 响应
 
@@ -749,7 +749,7 @@ Authorization: Bearer <USER_API_KEY>
 
 ## Web Deep Search（Agent 工具）
 
-协议无关的产品 API，供「搜 + 读」一体的深度检索（Firecrawl Search / Jina Search）。相对普通 Web Search，结果常含页面正文，延迟与单价更高。**不是** OpenAI / Anthropic / Gemini 推理协议的一部分。
+协议无关的产品 API，供「搜 + 读」一体的深度检索（Firecrawl Search / Jina Search / DeepSeek Search）。相对普通 Web Search，结果常含页面正文，延迟与单价更高。**不是** OpenAI / Anthropic / Gemini 推理协议的一部分。
 
 ### 请求
 
@@ -776,13 +776,13 @@ Authorization: Bearer <USER_API_KEY>
 
 1. 校验用户 API Key；额度不足 → **403** `{ "error": "Budget exceeded" }`
 2. 从 Admin `system_config` 读取配置（无环境变量回退）：
-   - `WEB_DEEP_SEARCH_ACTIVE`（白名单：`firecrawl` \| `jina`；非法值 → **503**）
+   - `WEB_DEEP_SEARCH_ACTIVE`（白名单：`firecrawl` \| `jina` \| `deepseek`；非法值 → **503**）。`deepseek` 引擎的上游查询词最长 128 个字符，超出部分由 Gateway 截断
    - `WEB_DEEP_SEARCH_CATALOG`（JSON：按引擎 `{ "apiKey", "metered", "standard", "charged" }`；可带兼容键 `cost`；Active 必须有非空 `apiKey`，否则 **503**）
    - 默认单价三列均为 **0.01**（catalog 未写价格时），单位随 `BILLING_CURRENCY`
 3. 调用 Active 引擎；**仅成功**后按该引擎单价计入 `users.budget_spent`
 4. 上游失败不扣费；上游 **401/403** 映射为 **502**
 
-运营侧在 Admin → **Tools → Configuration** 配置；调用记录见 **Tools → Invocations**（`model_id=tool:web-deep-search`）。
+运营侧在 Admin → **Tools → Configuration** 配置；调用记录见 **Logs → Request Logs**（Type 选 **REST tools**，`model_id=tool:web-deep-search`）。
 
 ### 响应
 
@@ -866,7 +866,7 @@ Authorization: Bearer <USER_API_KEY>
 4. **仅成功**后按计费单元数 × 三账本单价写入日志，并仅用 **charged** 扣费；上游失败写 error 日志、**不扣费**
 5. 请求日志不含原文 / excerpt：`requestBody` 仅 `{ total_chars, billing_units }`；`pricing_audit`（v4 `fixed_tool_cost`）含 `unit_prices` / `totals` / `provider` / `billing_units`
 
-运营侧在 Admin → **Tools → Configuration** 配置；调用记录见 **Tools → Invocations**（`model_id=tool:ai-detection`）。
+运营侧在 Admin → **Tools → Configuration** 配置；调用记录见 **Logs → Request Logs**（Type 选 **REST tools**，`model_id=tool:ai-detection`）。
 
 ### 响应
 
@@ -1539,3 +1539,36 @@ OpenAI 生图、语音合成和转写入口走转换适配器时，用户请求�
 **`headers`** 是上游 **HTTP 头**，不是请求体字段：转发前会从 JSON 中剥离，并合并到出站请求头。仅处理路由里配置过的头名：默认客户端同名请求头优先；`force_override.headers` 为 true 后改为路由值优先。未在路由中配置的客户端头不会转发到上游。网关写入的鉴权头（`Authorization` / `x-api-key` / `x-goog-api-key`）、`Content-Type` 与 hop-by-hop 头不可被 `headers` 或客户端覆盖；其余键（如 `HTTP-Referer`、`anthropic-version`）可以追加或覆盖驱动默认值。`headers` 缺省或为 `{}` 时行为与改造前相同。
 
 各厂商 `thinking` / `reasoning` / `reasoning_effort` 等字段的 JSON 形态见 **[渠道模型思考参数配置说明](../reference/provider-thinking-configs.md)**。在 Route 的 `custom_params.body` 中写入默认值后，客户端未传该字段时会合并进上游请求；未开启该侧强制覆盖时，客户端显式传入以客户端为准。
+
+### Provider 级默认参数（可选的下界）
+
+<a id="provider-级默认参数"></a>
+
+`providers` 支持一份可选的 **Provider 级** `custom_params`（JSON 对象字符串），按**上游协议**分组：
+
+```json
+{
+  "openai": {
+    "headers": { "HTTP-Referer": "https://example.com", "X-Title": "My App" },
+    "body": { "max_tokens": 4096 }
+  },
+  "gemini": {
+    "body": { "generationConfig": { "maxOutputTokens": 8192 } }
+  }
+}
+```
+
+- 每个分组的 `headers` / `body` 形状与上面 Route 级信封里的同名字段一致（受保护头同样不可配置）。
+- Provider 层**没有** `force_override`；强制覆盖仍只能在 Route 上配置。
+- 这是该 Provider 下**所有** Route 的默认值下界：Route 不配置同一字段时自动继承 Provider 的值；Route 配置了就覆盖 Provider。每条 Route 只会用到 Provider 配置里与自己 `upstream_protocol` 一致的那个分组，协议不匹配的分组不生效。
+
+合并发生在 Route 的「有效参数」生成阶段，先于本节前面描述的「Route 默认参数合并」，因此下游行为完全一致，只是多了一层更低优先级的默认值：
+
+```text
+请求头：协议默认头 < Provider.headers < Route.headers < 客户端头（Route 未开 force_override.headers 时）
+请求体：适配器默认 < Provider.body  < Route.body  < 客户端同名字段（Route 未开 force_override.body 时）
+```
+
+**`force_override.body` 为 true 时，整份合并后的有效 body（包含其中的 Provider 默认值）一起对客户端生效强制覆盖**，不是只强制 Route 自己配置的那几个键——例如 Provider 配了 `max_tokens: 4096`、Route 只对 `temperature` 打开了 `force_override.body`，客户端传 `max_tokens: 100` 时最终仍是 `4096` 生效。
+
+Provider 未配置 `custom_params`，或某协议分组为空时，行为与改造前完全一致。原生透传入口（DashScope / MiniMax / ElevenLabs / Volcengine 的直连路径）不合并 body 默认值（仍只替换 `model`），但 headers 会按上面的优先级正常合并，因此配置了 Provider 级 headers 后，这些入口的实际上游请求头也会相应变化。

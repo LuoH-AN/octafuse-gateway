@@ -1,14 +1,10 @@
 /**
- * MCP OAuth 发现（RFC 9728）：Gateway 作为资源服务器，只声明授权服务器在哪里。
- * 开关：`system_config.MCP_OAUTH_AUTHORIZATION_SERVER` 非空（见 core `mcp-oauth-system-config`）。
+ * MCP OAuth 发现（RFC 9728）：Gateway 作为资源服务器，声明授权服务器在哪里。
+ * 内置模式（`MCP_OAUTH_ISSUER`）指向 Gateway 自己；外部模式（`MCP_OAUTH_AUTHORIZATION_SERVER`）指向外部授权服务器。
+ * 见 core `mcp-oauth-system-config`。
  */
 import type { GatewayRepositories } from '@octafuse/core';
-import {
-	MCP_OAUTH_AUTHORIZATION_SERVER_KEY,
-	buildProtectedResourceMetadata,
-	normalizeMcpOAuthAuthorizationServer,
-	protectedResourceMetadataUrl,
-} from '@octafuse/core';
+import { MCP_OAUTH_SCOPE, buildProtectedResourceMetadata, protectedResourceMetadataUrl, readMcpOAuthMode } from '@octafuse/core';
 
 type RequestLike = { req: { header: (name: string) => string | undefined; url: string } };
 
@@ -20,11 +16,12 @@ export function publicOrigin(c: RequestLike): string {
 	return `${proto}://${host}`;
 }
 
-/** 已配置且合法的授权服务器 origin；未配置返回 null。 */
+/** 要对客户端公布的授权服务器 origin：内置模式是 issuer，外部模式是配置的授权服务器；关闭返回 null。 */
 export async function readMcpOAuthAuthorizationServer(repos: GatewayRepositories): Promise<string | null> {
-	const raw = await repos.systemConfig.getConfig(MCP_OAUTH_AUTHORIZATION_SERVER_KEY);
-	const normalized = normalizeMcpOAuthAuthorizationServer(raw);
-	return normalized ? normalized : null;
+	const mode = await readMcpOAuthMode(repos);
+	if (mode.mode === 'builtin') return mode.issuer;
+	if (mode.mode === 'external') return mode.authorizationServer;
+	return null;
 }
 
 /**
@@ -43,11 +40,15 @@ export async function mcpUnauthorizedHeaders(
 	try {
 		server = await readMcpOAuthAuthorizationServer(repos);
 	} catch (err) {
-		console.warn('[Gateway MCP] failed to read MCP_OAUTH_AUTHORIZATION_SERVER', err);
+		console.warn('[Gateway MCP] failed to read MCP OAuth configuration', err);
 	}
 	const params: string[] = [];
 	if (options.invalidToken) params.push('error="invalid_token"');
-	if (server) params.push(`resource_metadata="${protectedResourceMetadataUrl(publicOrigin(c), path)}"`);
+	if (server) {
+		params.push(`resource_metadata="${protectedResourceMetadataUrl(publicOrigin(c), path)}"`);
+		// MCP 2025-11-25：提示客户端申请哪个作用域，免得它们去猜或申请全部 scopes_supported。
+		params.push(`scope="${MCP_OAUTH_SCOPE}"`);
+	}
 	if (params.length === 0) return {};
 	return { 'WWW-Authenticate': `Bearer ${params.join(', ')}` };
 }

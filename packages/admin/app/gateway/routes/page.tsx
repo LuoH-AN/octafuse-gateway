@@ -17,10 +17,11 @@ import { RouteModal } from './components/route-modal';
 import { ProviderStickyDialog } from './components/provider-sticky-dialog';
 import { RoutePolicyDialog } from './components/route-policy-dialog';
 import { RouteVendorGroup } from './components/route-vendor-group';
+import { useRouteModelLayout } from './use-route-display-preferences';
 import { useCatalogView } from '../components/use-catalog-view';
 import { RouteWorkspaceHeader } from './components/route-workspace-header';
 import { RouteSurfaceCatalog, UnroutedModelsPanel } from './components/route-surface-catalog';
-import { isRouteConfigurationAvailable, buildRouteSurfaceCatalog } from './route-utils';
+import { buildRouteSurfaceCatalog } from './route-utils';
 import {
 	readStickyRefreshInterval,
 	subscribeStickyRefreshInterval,
@@ -53,6 +54,7 @@ function subscribeFlowDensity(onStoreChange: () => void) {
 function RoutesContent() {
 	const t = useTranslations('routes');
 	const tCommon = useTranslations('common');
+	const [modelLayout, setModelLayout] = useRouteModelLayout();
 	const [catalogView, setCatalogView] = useCatalogView(ROUTE_DETAIL_STORAGE_KEY, 'topology');
 	const density: RouteFlowDensity = catalogView === 'cards' ? 'topology' : 'list';
 	const setDensity = useCallback((next: RouteFlowDensity) => {
@@ -100,8 +102,6 @@ function RoutesContent() {
 		return { vendorGroups, unrouted };
 	}, [state.routeCardVendorGroups, state.routeCards]);
 
-	const availableRouteCount = state.routeCards.reduce((count, card) => count + card.groupRoutes.filter(route => isRouteConfigurationAvailable(route, state.providerMeta.get(route.provider_id))).length, 0);
-
 	if (state.isLoading) {
 		return (
 			<div className="flex min-h-full items-center justify-center bg-gray-50">
@@ -126,33 +126,28 @@ function RoutesContent() {
 				filterStatus={state.filterStatus}
 				filterKind={state.filterKind}
 				filterRouteGroup={state.filterRouteGroup}
-				filterVendor={state.filterVendor}
-				filterProviderId={state.filterProviderId}
-				filterProviderKind={state.filterProviderKind}
-				providerKindFilterOptions={state.providerKindFilterOptions}
+				filterModels={state.filterModels}
+				filterProviders={state.filterProviders}
+				modelGroups={state.modelFilterGroups}
+				providerGroups={state.providerFilterGroups}
 				statusCounts={state.statusCounts}
 				kindCounts={state.kindCounts}
 				routeGroupFilterOptions={state.routeGroupFilterOptions}
 				routeGroupCounts={state.routeGroupCounts}
-				vendorFilterOptions={state.vendorFilterOptions}
-				providers={state.filterProviders}
-				providerRouteCounts={state.providerRouteCounts}
 				onFilterStatusChange={state.setFilterStatus}
 				onFilterKindChange={state.setFilterKind}
 				onFilterRouteGroupChange={state.setFilterRouteGroup}
-				onFilterVendorChange={state.setFilterVendor}
-				onFilterProviderIdChange={state.setFilterProviderId}
-				onFilterProviderKindChange={state.setFilterProviderKind}
+				onModelsChange={state.setFilterModels}
+				onProvidersChange={state.setFilterProviders}
 				onClearAllFilters={state.clearAllFilters}
 			/>
 
 			<section className="min-w-0">
 				<RouteWorkspaceHeader
-					visibleModelCount={state.visibleModelCount}
-					visibleRouteCount={state.visibleRouteCount}
-					availableRouteCount={availableRouteCount}
 					density={density}
 					onDensityChange={setDensity}
+					modelLayout={modelLayout}
+					onModelLayoutChange={setModelLayout}
 					view={workspaceView}
 					onViewChange={handleWorkspaceViewChange}
 					stickyRefreshIntervalMs={stickyRefreshIntervalMs}
@@ -210,6 +205,7 @@ function RoutesContent() {
 											cards={cards}
 											showHeader={showHeader}
 											vendorGroupIdx={vendorGroupIdx}
+											modelLayout={modelLayout}
 											modelMeta={state.modelMeta}
 											providerMeta={state.providerMeta}
 											globalRouteStrategy={state.globalRouteStrategy}

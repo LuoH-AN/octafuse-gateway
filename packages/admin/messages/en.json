@@ -1,4 +1,14 @@
 {
+	"proxyConnection": {
+		"source": {
+			"browser": "Browser override · shared by REST, Simulator and MCP",
+			"deployment": "Deployment default: GATEWAY_PROXY_URL",
+			"local": "Local development default",
+			"unset": "No Proxy URL. Set GATEWAY_PROXY_URL."
+		},
+		"reset": "Restore default URL",
+		"hint": "Shared by REST, Simulator and MCP. Defaults to GATEWAY_PROXY_URL; manual changes override only this browser."
+	},
 	"autoRefresh": {
 		"paused": "Paused",
 		"everySeconds": "Every {seconds}s",
@@ -137,15 +147,22 @@
 		"login": "Login",
 		"loggingIn": "Logging in...",
 		"loggingOut": "Logging out...",
-		"logout": "Logout"
+		"logout": "Logout",
+		"lockedOutTitle": "Too many attempts",
+		"lockedOutDescription": "Sign in is temporarily locked. Please try again when the countdown ends.",
+		"lockedOutCountdown": "Try again in {time}",
+		"lockoutAcknowledge": "Got it",
+		"loginBusy": "A sign-in attempt is still in progress. Try again shortly."
 	},
 	"sidebar": {
 		"openMenu": "Open navigation menu",
 		"navigation": "Main navigation",
 		"groups": {
 			"overview": "Overview",
-			"inference": "Inference",
+			"models": "Models",
+			"testing": "Testing",
 			"user": "User",
+			"logs": "Logs",
 			"tools": "Tools",
 			"analytics": "Analytics",
 			"integration": "Integration",
@@ -163,7 +180,6 @@
 			"requestLogs": "Request Logs",
 			"auditLogs": "Audit Logs",
 			"toolsConfig": "REST Services",
-			"toolInvocations": "Invocations",
 			"mcpServers": "MCP Servers",
 			"modelUsage": "Model Usage",
 			"providerUsage": "Provider Usage",
@@ -425,7 +441,7 @@
 			"comparePrevious": "vs preceding equal period",
 			"newActivity": "New",
 			"ttftP95": "First response P95",
-			"latencyP95": "Successful duration P95",
+			"latencyP95": "Request duration P95",
 			"timingContext": "Median {median} · {count} samples",
 			"ttftHint": "Successful measured streams: first reasoning token, otherwise first content token. P95 is the duration not exceeded by 95% of samples. Small samples are indicative only.",
 			"latencyHint": "Complete successful-request duration across request types. P95 is calculated from raw samples, not averaged model percentiles. Small samples are indicative only.",
@@ -568,6 +584,7 @@
 			"routes": "{count} route",
 			"routesPlural": "{count} routes",
 			"activeRoutes": "{count} active",
+			"enabledRouteRatio": "{active} / {total} routes enabled",
 			"routesTitle": "{routes}; {active}",
 			"placeholder": "placeholder",
 			"copyApiKey": "Copy API key",
@@ -712,6 +729,18 @@
 			"legacyPerActionNotice": "This legacy configuration has separate generation and streaming endpoints. They are preserved on save.",
 			"basicInfo": "Basic information",
 			"endpointSettings": "Endpoints",
+			"paramsSettings": "Custom Params",
+			"paramsSettingsHint": "Default headers and body fields applied to every route under this provider, grouped by upstream protocol. A route can still override any of these values; routes with no override simply inherit them.",
+			"paramsTabsAria": "Custom params protocols",
+			"paramsHeadersLabel": "Headers",
+			"paramsHeadersHint": "Account-level headers sent on every request for this protocol (e.g. a fixed Referer or title required by some channels). Protected headers such as Authorization or Content-Type cannot be set here.",
+			"paramsHeaderNamePlaceholder": "Header name",
+			"paramsHeaderValuePlaceholder": "Header value",
+			"paramsAddHeader": "Add header",
+			"paramsRemoveHeader": "Remove header",
+			"paramsBodyLabel": "Body (JSON)",
+			"paramsBodyPlaceholder": "e.g. '{\"max_tokens\": 4096}'",
+			"paramsBodyHint": "Default request body fields merged under the client request and any route-level override. Field names depend on the upstream protocol (e.g. OpenAI uses max_tokens; Gemini uses generationConfig.maxOutputTokens).",
 			"modalTabs": "Provider settings",
 			"editHint": "Manage this account, protocol endpoints, and related routes.",
 			"newHint": "Enter account details, then configure the protocol endpoints you need.",
@@ -1084,6 +1113,9 @@
 			"editHint": "Manage model details, modalities, pricing and associated routes.",
 			"modalities": "Modalities",
 			"backToForm": "Back to form",
+			"pricingViewLabel": "Pricing view",
+			"pricingFormView": "Form",
+			"pricingJsonView": "JSON",
 			"metadataHint": "Optional JSON data stored with this model. Leave blank to remove it.",
 			"pricingJsonHint": "Preview pricing_profile from the current form, including unsaved prices and schedules.",
 			"jsonCopyFailed": "Copy failed. The text is selected; you can copy it manually.",
@@ -1255,8 +1287,7 @@
 		"empty": "No models or routes found",
 		"emptyFilteredPrefix": "Try adjusting filters or",
 		"workspace": {
-			"coverageTitle": "Ready routes",
-			"coverageHint": "Both route and provider are enabled. Configuration status within the current filters, not live health.",
+			"searchLabel": "Search",
 			"searchPlaceholder": "Search model, upstream model or provider…",
 			"removeFilter": "Remove filter: {filter}",
 			"densityList": "List",
@@ -1268,6 +1299,9 @@
 			"filteredBy": "Filtered by: {summary}",
 			"allModelsRoutes": "All models and routes",
 			"organizationLabel": "Organization",
+			"modelLayoutLabel": "Layout mode",
+			"modelLayoutCompact": "Compact",
+			"modelLayoutTiled": "Tiled",
 			"displayLabel": "Display",
 			"viewGroupAria": "Route layout",
 			"viewOverview": "Overview",
@@ -1297,6 +1331,14 @@
 			"displaySettings": "Display settings"
 		},
 		"flow": {
+			"controls": {
+				"entry": "Entry",
+				"group": "Group",
+				"model": "Model",
+				"modelHelpLabel": "Which model ID should I send?",
+				"modelHelp": "Model ID to send in the request",
+				"sticky": "Sticky"
+			},
 			"requestNode": "Surface",
 			"catalogColumnSurface": "Surface",
 			"catalogColumnModel": "Model",
@@ -1337,11 +1379,14 @@
 			"availabilityAvailableTooltip": "The route and provider are enabled. This is not a live connectivity check.",
 			"availabilityRouteDisabledTooltip": "This route is disabled and will not receive requests.",
 			"availabilityProviderDisabledTooltip": "The provider is disabled, so this route cannot receive requests.",
+			"groupAvailableCount": "Available routes: {active} (both route and provider enabled)",
 			"tierAvailableTooltip": "Available {active} / {total} routes (both route and provider enabled)",
 			"enabledShort": "Enabled",
 			"disabledShort": "Disabled",
+			"toggleRouteStatus": "Enable route {model}",
 			"addRoute": "Add route",
 			"noProviders": "No providers available",
+			"listPriority": "Priority",
 			"firstAttempt": "First attempt",
 			"fallback": "On failure, continue",
 			"fallbackLayer": "Fallback",
@@ -1361,10 +1406,13 @@
 			"paramsBody": "Body",
 			"paramsHeadersTooltip": "Custom HTTP headers configured; client headers take precedence. Click to edit.",
 			"paramsBodyTooltip": "Custom body fields configured; client fields take precedence during deep merge. Click to edit.",
+			"providerRoutes": "Provider routes",
 			"routeGroupProviders": "Providers in route group {group}",
 			"listProvider": "Provider / upstream model",
 			"listProviderAccount": "Provider",
 			"listUpstreamModel": "Upstream model",
+			"uniformPricingPeriod": "Same rate all day",
+			"pricingDetails": "Pricing details",
 			"pricingPeriod": "Period",
 			"pricingProviderFactor": "Provider",
 			"pricingBillingMultiplier": "Billing",
@@ -1632,10 +1680,7 @@
 				},
 				"dashscope-asr-fun-file": {
 					"purpose": "For the non-realtime file API of the fun-asr-realtime family.",
-					"mapping": [
-						"language and prompt return 400.",
-						"format is inferred from the MIME type or filename extension."
-					]
+					"mapping": ["language and prompt return 400.", "format is inferred from the MIME type or filename extension."]
 				},
 				"dashscope-asr-qwen-file-async": {
 					"purpose": "For qwen3-asr-flash-filetrans. The provider needs both the submit and task query endpoints.",
@@ -2201,6 +2246,14 @@
 		}
 	},
 	"playground": {
+		"inspectionInvalidBody": "Fix the input JSON to preview the actual request body.",
+		"inspectionBodyInput": "Request body (input)",
+		"inspectionBodyActual": "Request body (actual)",
+		"inspectionSourceProvider": "Provider custom parameters",
+		"inspectionSourceRoute": "Route custom parameters",
+		"inspectionSourceProtocol": "Protocol default",
+		"inspectionFieldSources": "Sources of configured fields",
+		"inspectionUnavailable": "Request preview unavailable.",
 		"title": "Playground",
 		"subtitle": "Test requests and upstream responses on a single route",
 		"usageNote": "Tests are excluded from gateway user billing and request logs.",
@@ -2302,9 +2355,6 @@
 		"audioInputMode": "Audio input",
 		"audioInputFile": "Audio file",
 		"audioInputMicrophone": "Browser microphone",
-		"mode": "Mode",
-		"modeRoutes": "Routes",
-		"modeTools": "Tools",
 		"toolsSubtitle": "Test requests and results with a tool and engine",
 		"toolsSection": "Tool & engine",
 		"toolsHint": "Test tools and service engines with configured credentials",
@@ -2399,7 +2449,43 @@
 		"kindEmbedding": "Embedding",
 		"actualRequest": "Actual request"
 	},
+	"modelToolMode": {
+		"label": "Call type",
+		"models": "Models",
+		"tools": "Tools"
+	},
 	"simulator": {
+		"inspection": {
+			"gatewayHeaders": "Headers to gateway",
+			"inputBody": "Request body (input)",
+			"actualBody": "Request body (actual)",
+			"gateway": "To gateway",
+			"upstream": "To upstream",
+			"preview": "Preview",
+			"submitted": "Submitted",
+			"modelInPath": "model (URL path)",
+			"modelInQuery": "{field} (URL query)",
+			"inputSource": "The other JSON fields come from your input. The gateway applies upstream settings after choosing a route.",
+			"multipartSource": "The form is built from the supported JSON fields and selected files.",
+			"frameSource": "The simulator builds the initial frames and URL from your input and the selected model.",
+			"upstreamAfterSend": "After sending, the request log shows the upstream selected by the gateway and its effective configuration.",
+			"waitingForLog": "Waiting for the gateway request log…",
+			"snapshotUnavailable": "The upstream snapshot for this request is unavailable.",
+			"upstreamSnapshot": "Redacted snapshot from the gateway request log.",
+			"upstreamHeaderSources": "Configured upstream header sources",
+			"upstreamBodySources": "Configured upstream field sources",
+			"sourcesUnavailable": "This log does not include parameter sources.",
+			"openThisLog": "Open this request log",
+			"source": {
+				"key": "Selected API key",
+				"protocol": "Protocol default",
+				"selection": "Selected model and route group",
+				"input": "Incoming request",
+				"provider": "Provider configuration",
+				"route": "Route configuration"
+			}
+		},
+		"toolsSubtitle": "Use a user API key to call tools and verify authentication, billing and invocation logs.",
 		"title": "Simulator",
 		"subtitle": "Use a user API key to simulate client requests and verify authentication, routing and failover.",
 		"connection": "Connection",
@@ -2517,7 +2603,6 @@
 		"toolProtocolHidden": "Tools always use JSON POST /v1/tools/* — protocol selection does not apply.",
 		"readyNeedTool": "Select a tool.",
 		"errSelectTool": "Select a tool before Send.",
-		"openToolsInvocations": "Open Tools Invocations",
 		"clientHint": "Same path a real client uses: Proxy Base URL + user API key. Auth, failover, billing, and request logs all apply.",
 		"routingTargetHint": "Pick the catalog model and route group the client would send. Proxy chooses the upstream; this page does not pin a single route.",
 		"noMatchingModels": "No models match the current search.",
@@ -2812,7 +2897,7 @@
 	},
 	"oauthAccessTokensPage": {
 		"title": "OAuth access tokens",
-		"subtitle": "Tokens issued to third-party MCP clients (ChatGPT, Codex, …) after OAuth consent. They can only reach /mcp, never model endpoints, and are managed separately from user API keys. Tokens expire after 1 hour; clients renew them with a refresh token.",
+		"subtitle": "Applications are the clients people connect (ChatGPT, Codex, …). Each registers one or more instances and each user authorizes separately. Access tokens last 1 hour, only reach /mcp, and renew with a refresh token.",
 		"cleanup": "Clean up",
 		"cleanupHint": "Delete records revoked or expired more than 30 days ago",
 		"cleanupTitle": "Clean up old tokens",
@@ -2829,7 +2914,8 @@
 		"status": {
 			"active": "Active",
 			"expired": "Expired",
-			"revoked": "Revoked"
+			"revoked": "Revoked",
+			"renewable": "Renewable"
 		},
 		"table": {
 			"user": "User",
@@ -2856,7 +2942,84 @@
 		"userSectionEmpty": "This user has not authorized any third-party app.",
 		"viewAll": "View all",
 		"logCredential": "OAuth app: {name}",
-		"logCredentialUnknown": "OAuth access token {id}"
+		"logCredentialUnknown": "OAuth access token {id}",
+		"apps": {
+			"title": "Applications",
+			"empty": "No applications yet. Add one or import a preset; clients whose callback URL matches no application cannot register.",
+			"add": "Add application",
+			"importPreset": "Import preset",
+			"viewGrants": "Show authorizations of this app",
+			"disabledBadge": "Disabled",
+			"statUsers": "{count} users",
+			"statClients": "{count} instances",
+			"edit": "Edit",
+			"enable": "Enable",
+			"disable": "Disable",
+			"delete": "Delete",
+			"deleteTitle": "Delete application",
+			"deleteConfirm": "This revokes all {count} live authorizations of \"{name}\", deletes the clients issued manually for it and detaches its other registered instances; the app can no longer register. Continue?",
+			"deleted": "Application deleted",
+			"unattributedTitle": "Unattributed authorizations",
+			"unattributedHint": "Historical grants not linked to an app. Switching authorization modes does not remove these records; review or revoke them by status.",
+			"unattributedBadge": "Unattributed",
+			"filteringBy": "Showing authorizations of: {name}",
+			"manualCredentials": "Manual credentials",
+			"manual": {
+				"title": "Manual credentials · {name}",
+				"hint": "Issue fixed credentials for platforms without dynamic registration, such as connectors that ask for a server-side client_id / client_secret. The credentials belong to this app and stop working when the app is disabled or deleted.",
+				"issuedTitle": "Credentials issued",
+				"issuedHint": "The client_secret is shown only once. Copy it to the other platform now; if lost, rotate it.",
+				"authorizeUrl": "Authorize URL",
+				"tokenUrl": "Token URL",
+				"mcpUrl": "MCP URL",
+				"issuerMissing": "The built-in authorization server URL (Issuer) is not set yet. Save it to see the authorize and token URLs here.",
+				"authMethodHint": "The token endpoint accepts client_secret_basic and client_secret_post. Manual clients may skip PKCE; if they send it, S256 is verified.",
+				"createTitle": "Issue new credentials",
+				"name": "Name (shown on the consent page)",
+				"redirectUris": "Callback rules (optional, one per line)",
+				"redirectUrisHint": "Leave empty to use the app's callback allowlist. Same syntax as the app allowlist, including https://*.example.com wildcards.",
+				"create": "Issue",
+				"createFailed": "Could not issue credentials",
+				"listTitle": "Issued credentials",
+				"empty": "No manual credentials yet.",
+				"inheritRedirects": "Uses the app's callback allowlist",
+				"createdAt": "Created {time}",
+				"liveGrants": "{count} live authorizations",
+				"rotate": "Rotate secret",
+				"rotateTitle": "Rotate client_secret",
+				"rotateConfirm": "The old secret of \"{name}\" stops working immediately and the other platform must switch to the new one. Existing authorizations are kept. Continue?",
+				"rotateFailed": "Could not rotate the secret",
+				"deleteTitle": "Delete credentials",
+				"deleteConfirm": "This deletes \"{name}\" and revokes its {count} live authorizations; the other platform must be reconfigured. Continue?",
+				"deleteFailed": "Could not delete the credentials",
+				"deleted": "Credentials deleted"
+			},
+			"form": {
+				"createTitle": "Add application",
+				"editTitle": "Edit application",
+				"hint": "An application is recognized by the callback URLs it registers with; the display name is shown to users.",
+				"name": "Name",
+				"slug": "Identifier",
+				"slugHint": "Lowercase letters, digits and hyphens. Cannot be changed later.",
+				"redirectUris": "Allowed callback URLs (one per line)",
+				"redirectUrisHint": "Concrete URLs match exactly; http://127.0.0.1, http://localhost and http://[::1] ignore the port (RFC 8252); custom schemes (such as cursor://…) are allowed. Wildcards: https://*.example.com matches any subdomain and path, and a trailing * matches by prefix (such as http://127.0.0.1/*). Wildcards only work here; clients cannot register wildcard URLs.",
+				"patterns": "Client name keywords (optional, one per line)",
+				"patternsHint": "Needed only when several applications share one callback URL. A client whose registered name contains a keyword is assigned to this app. Client names are not trusted for anything else.",
+				"save": "Save",
+				"saved": "Application saved",
+				"saveFailed": "Could not save the application"
+			}
+		},
+		"managementTitle": "Apps & user grants",
+		"globalScope": "Gateway-wide records · Not filtered by service scope or authorization server URL",
+		"relationshipHint": "Apps define which clients the built-in authorization server admits. An app can have multiple client instances and users. After consent, a token binds a Gateway user to a client instance; calls use that user’s permissions and budget. Switching authorization servers does not delete these records.",
+		"grantsTitle": "User grants",
+		"grantsHint": "Each record is a Gateway user’s grant to a client instance. Select an app on the left to view its records.",
+		"appsRoleHint": "Admission rules for the built-in server; one app can register multiple client instances.",
+		"searchApps": "Search app name or slug",
+		"selectApp": "Select an app",
+		"allGrants": "All grants",
+		"noMatchingApps": "No matching apps"
 	},
 	"keysPage": {
 		"title": "API Keys",
@@ -2992,7 +3155,99 @@
 			"showLatest": "Show latest"
 		},
 		"title": "Request Logs",
-		"subtitle": "Filter requests by time, user or model to inspect call details, charges and errors.",
+		"subtitle": "Filter requests by time, type, user, model or tool to inspect call details, charges and errors.",
+		"kindFilter": {
+			"label": "Type",
+			"all": "All types",
+			"model": "Models",
+			"invocation": "Tools",
+			"tool": "REST tools",
+			"mcp": "MCP tools",
+			"hint": "Select any number; results match any of them. Model types are the same as the type tag in the list.",
+			"clear": "Any type",
+			"serversLoading": "Loading MCP servers…",
+			"noServers": "No MCP servers yet",
+			"toolChip": "Specific tool",
+			"modelOnly": "The selected types contain tool calls only. Tool calls do not go through model routing, so this filter does not apply."
+		},
+		"modelFilter": {
+			"search": "Search vendors or models…",
+			"empty": "No matching models",
+			"hint": "Select any number; results match any of them. Checking a vendor includes all of its models.",
+			"clear": "Any model",
+			"limit": "You can check up to {max} individual models. To select more, check the whole vendor."
+		},
+		"providerFilter": {
+			"all": "All providers",
+			"search": "Search types or providers…",
+			"empty": "No matching providers",
+			"hint": "Select any number; results match any of them. Checking a type includes all of its providers.",
+			"clear": "Any provider",
+			"limit": "You can check up to {max} individual providers. To select more, check the whole provider type."
+		},
+		"invocation": {
+			"requestView": "Request view",
+			"responseView": "Response view",
+			"dataPreview": "Preview",
+			"dataOriginal": "Raw data",
+			"restTitle": "REST tool call",
+			"mcpTitle": "MCP tool call",
+			"engineLatency": "Engine time",
+			"upstreamLatency": "Upstream time",
+			"latencyHint": "Time from the Gateway sending the call to receiving the result. Authentication and accounting are not included.",
+			"overview": "Call overview",
+			"request": "Request",
+			"response": "Response",
+			"accounting": "Accounting",
+			"tool": "Tool",
+			"engine": "Engine",
+			"server": "MCP server",
+			"upstreamTool": "Upstream tool",
+			"query": "Query",
+			"url": "URL",
+			"results": "Results",
+			"pageTitle": "Page title",
+			"contentLength": "Content length",
+			"contentPreview": "Start of content",
+			"charCount": "{count} characters",
+			"overallScore": "Overall AI rate",
+			"totalChars": "Characters checked",
+			"segmentCount": "Segments",
+			"segment": "Segment",
+			"segmentChars": "Characters",
+			"segmentScore": "AI rate",
+			"aiDetectionNote": "AI detection does not store the submitted text. Only character counts and scores are kept.",
+			"noArguments": "This call was made without arguments.",
+			"requestRaw": "Request summary (raw)",
+			"mcpRequestRaw": "Call sent upstream (raw)",
+			"responseRaw": "Response summary (raw)",
+			"mcpResponseRaw": "Result returned by upstream (raw)",
+			"contentBlock": "Content {index}",
+			"structuredContent": "Structured content",
+			"upstreamIsError": "Marked as error by upstream",
+			"emptyResult": "The upstream result has no content.",
+			"truncated": "The result is longer than the log keeps. Only the beginning is shown.",
+			"noResponseFailed": "The call failed before a result was returned, so there is no response to show.",
+			"noResponseStored": "No response summary was stored for this record.",
+			"failureRest": "The call to engine {engine} failed. Check its credentials, quota, and availability in the tool configuration.",
+			"failureRestUnknownEngine": "The engine call failed. Check the engine's credentials, quota, and availability in the tool configuration.",
+			"failureMcpToolError": "The upstream MCP server ran this tool and returned an error. See the response below for the reason.",
+			"failureMcpInvalidResult": "The upstream returned content that is not a valid MCP tool result, so the Gateway did not pass it to the client. See the raw content in the response below.",
+			"failureMcpTimeout": "The upstream MCP server did not respond within the timeout. Check the URL and timeout in that server's connection settings.",
+			"failureMcpUpstream": "No tool result was received from the upstream MCP server. Check the URL, credentials, and availability in that server's connection settings.",
+			"openToolConfig": "Open tool configuration",
+			"openMcpServer": "Open MCP server",
+			"billingUnits": "Billing units",
+			"unitPriceCharged": "Billing unit price",
+			"unitPriceMetered": "Cost unit price",
+			"unitPriceStandard": "Catalog unit price",
+			"pricingSource": "Price source",
+			"pricingSourceItem": "Price set on this tool",
+			"pricingSourceServer": "Server default prices",
+			"preflightUnits": "Estimated billing units",
+			"settledUnits": "Settled billing units",
+			"notCharged": "The call failed and was not charged. Unit prices are the ones in effect at the time of the call."
+		},
 		"filters": {
 			"protocol": "Protocol",
 			"routeGroup": "Route group",
@@ -3040,6 +3295,15 @@
 			"failover": "Failover"
 		},
 		"usage": {
+			"input": "In",
+			"inputImages": "Ref",
+			"outputImages": "Output",
+			"total": "Total",
+			"reasoning": "Reasoning",
+			"output": "Out",
+			"cacheRead": "Read",
+			"cacheWrite": "Write",
+			"noTokens": "No Token usage was recorded for this request",
 			"tokens": "tok",
 			"images": "img",
 			"seconds": "s",
@@ -3049,7 +3313,8 @@
 			"model": "Gateway model name, protocol, and route group",
 			"route": "Inbound: protocol endpoint, model ID, and route group. Upstream: protocol endpoint, model ID, and provider",
 			"tags": "Request traits: model kind, streaming, reasoning, and failover",
-			"usage": "Billable usage for this request: tokens, images, seconds, or characters depending on the model",
+			"usage": "Usage for this request: Tokens, images, seconds or characters. LLM input excludes cache read/write; each bucket maps to its own unit price.",
+			"billableInput": "Total input {input} − cache read {read} − cache write {write}. Cache is excluded from input only; output is unchanged. Pricing tiers use total input. If cache exceeds total input, the split is unavailable.",
 			"tag": {
 				"llm": "Text / multimodal chat model",
 				"image": "Image generation",
@@ -3067,7 +3332,7 @@
 			"profit": "Billing amount − cost amount; excludes infrastructure, taxes and other expenses.",
 			"rowDetail": "Click to inspect the request journey and stage details",
 			"inputOutputTokens": "Input / output tokens",
-			"imagePerImageUsage": "Input × output image count (per-image billing)",
+			"imagePerImageUsage": "Reference and generated images are counted separately (per-image billing)",
 			"audioPerSecondUsage": "Billable audio duration (per-second billing)",
 			"audioPerCharacterUsage": "Billable speech synthesis characters",
 			"cacheTokens": "Cache read / cache write tokens",
@@ -3168,10 +3433,12 @@
 			"responseNote": "Response content is not retained in request logs. Status, tracking IDs, timing and usage are shown when recorded.",
 			"catalogAmount": "Catalog amount",
 			"inputTokens": "Input tokens",
+			"uncachedInputTokens": "Uncached input Tokens",
 			"outputTokens": "Output tokens",
 			"cacheRead": "Cache read tokens",
 			"cacheWrite": "Cache write tokens",
 			"reasoningTokens": "Reasoning tokens",
+			"totalTokens": "Total Tokens",
 			"billingKind": "Billing kind",
 			"inputImages": "Input images",
 			"outputImages": "Output images",
@@ -3662,7 +3929,7 @@
 		},
 		"config": {
 			"title": "REST Services",
-			"subtitle": "Manage search, web extraction and content detection services",
+			"subtitle": "Configure tool providers and pricing, and view API and Agent integration guides.",
 			"viewInvocations": "View invocations →",
 			"showSecrets": "Show API keys",
 			"hideSecrets": "Hide API keys",
@@ -3706,54 +3973,17 @@
 			"catalogProvider": "Engine",
 			"noKey": "no key",
 			"needKeyToActivate": "Add an API key to at least one engine before saving.",
-			"providerGuideLink": "Engine guide",
 			"providerDocs": "Docs & API key →",
 			"cost": "Charged per success ({currency})",
-			"apiKey": "Provider API key",
+			"apiKey": "API Key",
 			"apiKeyPlaceholder": "Paste engine API key",
 			"apiKeyHint": "Required for the tool to accept traffic. Cleared keys fall back to nothing (no env).",
 			"providers": {
 				"bocha": "Bocha (博查)",
 				"tavily": "Tavily",
 				"cleversee": "Alibaba CleverSee (开析)",
-				"tencent_wsa": "Tencent Cloud WSA"
-			},
-			"providerGuide": {
-				"title": "Search engine guide",
-				"subtitle": "Index / sources and when to pick each engine. Not a direct Baidu or Google API.",
-				"disclaimer": "None of these call Baidu or Google official search APIs. Each uses its own or partner web index; result URLs may still point at baidu.com, google.com, etc.",
-				"selected": "Currently selected",
-				"docsLink": "Docs & API key →",
-				"labels": {
-					"sources": "Sources",
-					"bestFor": "Best for"
-				},
-				"items": {
-					"bocha": {
-						"badge": "China preferred",
-						"summary": "AI-oriented Chinese search engine with its own large web index (positioned as a domestic Bing Search API alternative).",
-						"sources": "Hundreds of millions to ~10B web pages plus partner content (news, encyclopedia, short video, weather, academic, etc.). Not Baidu/Google.",
-						"bestFor": "China-region users, Chinese queries, domestic compliance."
-					},
-					"tavily": {
-						"badge": "International preferred",
-						"summary": "LLM-oriented retrieval layer: search + extract + rank in one call. Built for agents/RAG, not a classic SERP dump.",
-						"sources": "Own crawler plus third-party aggregation (often associated with independent indexes such as Brave). Not an official Google/Baidu API.",
-						"bestFor": "International region, English research, agent workflows."
-					},
-					"cleversee": {
-						"badge": "",
-						"summary": "Alibaba CleverSee (开析) AI-native web search with mainland_china / global region modes.",
-						"sources": "Alibaba’s own AI search index. Docs do not claim Baidu or Google backends. Gateway default is mainland_china; domain allow-lists switch to global.",
-						"bestFor": "When you need an explicit China vs global region switch on Alibaba Cloud."
-					},
-					"tencent_wsa": {
-						"badge": "",
-						"summary": "Tencent Cloud Web Search API (WSA), officially based on Sogou Search.",
-						"sources": "Open web via Sogou plus Tencent ecosystem (Tencent News, Sogou Baike, Penguin accounts). Higher tiers add VR/authority verticals.",
-						"bestFor": "China Chinese web as an alternative to Bocha; strong Sogou/Tencent content mix."
-					}
-				}
+				"tencent_wsa": "Tencent Cloud WSA",
+				"deepseek": "DeepSeek Search"
 			}
 		},
 		"webFetch": {
@@ -3767,13 +3997,14 @@
 			"needKeyToActivate": "Add an API key to at least one provider before saving.",
 			"providerDocs": "Docs & API key →",
 			"cost": "Charged per success ({currency})",
-			"apiKey": "Provider API key",
+			"apiKey": "API Key",
 			"apiKeyPlaceholder": "Paste provider API key",
 			"apiKeyHint": "Required for the tool to accept traffic. Cleared keys fall back to nothing (no env).",
 			"providers": {
 				"firecrawl": "Firecrawl",
 				"tavily": "Tavily Extract",
-				"jina": "Jina Reader"
+				"jina": "Jina Reader",
+				"deepseek": "DeepSeek Fetch"
 			}
 		},
 		"webDeepSearch": {
@@ -3785,11 +4016,12 @@
 			"needKeyToActivate": "Add an API key to at least one provider before saving.",
 			"providerDocs": "Docs & API key →",
 			"cost": "Charged per success ({currency})",
-			"apiKey": "Provider API key",
+			"apiKey": "API Key",
 			"apiKeyPlaceholder": "Paste provider API key",
 			"providers": {
 				"firecrawl": "Firecrawl Search",
-				"jina": "Jina Search"
+				"jina": "Jina Search",
+				"deepseek": "DeepSeek Search (with content)"
 			}
 		},
 		"aiDetection": {
@@ -3818,52 +4050,6 @@
 			"billingUnitHint": "Partial units are rounded up to one billing unit.",
 			"billingUnitInvalid": "Enter a positive whole number of characters."
 		},
-		"invocations": {
-			"title": "Invocations",
-			"subtitle": "Review REST and MCP tool calls, including requests, responses and charges.",
-			"configureTools": "REST Services →",
-			"source": "Source",
-			"allSources": "All",
-			"sourceRest": "REST",
-			"sourceMcp": "MCP",
-			"serverFilter": "MCP server",
-			"allServers": "All servers",
-			"openInRequestLogs": "Open in Request Logs",
-			"toolFilter": "Tool",
-			"allTools": "All tools",
-			"status": "Status",
-			"empty": "No tool invocations in this range.",
-			"columns": {
-				"time": "Time",
-				"tool": "Tool",
-				"provider": "Engine",
-				"query": "Query",
-				"user": "User",
-				"status": "Status",
-				"results": "Results",
-				"standard": "Standard ({currency})",
-				"charged": "Charged ({currency})",
-				"metered": "Metered ({currency})",
-				"profit": "Profit ({currency})",
-				"latency": "Latency"
-			},
-			"titles": {
-				"profit": "Charged − metered (per call)",
-				"standard": "Standard (catalog price)",
-				"charged": "Charged (user budget)",
-				"metered": "Metered (supplier cost)"
-			},
-			"detail": {
-				"request": "Request",
-				"response": "Response",
-				"responseFormat": "Response format",
-				"formatList": "List",
-				"formatJson": "JSON",
-				"noListResults": "No list items to show; switch to JSON if a raw payload exists.",
-				"noResponseStored": "No response summary stored (older rows only kept the query, or the call failed before results).",
-				"hint": "Response summaries are truncated for ops review; full chat transcripts stay on the client."
-			}
-		},
 		"errors": {
 			"invalidWebSearchProvider": "Search engine must be one of the implemented options.",
 			"invalidWebSearchCost": "The standard price and both multipliers must be finite, non-negative numbers and cannot be blank. Calculated amounts must be within range.",
@@ -3875,8 +4061,145 @@
 			"noKeyCannotActivate": "Cannot activate a provider without an API key.",
 			"switchActiveBeforeClearingKey": "Switch Active to another engine that still has a key before clearing the current engine’s key, then save again to clear it."
 		},
+		"apiGuide": {
+			"authLabel": "User authentication",
+			"baseRequired": "Set the Proxy URL in Connection URL first.",
+			"copyCode": "Copy {name}",
+			"docs": "API docs",
+			"openDocs": "{name} API docs",
+			"title": "{name} · API integration",
+			"copyUrl": "Copy full request URL",
+			"copyPath": "Copy endpoint path",
+			"copyFailed": "Copy failed; select the text manually",
+			"proxyBase": "Proxy URL",
+			"proxyHint": "Shared by REST, Simulator and MCP. Defaults to GATEWAY_PROXY_URL; manual changes override only this browser.",
+			"invalidBase": "Use an http(s) base URL without /v1, an endpoint, credentials or query parameters.",
+			"authHint": "Use a user API key: Authorization: Bearer USER_API_KEY. Agents do not need admin keys or upstream engine credentials.",
+			"views": "Documentation views",
+			"reference": "API reference",
+			"curl": "cURL example",
+			"agent": "Agent tool",
+			"request": "Request · JSON",
+			"response": "Response · 200",
+			"required": "Required",
+			"defaultValue": "Default {value}",
+			"optionalHint": "? Optional",
+			"errors": "Common errors",
+			"curlHint": "Set OCTAFUSE_API_KEY to a user API key before running the example. Requests use the active engine and successful calls are billed using the saved configuration.",
+			"agentHint": "Names and arguments follow the Gateway contract. Choose your Agent protocol. Definitions let the model request a tool; they do not execute HTTP requests or expose an MCP server.",
+			"definition": "Register tool · JSON",
+			"executor": "Execute tool · TypeScript / Node.js 18+",
+			"executorHint": "Run on your Agent server. Set OCTAFUSE_API_KEY to a user API key; OCTAFUSE_BASE_URL overrides the displayed URL. Pass tool arguments to the function; it returns Gateway data. Keep credentials out of definitions and model context.",
+			"fields": {
+				"query": "Search query; at least 2 characters after trimming",
+				"count": "1–10 results",
+				"allowed_domains": "Allow these domains; omit blocked_domains",
+				"blocked_domains": "Exclude these domains; omit allowed_domains",
+				"url": "Public http(s) URL; no localhost, private IPs or metadata hosts",
+				"text": "Text to analyze; non-empty after trimming"
+			},
+			"responseFields": {
+				"results": "Search results",
+				"title": "Page title",
+				"url": "Page URL, possibly redirected",
+				"snippet": "Short excerpt",
+				"summary": "Additional summary",
+				"content": "Page content, usually Markdown",
+				"cost": "User charge in the gateway billing currency",
+				"overall_score": "Character-weighted AI likelihood, 0–100",
+				"total_chars": "Characters analyzed",
+				"segments": "Segments: index, chars, score, excerpt",
+				"score": "Segment AI likelihood, 0–100",
+				"billing_units": "Character count ÷ billing unit size, rounded up"
+			},
+			"errorsByStatus": {
+				"400": "Invalid parameters or JSON body.",
+				"401": "Missing or invalid user API key.",
+				"403": "Insufficient budget or access denied.",
+				"502": "Upstream request failed.",
+				"503": "Tool inactive, credentials missing or invalid configuration."
+			},
+			"agentFlow": "Register tool → Execute REST → Return result",
+			"format": "Definition format",
+			"officialDocs": "Official docs",
+			"formats": {
+				"generic": "Generic (adapt to SDK)",
+				"responses": "OpenAI Responses",
+				"chat": "OpenAI Chat Completions",
+				"anthropic": "Anthropic Messages"
+			},
+			"formatHints": {
+				"generic": "For custom Agent adapters. inputSchema is not a universal SDK registration format.",
+				"responses": "Add the definition to the request tools array. Explicit strict: false preserves optional REST arguments.",
+				"chat": "Add the definition to the request tools array, keeping the function wrapper. The model or compatible service must support tool calling.",
+				"anthropic": "Add the definition to the Messages request tools array. input_schema describes the generated input."
+			},
+			"handler": "Return tool results",
+			"handlerCode": "Tool-call bridge · TypeScript",
+			"handlerHints": {
+				"generic": "Call handleToolCall from your dispatcher with parsed arguments, then pass its result to your Agent framework.",
+				"responses": "Pass only function_call items from output. Append the returned item to the next input, preserving the original model output including reasoning items.",
+				"chat": "Pass only function calls from message.tool_calls. Preserve the assistant message, then append the returned tool message to messages.",
+				"anthropic": "Pass only tool_use blocks from content. Preserve the assistant message; place returned blocks in the next user message content."
+			},
+			"agentRuntimeHint": "Integration fragments, not a complete Agent loop. Validate arguments, match call IDs and continue model requests through your SDK. Handle timeouts and errors in the runtime; avoid blindly retrying potentially billed calls. Tailor descriptions to your task and keep names aligned with the executor."
+		},
+		"workspace": {
+			"documentation": "Integration documentation",
+			"providersHelp": "Provider and pricing help",
+			"noMatches": "No matching tools",
+			"intro": "Clients use a stable tool API; Gateway calls the active provider and applies your pricing.",
+			"addressSettings": "Connection URL",
+			"directory": "Tool directory",
+			"selectTool": "Choose a tool",
+			"configured": "Configured",
+			"testTool": "Debug tool",
+			"appliedProvider": "Active configuration",
+			"setupHint": "No active provider",
+			"setupAction": "Configure provider",
+			"views": "Tool workspace",
+			"tabs": {
+				"providers": "Providers & pricing",
+				"api": "API integration",
+				"agent": "Agent integration"
+			},
+			"providersHint": "One active provider (upstream engine) per tool, with separate credentials and pricing. Switching providers keeps the tool definition and request URL unchanged. Edits take effect after saving.",
+			"input": "Input",
+			"output": "Output",
+			"inputs": {
+				"webSearch": "Search query, optional result count and domain filters",
+				"webFetch": "Public page URL to read",
+				"webDeepSearch": "Search query and result count",
+				"aiDetection": "Text to analyze"
+			},
+			"outputs": {
+				"webSearch": "Page titles, links and snippets",
+				"webFetch": "Page content and metadata",
+				"webDeepSearch": "Search results with page content",
+				"aiDetection": "Overall score, segments and billable units"
+			}
+		},
+		"toolGroups": {
+			"webSearch": "Search the web for titles, links and snippets",
+			"webFetch": "Extract page content for models to read and process",
+			"webDeepSearch": "Search the web and retrieve page content for further analysis",
+			"aiDetection": "Assess whether text may be AI-generated"
+		},
 		"serviceList": {
-			"search": "Search services or tool types",
+			"filteredEngineCount": "{visible} / {total} engines",
+			"configHint": "Configure this tool provider’s credentials and pricing.",
+			"toolConfig": "Configure {name}",
+			"engineHint": "One active engine per tool. Credentials and pricing are configured separately and take effect after saving.",
+			"testActive": "Test current engine",
+			"configureEngine": "Configure {name}",
+			"configure": "Configure",
+			"engineCount": "{count} engines",
+			"currentEngine": "Current engine · {name}",
+			"enginesForTool": "Upstream engines for {name}",
+			"engines": "Provider",
+			"overview": "{tools} tools · {engines} upstream engines",
+			"tools": "Tools",
+			"search": "Search tools or providers",
 			"toolType": "Tool type",
 			"status": "Status",
 			"name": "Service",
@@ -3884,7 +4207,7 @@
 			"allStatuses": "All statuses",
 			"clearFilters": "Clear filters",
 			"noResults": "No matching REST services.",
-			"count": "Showing {visible} of {total} services",
+			"count": "Matching {visible} / {total} engines",
 			"currency": "Billing currency: {currency}",
 			"openHint": "Click a service row for configuration and management",
 			"perRequest": "Billed per request",
@@ -3892,7 +4215,36 @@
 			"backToConfig": "Back to configuration",
 			"connection": "Connection",
 			"pricing": "Billing rules",
-			"credentialsRequired": "Complete the credentials to save and activate, or save the configuration first."
+			"credentialsRequired": "Save the credentials, then activate this provider in the list",
+			"usageStatus": "Usage",
+			"actions": "Actions",
+			"savedConfigHint": "Saved settings · One active provider per tool",
+			"credentialsSaved": "Credentials saved",
+			"credentialsMissing": "Missing credentials",
+			"enableEngine": "Enable {name}",
+			"enable": "Enable",
+			"inUse": "In use",
+			"standby": "Ready",
+			"needsSetup": "Needs setup",
+			"needsCredentials": "Credential issue",
+			"unavailable": "Unavailable",
+			"enableProvider": "Enable provider",
+			"switchHint": "Enabling {name} replaces {current} for subsequent requests to this tool.",
+			"firstEnableHint": "Once enabled, requests to this tool will use {name}.",
+			"activeHint": "Serving this tool. Saving updates its connection and pricing.",
+			"credentialHint": "Complete the credentials to enable this provider, or save the configuration first.",
+			"pricingHint": "Set a standard price per billing unit. Multipliers determine charges and costs.",
+			"saveOnlyHint": "Save connection and pricing settings here. Activate providers in the Usage column.",
+			"usageSelectionHint": "Each tool uses one provider. Select another configured provider to switch.",
+			"activateSavedHint": "Use this provider’s saved connection and pricing settings",
+			"switching": "Switching…",
+			"enabledFeedback": "Enabled {name}",
+			"activationBlocked": {
+				"missing": "Configure and save credentials first",
+				"unsaved": "Save or discard this provider’s changes first",
+				"unavailable": "This provider is unavailable"
+			},
+			"engineDetails": "{name} engine details"
 		},
 		"ui": {
 			"notConfigured": "Not configured",
@@ -3902,11 +4254,77 @@
 			"test": "Test service",
 			"testSavedConfig": "Test the saved configuration in Playground",
 			"discard": "Revert changes",
-			"draftHint": "Changes stay on this page until saved; tests use the saved configuration",
-			"saveHint": "Save this service only; activating it replaces the active service of the same type",
+			"draftHint": "Unsaved changes; debugging uses saved configuration",
+			"saveHint": "Activation switches the provider for this tool",
 			"activationFailed": "Configuration saved, but activation failed: {message}",
 			"loadFailed": "Could not load service configuration",
 			"retry": "Reload"
+		},
+		"engineGuide": {
+			"docs": "Website & docs",
+			"integration": "Integration notes",
+			"items": {
+				"webSearch": {
+					"bocha": {
+						"summary": "Returns page titles, links and snippets through Bocha Web Search.",
+						"note": "Result limits and domain allowlists or blocklists are passed upstream."
+					},
+					"tavily": {
+						"summary": "Retrieves web results through Tavily Search.",
+						"note": "The gateway uses basic search depth and supports result limits and domain filters."
+					},
+					"cleversee": {
+						"summary": "Runs web searches through Alibaba Cloud CleverSee.",
+						"note": "Uses mainland_china by default; a domain allowlist selects global, with up to 30 domains."
+					},
+					"tencent_wsa": {
+						"summary": "Retrieves Tencent Cloud WSA search results in the unified tool response.",
+						"note": "Uses the service API Key. The first allowed domain is sent upstream; the gateway then applies the full domain filter."
+					},
+					"deepseek": {
+						"summary": "Returns titles, links and snippets through DeepSeek Search.",
+						"note": "Queries are truncated to 128 characters. Domain filters use site: syntax, with local filtering when the query has no room."
+					}
+				},
+				"webFetch": {
+					"firecrawl": {
+						"summary": "Extracts a page as Markdown through Firecrawl Scrape.",
+						"note": "Fetches one URL per call and returns the title and page address supplied upstream."
+					},
+					"tavily": {
+						"summary": "Extracts page content through Tavily Extract.",
+						"note": "Submits one URL per call, preferring raw_content and falling back to content."
+					},
+					"jina": {
+						"summary": "Reads page titles, addresses and content through Jina Reader.",
+						"note": "Requests Markdown and authenticates with the configured Jina API Key."
+					},
+					"deepseek": {
+						"summary": "Reads page titles and Markdown through DeepSeek Fetch.",
+						"note": "The upstream does not return the final redirect address, so the response retains the requested URL."
+					}
+				},
+				"webDeepSearch": {
+					"firecrawl": {
+						"summary": "Searches through Firecrawl Search and requests Markdown content with results.",
+						"note": "Returns normalized titles, links, snippets and available content. Content availability depends on the upstream result."
+					},
+					"jina": {
+						"summary": "Searches and reads result content through Jina Search.",
+						"note": "Requests Markdown and limits the returned result count. Content may be absent."
+					},
+					"deepseek": {
+						"summary": "Searches and retrieves content in one DeepSeek Search request.",
+						"note": "Enables need_content and truncates queries to 128 characters. Content may be absent."
+					}
+				},
+				"aiDetection": {
+					"tencent_tms": {
+						"summary": "Detects AI-generated text signals through Tencent Cloud TMS.",
+						"note": "Requires SecretId and SecretKey. Region defaults to ap-guangzhou; BizType is optional. Billing rounds characters up to the configured unit."
+					}
+				}
+			}
 		}
 	},
 	"pricing": {
@@ -3917,23 +4335,24 @@
 			"add": "Add",
 			"preview": "Preview",
 			"noTiers": "No tiers yet.",
-			"upto": "upto",
-			"input": "input",
-			"output": "output",
-			"cacheRead": "cache read",
-			"cacheWrite": "cache write",
+			"upto": "Input limit",
+			"input": "Input",
+			"output": "Output",
+			"cacheRead": "Cache read",
+			"cacheWrite": "Cache write",
 			"textInput": "Text Input",
 			"cachedText": "Cached Text",
 			"imageInput": "Image Input",
 			"cachedImageInput": "Cached Image Input",
 			"imageOutput": "Image Output",
-			"imageHint": "Token rates billed from upstream Images usage × these $/1M rates. Route factors apply on top.",
+			"imageHint": "Image usage is billed at the {currency}/million Token rates below, with route multipliers applied afterwards.",
 			"footer": "{currency}/1M; by input_tokens (last row open-ended). No tiers on save → null (bill 0).",
 			"footerImage": "Unit: {currency}/1M tokens · Text Input / Cached Text / Image Input / Cached Image Input / Image Output. Last row open-ended.",
 			"removeTier": "Remove this tier",
 			"lastTierOpenEnded": "Last tier is open-ended (JSON upto: null); not editable",
 			"unitPerM": "{currency}/1M tokens",
-			"unitPerImage": "{currency}/image"
+			"unitPerImage": "{currency}/image",
+			"tierField": "Tier {tier} · {field}"
 		},
 		"readOnlyTable": {
 			"inputRange": "Input range",
@@ -4027,6 +4446,15 @@
 		"followHint": "Updates with the preview. Scroll up to pause following."
 	},
 	"mcp": {
+		"workspace": {
+			"directory": "Service directory",
+			"search": "Search services or URLs",
+			"selectService": "Select an MCP service",
+			"catalogPricing": "Catalog & pricing",
+			"copyEndpoint": "Copy endpoint URL",
+			"editDefaultPricing": "Edit default pricing",
+			"loading": "Loading services"
+		},
 		"clientEndpoint": "Client endpoint",
 		"sections": {
 			"label": "MCP management",
@@ -4035,7 +4463,14 @@
 		},
 		"clientAccess": {
 			"title": "Connect clients",
-			"description": "Connect external MCP clients to the gateway using an API Key or OAuth 2.0. Copy client configuration from the guide, or test the catalog exposed by the gateway."
+			"description": "Choose a service scope and authentication method, then copy a client configuration or test the catalog.",
+			"authCategories": "Connection method",
+			"keyTitle": "API Key access",
+			"oauthTitle": "OAuth 2.0 authorization",
+			"guideTitle": "Client configuration",
+			"keyDescription": "Connect with a Gateway user API Key using the configuration for your client.",
+			"oauthDescription": "Connect through browser sign-in and consent, without entering an API Key.",
+			"documentation": "Client connection documentation"
 		},
 		"title": "MCP Servers",
 		"subtitle": "Connect remote MCP servers, review and enable tools, and make them available through a single client endpoint.",
@@ -4057,29 +4492,59 @@
 		"oauth": {
 			"title": "OAuth 2.0 sign-in (optional)",
 			"hint": "For clients that only speak OAuth 2.0 (such as ChatGPT connectors), so users need not copy an API Key. Without it, clients can still connect with an API Key.",
-			"description": "Origin of the portal that signs users in for MCP clients such as ChatGPT connectors (system_config.MCP_OAUTH_AUTHORIZATION_SERVER). When set, /mcp* answers unauthenticated requests with 401 + WWW-Authenticate and publishes /.well-known/oauth-protected-resource. The Gateway never issues tokens itself. Must be https (http only for localhost). Leave empty to disable.",
+			"description": "How MCP clients such as ChatGPT connectors sign users in. Built-in: this Gateway is the OAuth authorization server (system_config.MCP_OAUTH_ISSUER) and issues access tokens that only work on /mcp*. External: the Gateway only points clients to another authorization server (MCP_OAUTH_AUTHORIZATION_SERVER). Off: no OAuth discovery. Must be https (http only for localhost).",
 			"label": "Authorization server origin",
 			"placeholder": "https://soloent.ai",
 			"howTitle": "What happens once enabled",
 			"how1": "When a client calls /mcp without credentials, the gateway returns 401 and tells it where the authorization server is.",
-			"how2": "The client signs in at the authorization server and receives an access credential that works for /mcp only.",
-			"how3": "The gateway handles no login and issues no credentials; the API Key method keeps working.",
-			"requirement": "The authorization server must support dynamic client registration, PKCE (S256) and /.well-known/oauth-authorization-server, and manages its own allowed callback URLs. The SoloEnt portal has this built in: enter https://soloent.ai, and manage callbacks under Admin → Integrations → Third-party apps.",
+			"how2": "The client registers, the user signs in and approves, and the client receives an access token that works for /mcp only.",
+			"how3": "The API Key method keeps working. Users can revoke an app at any time.",
+			"requirement": "The built-in server supports dynamic client registration, PKCE (S256), refresh tokens and /.well-known/oauth-authorization-server. Apps are recognized by their callback URL: add them under Applications below.",
 			"statusOn": "Enabled: unauthenticated /mcp requests get a 401 that points clients to the server above (resource metadata: {path}).",
 			"openGuide": "How to connect",
 			"metadataLink": "Authorization server metadata",
-			"save": "Save OAuth server",
-			"invalid": "Invalid authorization server: use an https origin (http is allowed for localhost only).",
+			"save": "Save OAuth settings",
+			"invalid": "Invalid server URL: use an https origin (http is allowed for localhost only).",
 			"enable": "Enable OAuth 2.0 sign-in",
-			"required": "Enter the authorization server URL first.",
-			"learnMore": "How it works and requirements"
+			"required": "Enter the server URL first.",
+			"learnMore": "How it works and requirements",
+			"modeLabel": "OAuth mode",
+			"modes": {
+				"builtin": {
+					"title": "Built-in authorization server",
+					"hint": "The Gateway registers clients, issues and refreshes tokens itself. Sign-in and consent can use the built-in API Key page or your own site."
+				},
+				"external": {
+					"title": "External authorization server",
+					"hint": "The Gateway only serves resource metadata and points clients to a server you run. Use this to keep an existing setup."
+				},
+				"off": {
+					"title": "Off",
+					"hint": "No OAuth discovery. Clients connect with an API Key."
+				}
+			},
+			"issuerLabel": "Public URL of this Gateway (issuer)",
+			"issuerPlaceholder": "https://api.example.com",
+			"issuerHint": "The origin clients reach this Gateway at. Your reverse proxy must forward /oauth/* and /.well-known/oauth-authorization-server to the proxy service.",
+			"consentLabel": "Sign-in and consent page (optional)",
+			"consentPlaceholder": "https://portal.example.com/oauth/consent",
+			"consentHint": "Where users sign in and approve. The Gateway appends request_id. Leave empty to use the built-in page, where users approve with their API Key.",
+			"cimdLabel": "Accept client ID metadata documents (CIMD)",
+			"cimdHint": "Lets clients use an https URL as client_id; the Gateway fetches the metadata document at that URL instead of dynamic registration (MCP 2025-11-25). Its callbacks must still match an enabled app. Off by default; when on, the Gateway makes outbound requests to those URLs.",
+			"consentInvalid": "Invalid consent page URL: use an https URL without credentials or fragment (http is allowed for localhost only).",
+			"serverTitle": "Authorization server",
+			"scope": {
+				"builtin": "Global configuration for all MCP services. Gateway manages app admission, client registration and token issuance.",
+				"external": "Global configuration. Sign-in and registration are managed externally; the records below are stored by Gateway.",
+				"off": "OAuth discovery is off; API Key access remains available. Existing grant records are retained, and issued tokens are not revoked automatically."
+			}
 		},
 		"connectGuide": {
 			"button": "Connection guide",
 			"title": "Client setup guide",
 			"subtitle": "Pick a client and copy the config. Agents only need the gateway URL and a user API Key, never upstream secrets.",
 			"proxyUrl": "Proxy URL",
-			"proxyHint": "Enter the Proxy base URL; /mcp is added automatically. Shared with “Test exposed catalog”.",
+			"proxyHint": "Shared by REST, Simulator and MCP. Defaults to GATEWAY_PROXY_URL; manual changes override only this browser.",
 			"proxyInvalid": "Invalid URL: use an http(s) base URL without the /mcp path, credentials or query.",
 			"scope": "Service scope",
 			"allServices": "All services (aggregate)",
@@ -4234,7 +4699,7 @@
 		"removeHeader": "Remove this header",
 		"removedHeadersWarning": "Saving will remove these headers: {names}",
 		"advancedSettings": "Advanced settings",
-		"defaultPriceHint": "Tools inherit this server’s per-call prices by default.",
+		"defaultPriceHint": "Tools without an override use these prices.",
 		"timeoutHint": "1,000–120,000 ms; default 30 seconds.",
 		"maxBytesHint": "1,000–8,000,000 bytes.",
 		"slugReserved": "builtin is reserved. Choose another slug.",
@@ -4245,7 +4710,8 @@
 		"testSummary": "Connected: {tools} tools, {prompts} prompts, {resources} resources found. The catalog was not changed.",
 		"batchEnableTitle": "Enable catalog items",
 		"batchDisableTitle": "Disable catalog items",
-		"batchStatusConfirm": "This updates {count} items. Enabled items are exposed when their server is active.",
+		"batchEnableConfirm": "Enable {count} catalog entries. The service must also be active for clients to use them.",
+		"batchDisableConfirm": "Disable {count} catalog entries. Clients will no longer be able to use them through the gateway.",
 		"confirmDeleteNamed": "Delete “{name}” and its entire catalog? Existing clients will no longer be able to call this server.",
 		"selectItem": "Select {name}",
 		"noDescription": "No description",
@@ -4276,6 +4742,35 @@
 		"checkConnection": "Check connection settings",
 		"noAuthHeaders": "No auth headers configured",
 		"reviewHint": "New items start disabled. Review and enable them individually or in batches. Definition changes require acceptance per item.",
+		"acceptAllTitle": "Accept all changes",
+		"acceptAllConfirm": "Accept {count} upstream definition changes? Clients will use the new definitions immediately.",
+		"acceptedMany": "{count} changes accepted",
+		"acceptAllChanges": "Accept all changes ({count})",
+		"enableAllNewCount": "Enable all new ({count})",
+		"reviewBannerTitle": "{count} catalog items need review",
+		"reviewBannerDetail": "{changed} changed · {added} new",
+		"reviewBannerHint": "Definition changes take effect only after you accept them; clients keep using the current definition until then. New items start disabled and are exposed only once enabled.",
+		"reviewStart": "Start review",
+		"reviewItem": "Review change",
+		"reviewChangedInline": "Upstream definition changed; the current definition stays in use until accepted",
+		"reviewDialogTitle": "Review catalog changes",
+		"reviewQueue": "To review",
+		"reviewPosition": "{index} / {total}",
+		"reviewPrev": "Previous",
+		"reviewNext": "Next",
+		"reviewSkip": "Skip",
+		"reviewChangedNote": "Until accepted, clients keep using the current definition.",
+		"reviewNewNote": "New items start disabled and are exposed only once enabled.",
+		"reviewChangedFields": "Changed fields",
+		"reviewDone": "Review complete",
+		"reviewDoneHint": "Nothing left to review.",
+		"reviewNothingToEnable": "No new items to enable.",
+		"diffStats": "+{added} −{removed} lines",
+		"diffUnchangedLines": "{count} unchanged lines",
+		"diffExpandAll": "Expand all",
+		"diffCollapse": "Collapse unchanged",
+		"diffNoChanges": "No substantive difference — the upstream probably just reordered fields. Accepting clears the change marker.",
+		"reviewDefinition": "Definition",
 		"discardTitle": "Discard unsaved changes?",
 		"discardMessage": "Your form changes have not been saved and will be lost on close.",
 		"discard": "Discard changes",
@@ -4286,7 +4781,7 @@
 			"title": "Test exposed catalog",
 			"subtitle": "Request the Proxy directly to inspect the MCP catalog and response seen by agents.",
 			"proxyUrl": "Proxy base URL",
-			"proxyHint": "Enter the Proxy base URL. The /mcp path is added automatically. Use the Proxy address rather than the Admin address.",
+			"proxyHint": "Shared by REST, Simulator and MCP. Defaults to GATEWAY_PROXY_URL; manual changes override only this browser.",
 			"scope": "Service scope",
 			"allServices": "All services",
 			"disabled": "Disabled",
@@ -4346,7 +4841,7 @@
 			"pricing": "Billing rules",
 			"advanced": "Advanced"
 		},
-		"advancedHint": "Defaults usually work well. Adjust for slower upstream services or larger responses. Default timeout: 30 seconds; maximum response: 1 MiB.",
+		"advancedHint": "Adjust these only for slow upstream responses or large payloads.",
 		"pricing": {
 			"simpleDefaultHint": "Tools without their own pricing use these defaults.",
 			"needsReview": "Review configuration",
@@ -4393,15 +4888,14 @@
 		"title": "Pricing rule",
 		"perUnitMode": "Per-unit billing",
 		"charactersUnit": "{count} characters",
-		"requestUnit": "request"
+		"requestUnit": "request",
+		"standardLabel": "Standard price"
 	},
 	"remainingUi": {
 		"effectiveFactor": "Amount divided by the standard amount for these records",
 		"allStatuses": "All statuses",
 		"loadFailed": "Could not load data",
 		"retry": "Reload",
-		"invocationDetails": "Invocation details",
-		"providerScope": "Provider scope",
 		"modelPrefix": "Service model prefix",
 		"discardTitle": "Discard unsaved changes?",
 		"discardHint": "Changes have not taken effect. Closing discards this draft",
@@ -4433,7 +4927,6 @@
 			"maintenance": "Maintenance"
 		},
 		"wholeMinutes": "Enter a positive whole number of minutes",
-		"requestLogs": "Request logs",
 		"writeIncludesRead": "Write includes read for the same resource; credential access is granted separately"
 	}
 }

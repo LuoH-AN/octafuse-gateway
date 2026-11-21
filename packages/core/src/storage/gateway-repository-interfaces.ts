@@ -17,6 +17,7 @@ import type { ApiKeyListSortField, ApiKeyListSortOrder } from '../db/api-keys-li
 import type { UserListSortField, UserListSortOrder } from '../db/users-list-sort';
 import type { ProviderProtocolBases } from '../db/providers-types';
 import type { SystemConfigRow } from '../db/system-config-types';
+import type { RequestLogMatchGroup } from '../db/request-log-filters';
 import type {
 	AdminApiKeyListItem,
 	EntityCountSnapshot,
@@ -48,6 +49,7 @@ import type {
 } from '../db/admin-access-types';
 import type { McpServersRepository } from '../db/mcp-servers.repository';
 import type { OAuthAccessTokensRepository } from '../db/oauth-access-tokens.repository';
+import type { OAuthServerRepository } from '../db/oauth-server.repository';
 
 export interface AdminAccessRepository {
 	listApiKeys(): Promise<AdminApiKeyRow[]>;
@@ -75,7 +77,7 @@ export interface AdminAccessRepository {
 	deleteExpiredSessions(nowIso: string): Promise<void>;
 }
 
-export type { McpServersRepository, OAuthAccessTokensRepository };
+export type { McpServersRepository, OAuthAccessTokensRepository, OAuthServerRepository };
 
 /** 管理端分析聚合 */
 export interface AdminAnalyticsRepository {
@@ -377,6 +379,8 @@ export interface ProvidersRepository {
 		note: unknown;
 		apiKey?: string;
 		status?: string;
+		/** `providers.custom_params` JSON 文本（按协议分组的默认 headers/body），未传 = `null`。 */
+		customParams?: string | null;
 	}): Promise<void>;
 	updateProviderByPatch(id: string, body: Record<string, unknown>): Promise<number>;
 	deleteProviderById(id: string): Promise<number>;
@@ -479,8 +483,16 @@ export interface RequestLogsRepository {
 		userEmail?: string;
 		modelId?: string;
 		providerId?: string;
-		/** Match any of these `provider_id` values. Combined with `providerId` when both are set. */
+		/** Match any of these `provider_id` values, or any provider of `providerKinds`. Combined with `providerId` when both are set. */
 		providerIds?: string[];
+		/** Provider kinds (`providers.kind`; empty string = unclassified), resolved against the current provider catalog. ORed with `providerIds`. */
+		providerKinds?: string[];
+		/** Match any of these `model_id` values, or any model of `modelVendors`. Combined with `modelId` when both are set. */
+		modelIds?: string[];
+		/** Model vendors (`models.vendor`), resolved against the current model catalog. ORed with `modelIds`. */
+		modelVendors?: string[];
+		/** Rows must match at least one group. Conditions inside a group are ANDed. Combined with the other filters by AND. */
+		anyOf?: RequestLogMatchGroup[];
 		/** `model_id` prefix match. `%`, `_`, and `\` in the prefix are escaped. */
 		modelIdPrefix?: string;
 		routeGroup?: string;

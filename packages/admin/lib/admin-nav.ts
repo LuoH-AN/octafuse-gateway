@@ -14,7 +14,6 @@ export type AdminNavNameKey =
 	| 'requestLogs'
 	| 'auditLogs'
 	| 'toolsConfig'
-	| 'toolInvocations'
 	| 'mcpServers'
 	| 'modelUsage'
 	| 'providerUsage'
@@ -24,13 +23,7 @@ export type AdminNavNameKey =
 	| 'config'
 	| 'maintenance';
 
-export type AdminNavGroupKey =
-	| 'overview'
-	| 'inference'
-	| 'user'
-	| 'tools'
-	| 'analytics'
-	| 'system';
+export type AdminNavGroupKey = 'overview' | 'models' | 'testing' | 'user' | 'tools' | 'logs' | 'analytics' | 'system';
 
 export interface AdminNavRoute {
 	nameKey: AdminNavNameKey;
@@ -48,11 +41,23 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
 		items: [{ nameKey: 'dashboard', href: '/dashboard' }],
 	},
 	{
-		groupKey: 'inference',
+		groupKey: 'models',
 		items: [
 			{ nameKey: 'providers', href: '/gateway/providers' },
 			{ nameKey: 'models', href: '/gateway/models' },
 			{ nameKey: 'routes', href: '/gateway/routes' },
+		],
+	},
+	{
+		groupKey: 'tools',
+		items: [
+			{ nameKey: 'toolsConfig', href: '/gateway/tools' },
+			{ nameKey: 'mcpServers', href: '/gateway/mcp' },
+		],
+	},
+	{
+		groupKey: 'testing',
+		items: [
 			{ nameKey: 'playground', href: '/gateway/playground' },
 			{ nameKey: 'simulator', href: '/gateway/simulator' },
 		],
@@ -62,16 +67,14 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
 		items: [
 			{ nameKey: 'users', href: '/gateway/users' },
 			{ nameKey: 'apiKeys', href: '/gateway/keys' },
-			{ nameKey: 'requestLogs', href: '/gateway/request-logs' },
-			{ nameKey: 'auditLogs', href: '/gateway/audit-logs' },
 		],
 	},
 	{
-		groupKey: 'tools',
+		// 请求日志覆盖模型、REST 工具与 MCP 调用，审计日志记账户与额度变更；两者都不只属于「用户」。
+		groupKey: 'logs',
 		items: [
-			{ nameKey: 'toolsConfig', href: '/gateway/tools' },
-			{ nameKey: 'mcpServers', href: '/gateway/mcp' },
-			{ nameKey: 'toolInvocations', href: '/gateway/tools/invocations' },
+			{ nameKey: 'requestLogs', href: '/gateway/request-logs' },
+			{ nameKey: 'auditLogs', href: '/gateway/audit-logs' },
 		],
 	},
 	{
@@ -94,7 +97,7 @@ export const ADMIN_NAV_GROUPS: AdminNavGroup[] = [
 
 export const ADMIN_NAV_ROUTES: AdminNavRoute[] = ADMIN_NAV_GROUPS.flatMap((group) => group.items);
 
-/** 最长前缀匹配，避免 `/gateway/tools/invocations` 落到 Configuration。 */
+/** 最长前缀匹配，避免 `/gateway/analytics/users` 之类的嵌套路径落到更短的条目上。 */
 export function matchAdminNavRoute(pathname: string): AdminNavRoute | null {
 	const rawPath = pathname.split(/[?#]/)[0] || '/';
 	// Old maintenance bookmarks now belong to Configuration.

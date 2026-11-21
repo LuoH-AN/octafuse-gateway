@@ -17,7 +17,7 @@ Authorization: Bearer sk-admin-<64 hex characters>
 
 浏览器登录会创建数据库 Session，并通过 `admin_session` Cookie 识别为 `console:<username>`。Console 拥有完整业务权限，也是唯一可以管理集成密钥的主体。
 
-集成密钥（Integration Keys）在后台 **系统集成 → 集成密钥（Integration Keys）** 创建。每个外部集成应使用独立、最小权限 Key；Key 主体记录为 `admin_key:<id>`。权限包括 `users.*`、`user_keys.*`、`providers.*`、`models.*`、`routes.*`、`config.*`、`analytics.read`、`logs.read`、`playground.execute`、`mcp.read`、`mcp.write`、`mcp.secrets.read` 和 `maintenance.*`；`*.write` 自动包含对应 `*.read`，`*.secrets.read` 不随 write 授予，`*` 代表全部可委派业务权限，但不包含集成密钥或 Session 管理。
+集成密钥（Integration Keys）在后台 **系统集成 → 集成密钥（Integration Keys）** 创建。每个外部集成应使用独立、最小权限 Key；Key 主体记录为 `admin_key:<id>`。权限包括 `users.*`、`user_keys.*`、`oauth.read`、`oauth.write`、`oauth.consent`、`providers.*`、`models.*`、`routes.*`、`config.*`、`analytics.read`、`logs.read`、`playground.execute`、`mcp.read`、`mcp.write`、`mcp.secrets.read` 和 `maintenance.*`；`*.write` 自动包含对应 `*.read`，`*.secrets.read` 不随 write 授予，`*` 代表全部可委派业务权限，但不包含集成密钥或 Session 管理。
 
 升级迁移会把非空 `system_config.MASTER_KEY` 原值复制为普通全权限 Key `legacy-master`，确保旧调用方继续工作；随后的迁移会删除该配置行。新认证只读取 `admin_api_keys`。请在稳定后为外部系统创建具名 Key，并轮换或吊销 `legacy-master`。
 
@@ -87,6 +87,12 @@ Authorization: Bearer sk-admin-<64 hex characters>
 | `/admin/routes/pools/:poolId/sticky/bindings/:affinityHash` | DELETE | 强制解绑（不校验 `binding_token`） | Admin UI |
 | `/admin/routes/pools/:poolId/sticky/reset` | POST | bump `sticky_epoch`，使本 pool 全部绑定失效 | Admin UI |
 | `/admin/playground` | POST | Routes：`routeId` 或 `routeDraft` 直连上游；Tools：`toolId`+`provider` 读 catalog 直连引擎（均可测、不计费、不写日志、无 failover） | Admin UI、运维联调 |
+| `/admin/oauth/apps`、`/:id`、`/:id/revoke` | GET, POST, PATCH, DELETE | `oauth_apps` + `oauth_access_tokens` 统计；应用目录与按应用撤销（`oauth.read` / `oauth.write`；`/:id/revoke` 的 `none` 配 `client_name` 撤销「未归属」一组） | Admin UI |
+| `/admin/oauth/apps/:id/clients` | POST | 为应用签发手工客户端（body 可选 `client_name`、`redirect_uris`），响应含一次性 `client_secret` | Admin UI |
+| `/admin/oauth/clients` | GET | `oauth_clients`（可按 `app_id`、`registration_method`（`dcr` / `manual` / `cimd`）筛选；不返回 secret 哈希，只返回 `has_client_secret`） | Admin UI |
+| `/admin/oauth/clients/:clientId`、`/:clientId/secret` | PATCH, DELETE, POST | 仅手工客户端：改名称 / 回调规则、删除（先撤销其授权）、重置 secret（响应含新的一次性 `client_secret`） | Admin UI |
+| `/admin/oauth/authorization-requests/:id`、`/:id/accept`、`/:id/reject` | GET, POST | `oauth_authorization_requests`；同意页读取请求、提交决定（`oauth.consent`；`accept` 的 body 为 `{"user_id"}`，响应 `{"redirect_uri"}`） | 门户同意页 |
+| `/admin/oauth-access-tokens`、`/revoke`、`/cleanup`、`/:id/revoke` | GET, POST | `oauth_access_tokens`（列表支持 `app_id`、`client_name`、`status=active、renewable、expired、revoked`） | Admin UI |
 | `/admin/mcp-servers` | GET, POST | `mcp_servers`（列表脱敏 URL 与鉴权头） | Admin UI |
 | `/admin/mcp-servers/:id` | GET, PATCH, DELETE | `mcp_servers`（`pricing` 为服务默认按次价格） | Admin UI |
 | `/admin/mcp-servers/:id/reveal` | GET | 明文 URL 与鉴权头；需要 `mcp.secrets.read` | Admin UI |
@@ -94,6 +100,7 @@ Authorization: Bearer sk-admin-<64 hex characters>
 | `/admin/mcp-servers/:id/sync` | POST | 拉取目录并返回新增、变更、移除差异；新条目默认停用 | Admin UI |
 | `/admin/mcp-servers/:id/items/status` | POST | 批量 `enabled` / `disabled` | Admin UI |
 | `/admin/mcp-servers/:id/items/:itemId` | PATCH | `{ pricing }` 设置工具按次价格（`v=2`、`unit=request`、`standard`、`chargedFactor`、`meteredFactor`、空 `config`；兼容 v1 独立单价），整组替换服务价格；`null` 恢复服务默认价格 | Admin UI |
+| `/admin/mcp-servers/:id/items/accept` | POST | 批量接受待发布定义：`{ "ids": [...] }`，返回 `{ accepted, skipped }`；已不在待审状态、已移除或不存在的 id 计入 `skipped`，不会报错 | Admin UI |
 | `/admin/mcp-servers/:id/items/:itemId/accept` | POST | 接受已启用条目的待发布定义 | Admin UI |
 | `/admin/stats` | GET | 多表聚合（含 `api_key_request_logs`、`api_keys` 等） | Admin UI |
 | `/admin/config` | GET, PUT | `system_config`（含 `ROUTE_STRATEGY`、`USER_CHARGED_COST_FACTOR_MODE`） | Admin UI |
@@ -706,15 +713,17 @@ curl "http://localhost:8789/api/admin/keys/uuid-here/logs?page=1&page_size=10" \
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
-| GET | `/admin/providers` | 列表；`api_key` **脱敏**；含 `kind`、`endpoints`、`status`、`has_pending_key`、`quota_supported`、`routes_count`、`active_routes_count` |
-| POST | `/admin/providers` | 创建；**`name` + `api_key` + `kind` 必填**；`kind` 须为已知模板英文名或 `__custom__`；管理后台不提交 `id`，由服务端生成 UUID。API 仍可传可选 `id`。另可传 `note`、`endpoints`、`status` |
+| GET | `/admin/providers` | 列表；`api_key` **脱敏**；含 `kind`、`endpoints`、`custom_params`、`status`、`has_pending_key`、`quota_supported`、`routes_count`、`active_routes_count` |
+| POST | `/admin/providers` | 创建；**`name` + `api_key` + `kind` 必填**；`kind` 须为已知模板英文名或 `__custom__`；管理后台不提交 `id`，由服务端生成 UUID。API 仍可传可选 `id`。另可传 `note`、`endpoints`、`custom_params`、`status` |
 | GET | `/admin/providers/:id` | 详情（脱敏 `api_key`） |
-| PATCH | `/admin/providers/:id` | 部分更新；省略 `kind` = 不改类型；`kind: ""` = 标为尚未分类；省略 `api_key` = **不改密钥**；显式 `api_key: ""`（或 `null`）= **清空密钥**；`status` 仅 `active` \| `disabled`。改 `kind` 不覆盖已有 `endpoints` |
+| PATCH | `/admin/providers/:id` | 部分更新；省略 `kind` = 不改类型；`kind: ""` = 标为尚未分类；省略 `api_key` = **不改密钥**；显式 `api_key: ""`（或 `null`）= **清空密钥**；`status` 仅 `active` \| `disabled`。改 `kind` 不覆盖已有 `endpoints`；省略 `custom_params` = 不改，显式 `null` = 清空 |
 | DELETE | `/admin/providers/:id` | 删除；仍被 `model_routes` 引用时返回 **409**，须先删除或改绑对应 Target |
 | GET | `/admin/providers/:id/api-key` | **揭示明文** `api_key`（`{ success, data: { api_key } }`） |
 | GET | `/admin/providers/:id/quota` | 用该账号现有 `api_key` 实时查询额度。权限是 `providers.read`，响应不含密钥。不支持的 `kind`、空密钥或导入占位密钥返回 **400**。上游非 2xx 或响应无法解析返回 **502**（`message` 只有状态码，没有响应体）。超时返回 **504** |
 | GET / POST | `/admin/providers/sync/diff`、`/sync/apply` | 与官方模板同步：`diff` 只读，只比对端点；`note` 不参与。差异只在管理员手动检查时计算，列表接口不带 |
 | GET / POST | `/admin/providers/import/catalog`、`/import` | 静态模板导入（占位 key，须手动替换）。写入 `kind =` 模板英文名；`name` 按 `locale`（`zh` 中文，`ja` 日文，`ko` 韩文，其余英文）；介绍不入库。仅同一 `kind` 下同名才追加 `(2)` 后缀 |
+
+**`custom_params`（Provider 级默认参数下界）**：JSON 对象，按**上游协议**分组，形如 `{ "openai": { "headers": {...}, "body": {...} }, "gemini": { "body": {...} } }`；协议 key 须为已支持的上游协议（`openai` / `anthropic` / `gemini` / `dashscope` / `minimax` / `volcengine` / `elevenlabs`），非法 key 返回 **400**。单个分组内的 `headers` / `body` 形状与 Route 级 `custom_params` 信封里的同名字段一致（受保护头不可配置，返回 **400**）；但 Provider 层**没有** `force_override`（该字段仍只属于 Route）。运行时该 Provider 下每条 Route 按自身 `upstream_protocol` 取出对应分组，与 Route 自己的 `custom_params` 合并为一份有效参数后再发往上游：headers 优先级为「协议默认头 < Provider < Route < 客户端（Route 未开 `force_override.headers` 时）」，body 优先级为「适配器默认 < Provider < Route < 客户端同名字段（Route 未开 `force_override.body` 时）」；**Route 打开 `force_override.body` 后，整份合并后的有效 body（含其中的 Provider 默认值）一起强制覆盖客户端**，不是只强制 Route 自己配置的字段。Provider 未配置该协议或该字段为空时行为与改造前完全一致。原生透传入口（DashScope / MiniMax / ElevenLabs / Volcengine 的直连路径）不合并 body 默认值（只替换 `model`），但仍会合并 headers。序列化后超过 32KB 返回 **400**。
 
 `GET /admin/providers/:id/quota` 的 `data` 是归一化快照，不保存。请求发往与该 `kind` 默认域名同一注册域的 https origin；保存的 Endpoint 若换了注册域，则回退默认 origin。
 
@@ -1052,9 +1061,9 @@ Agent Tools 也通过该接口维护配置：
 
 | 工具 | Catalog 键 | Active 键 | Provider 白名单 |
 |------|------------|-----------|-----------------|
-| Web Search | `WEB_SEARCH_CATALOG` | `WEB_SEARCH_ACTIVE` | `bocha`、`tavily`、`cleversee`、`tencent_wsa` |
-| Web Fetch | `WEB_FETCH_CATALOG` | `WEB_FETCH_ACTIVE` | `firecrawl`、`tavily`、`jina` |
-| Web Deep Search | `WEB_DEEP_SEARCH_CATALOG` | `WEB_DEEP_SEARCH_ACTIVE` | `firecrawl`、`jina` |
+| Web Search | `WEB_SEARCH_CATALOG` | `WEB_SEARCH_ACTIVE` | `bocha`、`tavily`、`cleversee`、`tencent_wsa`、`deepseek` |
+| Web Fetch | `WEB_FETCH_CATALOG` | `WEB_FETCH_ACTIVE` | `firecrawl`、`tavily`、`jina`、`deepseek` |
+| Web Deep Search | `WEB_DEEP_SEARCH_CATALOG` | `WEB_DEEP_SEARCH_ACTIVE` | `firecrawl`、`jina`、`deepseek` |
 | AI Detection | `AI_DETECTION_CATALOG` | `AI_DETECTION_ACTIVE` | 当前 `tencent_tms`（多 provider 架构，可扩展） |
 
 Catalog JSON 以 Provider id 为键。新价格使用版本化 `pricing`，例如：
@@ -1076,11 +1085,11 @@ Catalog JSON 以 Provider id 为键。新价格使用版本化 `pricing`，例�
 
 ### 运维验收：Agent Tools（Playground / Simulator）
 
-Admin 内闭环：**Tools Config → Playground（引擎）→ Simulator（Proxy）→ Tools Invocations**。
+Admin 内闭环：**Tools Config → Playground（引擎）→ Simulator（Proxy）→ Request Logs**。
 
 1. **Config**：Admin → Tools → Configuration，在“连接设置”维护凭证，在“计费规则”维护**标准价、用户倍率、供应倍率**并保存；Active 指向已配齐凭证的引擎（AI Detection 第一版为 `tencent_tms`）。修改价格并保存后 catalog JSON 应包含 `pricing: { v: 2, standard, chargedFactor, meteredFactor }`。
 2. **Playground Tools**（不计费、不写 logs）：Admin → Playground → **Tools** 模式，或 Config 行内 **Test in Playground**（`?mode=tools&tool=…&provider=…`）。选工具 + **任意 catalog 引擎**（不限 Active）→ Send → 直连上游引擎，确认密钥与响应形态。
-3. **Simulator Tools**（真实 Proxy）：Admin → Simulator → Kind=**Tools** → 选工具与用户 API Key → Send 打到 `{proxy}/v1/tools/{id}` → 核对响应 `cost`（= charged）与预算；**Open Tools Invocations** / Request Logs 核对三列不同（若配置了不同单价）、`budget_spent` 仅增 charged、失败请求三列 0、`pricing_audit` v4 `fixed_tool_cost`。
+3. **Simulator Tools**（真实 Proxy）：Admin → Simulator → Kind=**Tools** → 选工具与用户 API Key → Send 打到 `{proxy}/v1/tools/{id}` → 核对响应 `cost`（= charged）与预算；**Open Request Logs**（已按该工具与所用 API Key 筛选）核对三列不同（若配置了不同单价）、`budget_spent` 仅增 charged、失败请求三列 0、`pricing_audit` v4 `fixed_tool_cost`。
 4. **边界**：Playground Tools **不经** Proxy、**不扣**用户预算、**不写** `api_key_request_logs`；Simulator Tools **走** Proxy 全链路。二者共用 **`@octafuse/tool-engines`** 引擎客户端（Admin 不得再依赖 `packages/proxy`）。LLM / Image / Audio 的 Routes 模式行为不变。
 5. **curl**（可选，用户 API Key，等价 Simulator）：
 
@@ -1119,12 +1128,33 @@ Admin UI 登录后由 `BusinessTimezoneProvider` 调用，用于时间列展示�
 | `api_key_id` | 精确匹配 |
 | `user_email` | 精确匹配 |
 | `model_id` | 精确匹配 |
+| `model_ids` | 逗号分隔，最多 30 个，匹配其中任一 `model_id` |
+| `model_vendors` | 模型厂商 key（`models.vendor`，如 `openai`、`anthropic`），逗号分隔，最多 100 个。匹配当前模型目录里属于这些厂商的模型；与 `model_ids` 同时传时取并集 |
 | `provider_id` | 精确匹配 |
-| `provider_ids` | 逗号分隔，最多 10 个，匹配其中任一 `provider_id` |
+| `provider_ids` | 逗号分隔，最多 30 个，匹配其中任一 `provider_id` |
+| `provider_kinds` | 供应商类型（`providers.kind`，如 `DeepSeek`；`__custom__` 是自定义，`__unclassified__` 是未分类），逗号分隔，最多 100 个。匹配当前供应商目录里属于这些类型的供应商；与 `provider_ids` 同时传时取并集 |
+| `kinds` | 请求类型，逗号分隔，最多 30 项，多项取并集，再与其他参数按 AND 组合。取值见下表；有不认识的项返回 400 |
 | `model_id_prefix` | `model_id` 前缀；`%`、`_` 和 `\` 按字面量匹配 |
 | `route_group` | 精确匹配 |
 | `status` | 精确匹配 |
 | `start_date` / `end_date` | 过滤 `created_at`（UTC，格式：`YYYY-MM-DD HH:mm:ss`） |
+
+`kinds` 的取值：
+
+| 取值 | 匹配的日志 |
+|------|------------|
+| `model` | 全部模型请求（`provider_id` 不是 `octafuse-tools` / `octafuse-mcp`，含没有 `provider_id` 的日志） |
+| `model:llm`、`model:image`、`model:asr`、`model:tts`、`model:embedding` | 某一类模型请求。类型不落库，按顺序推断：`billing_kind` → `request_operation` / `upstream_operation` → 模型目录里该模型的类型 → `audio_tokens` 计费算 `asr` → 其余算 `llm`。与管理后台请求日志列表的类型标签同一套规则 |
+| `tool` | 全部 REST 工具调用（`provider_id=octafuse-tools`） |
+| `tool:<id>` | 某个 REST 工具，即日志的 `model_id`，如 `tool:web-search` |
+| `mcp` | 全部 MCP 工具调用（`provider_id=octafuse-mcp`） |
+| `mcp:<slug>` | 某个 MCP 服务（`model_id` 以 `mcp:<slug>/` 开头）。只看其中一个工具时再加 `model_id=mcp:<slug>/<tool>` |
+
+例如 `kinds=model:image,tool:web-search,mcp:docs` 返回图像模型请求、Web Search 调用与 `docs` 服务的 MCP 调用。
+
+`model_vendors` 与 `provider_kinds` 按当前目录解析：已删除的模型不属于任何厂商，已删除的供应商不属于任何类型，它们的历史日志只能用 `model_ids` / `provider_ids` 查。模型、供应商、类型三组条件之间是 AND，例如 `model_vendors=openai&provider_kinds=__custom__` 返回自定义供应商承接的 OpenAI 模型请求。
+
+D1 单条语句最多 100 个绑定参数：`kinds`、`model_ids`、`model_vendors`、`provider_ids`、`provider_kinds` 的取值个数，加上按模型类型筛选时模型目录里的非 LLM 模型数，合计不能超过 85，超出返回 400。Postgres / MySQL 没有这个限制。
 
 `data` 每条日志即 **`api_key_request_logs` 行**（读接口不 JOIN `models` / `providers`；展示名依赖写入时快照列）。**`model_name`** / **`provider_name`** 为请求当时展示名快照；**`provider_model_name`** 为上游模型 id；**`provider_key_id`** / **`provider_key_label`** / **`provider_key_fingerprint`** 为最终选用 Provider 快照（现为 **provider id / name / api_key 指纹**；0015 前旧行可能仍为历史 key 池 id）。**`request_body`** 为客户端入口侧脱敏 JSON（无提示词正文；长度有上限）。**`upstream_request_body`** 为合并路由 `custom_params` 后、与发往供应商的 wire 体结构对齐的脱敏快照（规则同 `request_body`；迁移前或旧行可能为 `null`）。**`request_protocol`**（入口）与 **`upstream_protocol`**（所选路由实际转发协议）见上文注。升级前列可能为 `null`。
 
