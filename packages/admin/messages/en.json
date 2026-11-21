@@ -1655,7 +1655,13 @@
 				"elevenlabs-asr-file": "ElevenLabs file transcription",
 				"elevenlabs-tts": "ElevenLabs speech",
 				"volcengine-image": "Volcengine Seedream images",
-				"gemini-image": "Gemini official images"
+				"gemini-image": "Gemini official images",
+				"openai-chat-to-anthropic": "OpenAI Chat → Anthropic Messages",
+				"openai-chat-to-gemini": "OpenAI Chat → Gemini",
+				"anthropic-to-openai-chat": "Anthropic Messages → OpenAI Chat",
+				"anthropic-to-gemini": "Anthropic Messages → Gemini",
+				"gemini-to-openai-chat": "Gemini → OpenAI Chat",
+				"gemini-to-anthropic": "Gemini → Anthropic Messages"
 			},
 			"adapterGuides": {
 				"passthrough": {
@@ -1828,6 +1834,60 @@
 						"A WxH size maps to the nearest imageConfig.aspectRatio, and the long side picks 1K / 2K / 4K. You can also send only 512 / 1K / 2K / 4K, or auto.",
 						"response_format accepts only b64_json. Reference images go in image as data URLs and are sent as inlineData. quality and background are not forwarded.",
 						"Other Gemini parameters go in generationConfig (for example imageConfig or thinkingConfig) and are deep-merged. Billing uses image and text output tokens. JSON only; use the Gemini native passthrough for streaming."
+					]
+				},
+				"openai-chat-to-anthropic": {
+					"purpose": "Converts text conversations, function tools, responses and SSE between the selected client and upstream APIs.",
+					"mapping": [
+						"Maps system instructions, function definitions, tool calls/results, images and common generation parameters.",
+						"Streams text and reasoning immediately; buffers tool arguments for Gemini and Anthropic until complete JSON is available.",
+						"Route custom body parameters use the upstream format. Foreign reasoning signatures and cache controls are not replayed. Built-in tools, multiple candidates and unsupported media return 400.",
+						"For Gemini image input, use base64 data URLs. OpenAI Responses requires its own passthrough route."
+					]
+				},
+				"openai-chat-to-gemini": {
+					"purpose": "Converts text conversations, function tools, responses and SSE between the selected client and upstream APIs.",
+					"mapping": [
+						"Maps system instructions, function definitions, tool calls/results, images and common generation parameters.",
+						"Streams text and reasoning immediately; buffers tool arguments for Gemini and Anthropic until complete JSON is available.",
+						"Route custom body parameters use the upstream format. Foreign reasoning signatures and cache controls are not replayed. Built-in tools, multiple candidates and unsupported media return 400.",
+						"For Gemini image input, use base64 data URLs. OpenAI Responses requires its own passthrough route."
+					]
+				},
+				"anthropic-to-openai-chat": {
+					"purpose": "Converts text conversations, function tools, responses and SSE between the selected client and upstream APIs.",
+					"mapping": [
+						"Maps system instructions, function definitions, tool calls/results, images and common generation parameters.",
+						"Streams text and reasoning immediately; buffers tool arguments for Gemini and Anthropic until complete JSON is available.",
+						"Route custom body parameters use the upstream format. Foreign reasoning signatures and cache controls are not replayed. Built-in tools, multiple candidates and unsupported media return 400.",
+						"For Gemini image input, use base64 data URLs. OpenAI Responses requires its own passthrough route."
+					]
+				},
+				"anthropic-to-gemini": {
+					"purpose": "Converts text conversations, function tools, responses and SSE between the selected client and upstream APIs.",
+					"mapping": [
+						"Maps system instructions, function definitions, tool calls/results, images and common generation parameters.",
+						"Streams text and reasoning immediately; buffers tool arguments for Gemini and Anthropic until complete JSON is available.",
+						"Route custom body parameters use the upstream format. Foreign reasoning signatures and cache controls are not replayed. Built-in tools, multiple candidates and unsupported media return 400.",
+						"For Gemini image input, use base64 data URLs. OpenAI Responses requires its own passthrough route."
+					]
+				},
+				"gemini-to-openai-chat": {
+					"purpose": "Converts text conversations, function tools, responses and SSE between the selected client and upstream APIs.",
+					"mapping": [
+						"Maps system instructions, function definitions, tool calls/results, images and common generation parameters.",
+						"Streams text and reasoning immediately; buffers tool arguments for Gemini and Anthropic until complete JSON is available.",
+						"Route custom body parameters use the upstream format. Foreign reasoning signatures and cache controls are not replayed. Built-in tools, multiple candidates and unsupported media return 400.",
+						"For Gemini image input, use base64 data URLs. OpenAI Responses requires its own passthrough route."
+					]
+				},
+				"gemini-to-anthropic": {
+					"purpose": "Converts text conversations, function tools, responses and SSE between the selected client and upstream APIs.",
+					"mapping": [
+						"Maps system instructions, function definitions, tool calls/results, images and common generation parameters.",
+						"Streams text and reasoning immediately; buffers tool arguments for Gemini and Anthropic until complete JSON is available.",
+						"Route custom body parameters use the upstream format. Foreign reasoning signatures and cache controls are not replayed. Built-in tools, multiple candidates and unsupported media return 400.",
+						"For Gemini image input, use base64 data URLs. OpenAI Responses requires its own passthrough route."
 					]
 				}
 			},

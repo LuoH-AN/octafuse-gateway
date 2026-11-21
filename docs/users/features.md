@@ -24,6 +24,7 @@ Octafuse Gateway 是可自托管的 **AI 能力网关与运营控制面**：统�
 |------|------|
 | 统一入口 | 客户端只需要配置 Gateway Base URL 和用户 Key。 |
 | 多协议兼容 | 支持 OpenAI Chat Completions、OpenAI Responses、Anthropic Messages、Gemini `v1beta` 风格入口。 |
+| 文本协议互转 | OpenAI Chat、Anthropic Messages、Gemini 的六个方向均有显式转换适配器，支持 JSON、SSE 和函数工具轮回；Responses 继续走独立透传。见[文本协议转换](../developers/architecture/text-protocol-conversion.md)。 |
 | 图片生成 / 编辑（Images） | 客户端统一调用 OpenAI 兼容 `/v1/images/*`；OpenAI 兼容上游可直接透传，阿里云百炼千问 / 万相可由显式适配器转换为 DashScope 原生生图请求。目录价支持 **token** 分项与 **per_image** 按张；默认 `GET /v1/models` 不含纯 image 模型，可用 `kind=image` / `kind=all` 或直接调用 Images API。 |
 | 音频（Audio） | OpenAI 兼容 `/v1/audio/transcriptions` 与 `/v1/audio/speech`，DashScope 同步多模态 ASR，以及原生实时音频；ASR 支持按时长或 Token 计费，TTS 支持按字符计费。调试台验证实时 ASR 时可直接使用浏览器麦克风；默认 `GET /v1/models` 不含纯音频模型。`kind=asr` 只返回语音转写，`kind=tts` 只返回语音合成，`kind=audio` 同时返回两者。 |
 | 向量（Embeddings） | OpenAI 兼容 `POST /v1/embeddings`，以及 Gemini 原生 `:embedContent` / `:batchEmbedContents`，均为透传。仅按输入 token 计费；默认 `GET /v1/models` 不含向量模型，可用 `kind=embedding`。管理后台可导入 OpenAI / Google / 阿里云向量预设，并在调试台、模拟器和路由快速测试里验证。 |

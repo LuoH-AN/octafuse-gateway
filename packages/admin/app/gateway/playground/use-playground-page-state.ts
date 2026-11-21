@@ -202,6 +202,11 @@ export function usePlaygroundPageState() {
 
 	const previewUpstream = useMemo(() => {
 		if (!selected) return { url: null, target: null };
+		let targetGeminiAction = geminiAction;
+		if (!selectedIsImage && resolvePlaygroundLlmFamily(selected) !== 'gemini') {
+			try { targetGeminiAction = JSON.parse(bodyText).stream === true ? 'streamGenerateContent' : 'generateContent'; }
+			catch { targetGeminiAction = 'generateContent'; }
+		}
 		return describePlaygroundUpstreamUrl({
 			provider: providersById.get(selected.provider_id),
 			adapter: selected.adapter,
@@ -210,9 +215,9 @@ export function usePlaygroundPageState() {
 			providerModelName: selected.provider_model_name,
 			modelKind: selectedModelKind ?? 'llm',
 			imageOperation: selectedIsImage ? imageOperation : undefined,
-			geminiAction,
+			geminiAction: targetGeminiAction,
 		});
-	}, [selected, providersById, selectedModelKind, selectedIsImage, imageOperation, geminiAction]);
+	}, [selected, providersById, selectedModelKind, selectedIsImage, imageOperation, geminiAction, bodyText]);
 	const previewUpstreamUrl = previewUpstream.url;
 
 	const requestFingerprint = JSON.stringify([selectedId, bodyText, geminiAction, imageOperation]);
@@ -597,6 +602,7 @@ export function usePlaygroundPageState() {
 		}
 
 		const proto = normalizeProtocol(selected.upstream_protocol);
+		const selectedLlmFamily = selectedIsImage || selectedIsAudio || selectedIsEmbedding ? null : resolvePlaygroundLlmFamily(selected);
 		const realtimeOperation = selectedDashScopeRealtimeOperation ?? selectedElevenLabsRealtimeOperation;
 		const isRealtime = realtimeOperation != null;
 		const useAudio =
@@ -678,7 +684,7 @@ export function usePlaygroundPageState() {
 		setLastSentInputSnapshot(null);
 		setResponseTab('merged');
 
-		setResponseProtocol(proto);
+		setResponseProtocol(selectedLlmFamily === 'gemini' ? 'gemini' : selectedLlmFamily === 'anthropic' ? 'anthropic' : selectedLlmFamily?.startsWith('openai') ? 'openai' : proto);
 		if (selectedElevenLabsRealtimeOperation != null) {
 			const startedAt = performance.now();
 			const waitingText = t('realtimeWaitingElevenLabs');
@@ -855,7 +861,7 @@ export function usePlaygroundPageState() {
 		if (!selectedIsImage && !selectedIsAudio && !selectedIsEmbedding) {
 			payload.includeRequestSources = true;
 		}
-		if (proto === 'gemini') {
+		if (proto === 'gemini' || selectedLlmFamily === 'gemini') {
 			payload.geminiAction = geminiAction;
 		}
 		if (effectiveImageOp) {

@@ -38,6 +38,8 @@ import {
 	type PlaygroundLlmSampleId,
 } from '@/lib/playground/samples';
 import { normalizeProtocol } from '@/lib/playground/usage-parsing';
+import { TEXT_CONVERSION_ADAPTERS } from '@octafuse/core/adapters/registry';
+import { convertTextRequest } from '@octafuse/core/text-protocol';
 import type { AdminModelRow } from '@/lib/services/admin/types';
 import type { ModelKindFilter } from '../models/types';
 import type { RouteListRow } from './types';
@@ -295,15 +297,21 @@ export function previewPlaygroundMergedBody(input: {
 	upstreamProtocol?: string | null;
 	upstreamOperation?: string | null;
 	providerModelName?: string | null;
+	adapter?: string | null;
+	geminiAction?: 'generateContent' | 'streamGenerateContent';
 }): PlaygroundMergedBodyPreview {
-	let userBody: unknown;
+	let userBody: JsonObject;
 	try {
-		userBody = JSON.parse(input.bodyText);
+		const parsed: unknown = JSON.parse(input.bodyText);
+		if (!isPlainJsonObject(parsed)) return { status: 'invalid' };
+		userBody = parsed;
 	} catch {
 		return { status: 'invalid' };
 	}
-	if (!isPlainJsonObject(userBody)) {
-		return { status: 'invalid' };
+	const conversion = TEXT_CONVERSION_ADAPTERS.find(adapter => adapter.id === input.adapter);
+	if (conversion) {
+		try { userBody = convertTextRequest(conversion.request.protocol, conversion.upstream.protocol, userBody, conversion.request.protocol === 'gemini' ? input.geminiAction === 'streamGenerateContent' : userBody.stream === true); }
+		catch { return { status: 'invalid' }; }
 	}
 
 	if (input.upstreamOperation) {
@@ -319,6 +327,7 @@ export function previewPlaygroundMergedBody(input: {
 	const customParams = parseCustomParamsObject(input.customParams);
 	const merged = mergeRouteRequestBody(customParams, userBody);
 	const body: JsonObject = { ...merged };
+	if (conversion?.upstream.protocol === 'anthropic' && body.max_tokens == null) body.max_tokens = 4096;
 	const proto = normalizeProtocol(input.upstreamProtocol ?? 'openai');
 	const model = input.providerModelName?.trim() ?? '';
 	if (model && proto !== 'gemini') {
@@ -438,7 +447,8 @@ export function isResponsesPlaygroundRoute(route: RouteListRow | null | undefine
 
 export function resolvePlaygroundLlmFamily(route: RouteListRow | null | undefined): PlaygroundLlmFamily | null {
 	if (!route) return null;
-	const proto = normalizeProtocol(route.upstream_protocol);
+	const conversion = TEXT_CONVERSION_ADAPTERS.find(adapter => adapter.id === route.adapter);
+	const proto = conversion?.request.protocol ?? normalizeProtocol(route.upstream_protocol);
 	if (proto === 'anthropic') return 'anthropic';
 	if (proto === 'gemini') return 'gemini';
 	if (proto === 'openai') {

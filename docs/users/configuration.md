@@ -76,11 +76,16 @@ Routes 工作台支持**总览（Overview）**与**按模型（By model）**两�
 | 使用场景 | 适配器选择 |
 |----------|------------|
 | 客户端与上游使用相同协议和操作 | 选择对应的“透传（Passthrough）”项 |
+| OpenAI Chat 客户端调用 Anthropic 或 Gemini 原生上游 | `openai-chat-to-anthropic` / `openai-chat-to-gemini` |
+| Anthropic Messages 客户端调用 OpenAI Chat 或 Gemini 原生上游 | `anthropic-to-openai-chat` / `anthropic-to-gemini` |
+| Gemini 客户端调用 OpenAI Chat 或 Anthropic 原生上游 | `gemini-to-openai-chat` / `gemini-to-anthropic` |
 | OpenAI Images 调用百炼千问图片模型 | `dashscope-image-qwen` |
 | OpenAI Images 调用百炼万相图片模型 | `dashscope-image-wan` |
 | OpenAI 文件转写调用百炼 ASR | 选择与模型系列匹配的文件转写适配器 |
 
 图片模型还要确认输出模态包含 `image`，并根据供应商规则选择按 Token 或按张计费；音频模型则根据 ASR / TTS 能力选择按时长、Token 或字符计费。完整差异见[图片模型说明](../developers/reference/image-models.md)与 [DashScope 音频说明](../developers/architecture/dashscope-audio.md)。
+
+文本转换支持普通与流式对话、函数工具调用和结果回传。自定义请求体按上游协议填写；Gemini 图片输入使用 base64 data URL，内置搜索等专属工具不跨协议迁移。OpenAI Responses 仍需同协议透传路由。完整范围见[文本协议转换](../developers/architecture/text-protocol-conversion.md)。
 
 ### 3.2 配置路由组、主备和默认参数
 

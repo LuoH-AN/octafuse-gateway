@@ -9,7 +9,8 @@ import {
 	resolveProviderUpstreamSecret,
 	routeCustomParamsBody,
 } from '@octafuse/core';
-import { isDashScopeAsyncFileAdapter } from '@octafuse/core/adapters/registry';
+import { isDashScopeAsyncFileAdapter, TEXT_CONVERSION_ADAPTERS } from '@octafuse/core/adapters/registry';
+import { convertTextHttpResponse, convertTextRequest, TextProtocolError } from '@octafuse/core/text-protocol';
 import { mergeRouteRequestBody } from '@octafuse/core/route-custom-params';
 import { resolveCustomParamsLayers } from '@octafuse/core/provider-custom-params';
 import {
@@ -1034,12 +1035,20 @@ export type PlaygroundInvokeResult = {
 };
 
 function preparePlaygroundUpstreamRequest(route: PlaygroundResolvedRoute, input: PlaygroundInvokeInput) {
-	const userBody = input.body;
-	if (!isPlainObject(userBody)) {
+	const clientBody = input.body;
+	if (!isPlainObject(clientBody)) {
 		throw badRequest('body must be a JSON object');
+	}
+	const textAdapter = route.modelKind === 'llm' ? TEXT_CONVERSION_ADAPTERS.find(adapter => adapter.id === route.adapter) : undefined;
+	const conversionStream = textAdapter?.request.protocol === 'gemini' ? input.geminiAction === 'streamGenerateContent' : clientBody.stream === true;
+	let userBody = clientBody;
+	if (textAdapter) {
+		try { userBody = convertTextRequest(textAdapter.request.protocol, textAdapter.upstream.protocol, clientBody, conversionStream); }
+		catch (error) { if (error instanceof TextProtocolError) throw badRequest(error.message); throw error; }
 	}
 
 	const merged = mergePlaygroundRequestBody(route, userBody);
+	if (textAdapter?.upstream.protocol === 'anthropic' && merged.max_tokens == null) merged.max_tokens = 4096;
 	let url: string;
 	let headers: Record<string, string>;
 	let fetchBody: BodyInit;
@@ -1281,7 +1290,7 @@ function preparePlaygroundUpstreamRequest(route: PlaygroundResolvedRoute, input:
 			}
 			const action: GeminiContentAction = route.modelKind === 'image'
 				? 'generateContent'
-				: input.geminiAction === 'streamGenerateContent'
+				: (textAdapter ? conversionStream : input.geminiAction === 'streamGenerateContent')
 					? 'streamGenerateContent'
 					: 'generateContent';
 			let geminiRequest: { url: string; headers: Record<string, string> };
@@ -1732,6 +1741,7 @@ function preparePlaygroundUpstreamRequest(route: PlaygroundResolvedRoute, input:
 		headers: applyRouteExtraHeaders(headers, route.customParams),
 		fetchBody,
 		upstreamWireBodyJson,
+		textAdapter,
 	};
 }
 
@@ -1791,7 +1801,8 @@ export async function invokePlaygroundUpstream(
 			: await resolvePlaygroundRoute(repos, input.routeId ?? '');
 	const route = await applyPlaygroundUpstreamCredential(resolved);
 	const start = Date.now();
-	const { url, headers, fetchBody, upstreamWireBodyJson } = preparePlaygroundUpstreamRequest(route, input);
+	const { url, headers, fetchBody, upstreamWireBodyJson, textAdapter } = preparePlaygroundUpstreamRequest(route, input);
+	const clientBody = input.body;
 
 	let response: Response;
 	try {
@@ -1889,6 +1900,13 @@ export async function invokePlaygroundUpstream(
 		response = await pollPlaygroundDashScopeAsyncAsr(route, response, requestSignal);
 	}
 
+	if (textAdapter) {
+		const converted = await convertTextHttpResponse(response, textAdapter.upstream.protocol, textAdapter.request.protocol, {
+			model: typeof clientBody.model === 'string' ? clientBody.model : route.providerModelName,
+			includeUsage: isPlainObject(clientBody.stream_options) && clientBody.stream_options.include_usage === true,
+		});
+		response = converted.response;
+	}
 	const latencyMs = Date.now() - start;
 	const upstreamUrlForHeader = route.upstreamProtocol === 'gemini' ? stripApiKeyFromUrlForHeader(url) : url;
 

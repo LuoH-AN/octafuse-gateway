@@ -3,7 +3,13 @@ import type { RouteResult } from '../model-router';
 import type { UsageFromStream } from '../proxy';
 import { buildRouteRequestBody } from '../route-default-params';
 import { sanitizeRewrappedHeaders } from './response-headers';
-import { normalizeResponsesInputBody, normalizeResponsesOutputPayload } from './openai-responses-compat';
+import {
+	normalizeResponsesInputBody,
+	normalizeResponsesOutputPayload,
+	unsupportedResponsesToolType,
+	withoutOptionalResponsesWebSearch,
+} from './openai-responses-compat';
+import { isSensitiveUpstreamResponse } from '../user-model-circuit-breaker';
 import { extractUpstreamRequestId, normalizeUpstreamId } from './upstream-request-id';
 import type { RequestTimingAttempt, RequestTimingCollector } from '../request-timing';
 import {
@@ -392,15 +398,20 @@ function streamResponseWithUsage(
 			// resolveUsage already called in finally
 		},
 	);
+	const headers = new Headers({
+		'Content-Type': response.headers.get('Content-Type') ?? 'text/event-stream',
+		'Cache-Control': 'no-cache',
+		Connection: 'keep-alive',
+	});
+	for (const name of ['X-Octafuse-Disabled-Tools', 'Warning']) {
+		const value = response.headers.get(name);
+		if (value) headers.set(name, value);
+	}
 
 	return {
 		response: new Response(readable, {
 			status: response.status,
-			headers: {
-				'Content-Type': response.headers.get('Content-Type') ?? 'text/event-stream',
-				'Cache-Control': 'no-cache',
-				Connection: 'keep-alive',
-			},
+			headers,
 		}),
 		usagePromise,
 	};
@@ -477,21 +488,41 @@ export async function dispatchOpenAiResponsesRoute(
 	});
 
 	const isStreamRequest = (requestBody as { stream?: unknown }).stream === true;
-	const response = await fetchUntilHeaders(
-		url,
-		{
-			method: 'POST',
-			headers: applyRouteExtraHeaders(
-				{
-					'Content-Type': 'application/json',
-					Authorization: `Bearer ${secret}`,
-				},
-				route.customParams,
-			),
-			body: JSON.stringify(requestBody),
-		},
-		isStreamRequest ? options?.headersTimeoutMs : undefined,
+	const headers = applyRouteExtraHeaders(
+		{ 'Content-Type': 'application/json', Authorization: `Bearer ${secret}` },
+		route.customParams,
 	);
+	const send = (wireBody: Record<string, unknown>) => fetchUntilHeaders(url, {
+			method: 'POST',
+			headers,
+			body: JSON.stringify(wireBody),
+		}, isStreamRequest ? options?.headersTimeoutMs : undefined);
+	let response = await send(requestBody);
+	const fallback = withoutOptionalResponsesWebSearch(requestBody);
+	if (response.status === 400 && fallback) {
+		const errorText = await response.text();
+		const unsupportedTool = unsupportedResponsesToolType(response.status, errorText);
+		if (unsupportedTool && fallback.disabledTools.includes(unsupportedTool) &&
+			!isSensitiveUpstreamResponse(response.status, response.headers.get('content-type'), errorText)) {
+			// 只在上游明确拒绝可选搜索时重试一次，支持搜索的渠道保持原请求。
+			requestSignal?.throwIfAborted();
+			console.warn('[Gateway Responses] upstream rejected optional web search; retrying without it', {
+				providerId: route.providerId,
+				disabledTools: fallback.disabledTools,
+			});
+			const retried = await send(fallback.body);
+			const retryHeaders = sanitizeRewrappedHeaders(retried.headers);
+			retryHeaders.set('X-Octafuse-Disabled-Tools', fallback.disabledTools.join(','));
+			retryHeaders.append('Warning', '299 Octafuse "Upstream does not support built-in web search; optional tool disabled"');
+			response = new Response(retried.body, { status: retried.status, statusText: retried.statusText, headers: retryHeaders });
+		} else {
+			response = new Response(errorText, {
+				status: response.status,
+				statusText: response.statusText,
+				headers: sanitizeRewrappedHeaders(response.headers),
+			});
+		}
+	}
 	timing?.markAttemptHeaders(attempt, response.status);
 	const upstreamRequestId = extractUpstreamRequestId(response.headers);
 

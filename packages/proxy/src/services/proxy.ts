@@ -6,6 +6,8 @@ import type { GatewayRepositories } from "@octafuse/core";
 import type { RouteResult } from "./model-router";
 import { dispatchOpenAiRoute } from "./egress/openai-driver";
 import { dispatchOpenAiResponsesRoute } from "./egress/openai-responses-driver";
+import { isTextConversionAdapter } from '@octafuse/core/adapters/registry';
+import { dispatchTextConversion } from './egress/text-conversion-driver';
 import {
 	loadFirstEventTimeoutConfig,
 	resolveFirstEventTimeoutMs,
@@ -216,7 +218,9 @@ export async function proxyChatCompletions(
 			attempt?: RequestTimingAttempt,
 			context?: DispatchAttemptContext
 		) =>
-			dispatchOpenAiRoute(route, body, signal, timing, attempt, textStreamDispatchOptions(firstEvent, route.routeGroup, options, context)),
+			isTextConversionAdapter(route.adapter)
+				? dispatchTextConversion(route, 'openai', body, body.stream === true, signal, timing, attempt, textStreamDispatchOptions(firstEvent, route.routeGroup, options, context))
+				: dispatchOpenAiRoute(route, body, signal, timing, attempt, textStreamDispatchOptions(firstEvent, route.routeGroup, options, context)),
 		requestSignal,
 		options
 	);
@@ -273,7 +277,9 @@ export async function proxyAnthropicMessages(
 			attempt?: RequestTimingAttempt,
 			context?: DispatchAttemptContext
 		) =>
-			dispatchAnthropicRoute(route, body, signal, timing, attempt, textStreamDispatchOptions(firstEvent, route.routeGroup, options, context)),
+			isTextConversionAdapter(route.adapter)
+				? dispatchTextConversion(route, 'anthropic', body, body.stream === true, signal, timing, attempt, textStreamDispatchOptions(firstEvent, route.routeGroup, options, context))
+				: dispatchAnthropicRoute(route, body, signal, timing, attempt, textStreamDispatchOptions(firstEvent, route.routeGroup, options, context)),
 		requestSignal,
 		options
 	);
@@ -752,7 +758,9 @@ export async function proxyGeminiContent(
 			attempt?: RequestTimingAttempt,
 			context?: DispatchAttemptContext
 		) =>
-			dispatchGeminiRoute(route, body, action, search, signal, timing, attempt, textStreamDispatchOptions(firstEvent, route.routeGroup, options, context)),
+			isTextConversionAdapter(route.adapter)
+				? dispatchTextConversion(route, 'gemini', body, action === 'streamGenerateContent', signal, timing, attempt, textStreamDispatchOptions(firstEvent, route.routeGroup, options, context))
+				: dispatchGeminiRoute(route, body, action, search, signal, timing, attempt, textStreamDispatchOptions(firstEvent, route.routeGroup, options, context)),
 		requestSignal,
 		options
 	);

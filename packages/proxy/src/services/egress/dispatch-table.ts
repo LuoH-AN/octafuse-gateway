@@ -2,7 +2,7 @@
  * Adapter ID → driver 实现表。
  * Registry 声明能力，本表声明运行时实现；一致性由 dispatch-table.test.ts 焊死。
  */
-import { listConversionAdapters, type RouteAdapter } from '@octafuse/core/adapters/registry';
+import { listConversionAdapters, TEXT_CONVERSION_ADAPTERS, type RouteAdapter } from '@octafuse/core/adapters/registry';
 import type { RouteResult } from '../model-router';
 import type { ProxyDispatchResult } from '../failover-dispatch';
 import type { RequestTimingAttempt, RequestTimingCollector } from '../request-timing';
@@ -98,6 +98,7 @@ export const IMPLEMENTED_CONVERSION_ADAPTERS: readonly RouteAdapter[] = [
 	...AUDIO_TRANSCRIPTION_ADAPTERS,
 	...AUDIO_SPEECH_ADAPTERS,
 	...IMAGE_GENERATION_ADAPTERS,
+	...TEXT_CONVERSION_ADAPTERS.map(adapter => adapter.id),
 ];
 
 export function implementedConversionAdapterIds(): readonly string[] {

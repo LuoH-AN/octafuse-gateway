@@ -1655,7 +1655,13 @@
 				"elevenlabs-asr-file": "ElevenLabs 文件转写",
 				"elevenlabs-tts": "ElevenLabs 语音合成",
 				"volcengine-image": "火山方舟 Seedream 生图",
-				"gemini-image": "Gemini 官方生图"
+				"gemini-image": "Gemini 官方生图",
+				"openai-chat-to-anthropic": "OpenAI Chat → Anthropic Messages",
+				"openai-chat-to-gemini": "OpenAI Chat → Gemini",
+				"anthropic-to-openai-chat": "Anthropic Messages → OpenAI Chat",
+				"anthropic-to-gemini": "Anthropic Messages → Gemini",
+				"gemini-to-openai-chat": "Gemini → OpenAI Chat",
+				"gemini-to-anthropic": "Gemini → Anthropic Messages"
 			},
 			"adapterGuides": {
 				"passthrough": {
@@ -1828,6 +1834,60 @@
 						"size 填 WxH 时换算成最接近的 imageConfig.aspectRatio，并按长边取 1K / 2K / 4K；也可只填 512 / 1K / 2K / 4K 或 auto。",
 						"response_format 只支持 b64_json。参考图放在 image，需为 data URL，会转成 inlineData。quality 与 background 不转发。",
 						"其它 Gemini 参数写在 generationConfig（如 imageConfig、thinkingConfig），网关会深度合并。按图片输出与文本输出 token 计费。只返回 JSON，要流式请改走 Gemini 原生透传。"
+					]
+				},
+				"openai-chat-to-anthropic": {
+					"purpose": "在所选客户端与上游 API 之间转换文本对话、函数工具、响应及 SSE。",
+					"mapping": [
+						"映射系统提示、函数定义、工具调用与结果、图片及常用生成参数。",
+						"文本与推理内容即时流式输出；Gemini 和 Anthropic 的工具参数待 JSON 完整后输出。",
+						"路由自定义请求体使用上游格式。跨厂商推理签名与缓存控制不回传；内置工具、多候选和不支持的媒体返回 400。",
+						"Gemini 图片输入请使用 base64 data URL。OpenAI Responses 仍需单独配置透传路由。"
+					]
+				},
+				"openai-chat-to-gemini": {
+					"purpose": "在所选客户端与上游 API 之间转换文本对话、函数工具、响应及 SSE。",
+					"mapping": [
+						"映射系统提示、函数定义、工具调用与结果、图片及常用生成参数。",
+						"文本与推理内容即时流式输出；Gemini 和 Anthropic 的工具参数待 JSON 完整后输出。",
+						"路由自定义请求体使用上游格式。跨厂商推理签名与缓存控制不回传；内置工具、多候选和不支持的媒体返回 400。",
+						"Gemini 图片输入请使用 base64 data URL。OpenAI Responses 仍需单独配置透传路由。"
+					]
+				},
+				"anthropic-to-openai-chat": {
+					"purpose": "在所选客户端与上游 API 之间转换文本对话、函数工具、响应及 SSE。",
+					"mapping": [
+						"映射系统提示、函数定义、工具调用与结果、图片及常用生成参数。",
+						"文本与推理内容即时流式输出；Gemini 和 Anthropic 的工具参数待 JSON 完整后输出。",
+						"路由自定义请求体使用上游格式。跨厂商推理签名与缓存控制不回传；内置工具、多候选和不支持的媒体返回 400。",
+						"Gemini 图片输入请使用 base64 data URL。OpenAI Responses 仍需单独配置透传路由。"
+					]
+				},
+				"anthropic-to-gemini": {
+					"purpose": "在所选客户端与上游 API 之间转换文本对话、函数工具、响应及 SSE。",
+					"mapping": [
+						"映射系统提示、函数定义、工具调用与结果、图片及常用生成参数。",
+						"文本与推理内容即时流式输出；Gemini 和 Anthropic 的工具参数待 JSON 完整后输出。",
+						"路由自定义请求体使用上游格式。跨厂商推理签名与缓存控制不回传；内置工具、多候选和不支持的媒体返回 400。",
+						"Gemini 图片输入请使用 base64 data URL。OpenAI Responses 仍需单独配置透传路由。"
+					]
+				},
+				"gemini-to-openai-chat": {
+					"purpose": "在所选客户端与上游 API 之间转换文本对话、函数工具、响应及 SSE。",
+					"mapping": [
+						"映射系统提示、函数定义、工具调用与结果、图片及常用生成参数。",
+						"文本与推理内容即时流式输出；Gemini 和 Anthropic 的工具参数待 JSON 完整后输出。",
+						"路由自定义请求体使用上游格式。跨厂商推理签名与缓存控制不回传；内置工具、多候选和不支持的媒体返回 400。",
+						"Gemini 图片输入请使用 base64 data URL。OpenAI Responses 仍需单独配置透传路由。"
+					]
+				},
+				"gemini-to-anthropic": {
+					"purpose": "在所选客户端与上游 API 之间转换文本对话、函数工具、响应及 SSE。",
+					"mapping": [
+						"映射系统提示、函数定义、工具调用与结果、图片及常用生成参数。",
+						"文本与推理内容即时流式输出；Gemini 和 Anthropic 的工具参数待 JSON 完整后输出。",
+						"路由自定义请求体使用上游格式。跨厂商推理签名与缓存控制不回传；内置工具、多候选和不支持的媒体返回 400。",
+						"Gemini 图片输入请使用 base64 data URL。OpenAI Responses 仍需单独配置透传路由。"
 					]
 				}
 			},

@@ -365,7 +365,7 @@ export async function runProxyPipeline<TBody>(
 	let userModelCircuitEvent = null;
 	if (response.ok) {
 		markUserModelSuccess(apiKey.userId, baseModelId);
-	} else if (errorBodyText != null) {
+	} else if (errorBodyText != null && !proxyResult.meta?.textConversionClientError) {
 		userModelCircuitEvent = maybeTriggerUserModelCircuitFromUpstream(
 			apiKey.userId,
 			baseModelId,

@@ -110,7 +110,7 @@ function parseEventData(data: string, usage: UsageFromStream, timing?: RequestTi
       type?: string;
       delta?: { type?: unknown; text?: unknown; partial_json?: unknown; thinking?: unknown };
       usage?: AnthropicUsage;
-      message?: { id?: string };
+      message?: { id?: string; usage?: AnthropicUsage };
     };
     timing?.markFirstEvent();
     if (hasAnthropicReasoningDelta(parsed)) timing?.markFirstReasoningToken();
@@ -120,8 +120,11 @@ function parseEventData(data: string, usage: UsageFromStream, timing?: RequestTi
       const msgId = normalizeUpstreamId(parsed.message?.id);
       if (msgId) usage.upstreamMessageId = msgId;
     }
-    if (parsed.usage) {
-      applyUsage(usage, usageFromAnthropic(parsed.usage));
+    const nativeUsage = parsed.usage ?? parsed.message?.usage;
+    if (nativeUsage) {
+      // message_start carries input/cache counts; message_delta usually only patches output_tokens.
+      const previous = usage.raw_usage ? JSON.parse(usage.raw_usage) as AnthropicUsage : {};
+      applyUsage(usage, usageFromAnthropic({ ...previous, ...nativeUsage }));
     }
   } catch {
     // ignore

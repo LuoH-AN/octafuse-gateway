@@ -44,6 +44,8 @@ model + route_group + request protocol + operation
 
 `*` 是迁移兼容值。运行时先查精确 operation 的请求入口，查不到时再回退同协议的 `*` 请求入口。
 
+OpenAI `chat`、Anthropic `messages` 与 Gemini `models.generate` 可通过显式文本转换适配器互转，支持 JSON 与 SSE。同一请求入口的路由池可以混合同协议透传目标和转换目标；供应商端点按实际上游协议校验。六个方向、工具调用与能力边界见[文本协议转换](./text-protocol-conversion.md)。
+
 > **Gemini v2.2.0**：公开侧 / 上游侧配置只认 `models.generate`。客户端 URL 仍为 `POST /v1beta/models/{model}:{generateContent|streamGenerateContent}`；代理服务（Proxy）用 wire action 派生上游 URL，并把真实 action 写入 `route_trace.gemini.action`。历史 `generateContent` / `streamGenerateContent` 请求入口由迁移 `0017_gemini_models_generate.sql` 合并。详见 [gemini-models-generate-cutover.md](../../operators/migrations/gemini-models-generate-cutover.md)。
 
 > `POST /v1/responses` 已作为 OpenAI Responses 公开入口挂载。请求入口为 `openai` + `responses`，上游同样使用 `openai` + `responses` 与 `adapter=passthrough`。`previous_response_id` 仅在单一上游目标（或不会切换目标的路由池）下透传；多目标且无法保证回到同一上游时返回 `responses.state_route_unavailable`。当前不提供 Conversations、background retrieve/cancel 或 Chat ↔ Responses 转换。

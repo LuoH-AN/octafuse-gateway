@@ -12,7 +12,6 @@ import {
 	validateEditImageFiles,
 	type ImageOperation,
 } from '@/lib/image-generations';
-import { normalizeProtocol } from '@/lib/playground/usage-parsing';
 import {
 	codeBlockClass,
 	inputClass,
@@ -135,16 +134,12 @@ export function PlaygroundRequestPanel({
 		sentHeaders: lastSentWireHeaders,
 		sentSources: lastSentRequestSources,
 	});
-	const showGemini =
-		normalizeProtocol(selected?.upstream_protocol ?? 'openai') === 'gemini' &&
-		!selectedIsImage &&
-		!selectedIsEmbedding &&
-		!selectedIsAudio;
 	const llmFamily = playgroundLlmFamilyForRoute(selected, {
 		isImage: selectedIsImage,
 		isAudio: selectedIsAudio,
 		isEmbedding: selectedIsEmbedding,
 	});
+	const showGemini = llmFamily === 'gemini';
 	const llmSample = llmFamily
 		? matchPlaygroundLlmSample(llmFamily, bodyText, playgroundModelHintFromRoute(selected))
 		: null;
@@ -156,6 +151,8 @@ export function PlaygroundRequestPanel({
 				upstreamProtocol: selected?.upstream_protocol,
 				upstreamOperation: selected?.upstream_operation,
 				providerModelName: selected?.provider_model_name,
+				adapter: selected?.adapter,
+				geminiAction,
 			}),
 		[
 			bodyText,
@@ -163,6 +160,8 @@ export function PlaygroundRequestPanel({
 			selected?.upstream_protocol,
 			selected?.upstream_operation,
 			selected?.provider_model_name,
+			selected?.adapter,
+			geminiAction,
 		]
 	);
 	const routeHeaderRows = useMemo(

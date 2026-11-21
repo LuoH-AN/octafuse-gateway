@@ -107,6 +107,28 @@ describe('user-model-circuit-breaker — short-circuit response codes', () => {
 });
 
 describe('user-model-circuit-breaker — trigger helper', () => {
+	it('allows corrected requests immediately after an unsupported Responses tool', () => {
+		const event = maybeTriggerUserModelCircuitFromUpstream(
+			'user-1', 'deepseek', 400, 'application/json',
+			JSON.stringify({ error: {
+				message: "Failed to convert responses request: Unsupported Responses tools type 'web_search': the Chat Completions adapter supports only function tools",
+				type: 'invalid_request_error',
+			} })
+		);
+		assert.equal(event, null);
+		assert.equal(getUserModelCircuitOpen('user-1', 'deepseek'), null);
+	});
+
+	it('still blocks sensitive content even when the error also mentions unsupported tools', () => {
+		const event = maybeTriggerUserModelCircuitFromUpstream(
+			'user-1', 'deepseek', 400, 'application/json',
+			JSON.stringify({ error: {
+				message: "Unsupported Responses tools type 'web_search': sensitive content blocked",
+			} })
+		);
+		assert.equal(event?.reason, 'sensitive_content');
+	});
+
 	it('detects sensitive upstream responses', () => {
 		assert.equal(
 			isSensitiveUpstreamResponse(

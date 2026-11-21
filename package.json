@@ -42,6 +42,7 @@
 		"db:export:remote:data": "tsx scripts/db/d1-remote-export/export-remote-data.ts",
 		"test:gateway:node-smoke": "dotenv -c -- tsx scripts/smoke/test-node-core-routes.ts",
 		"test:gateway:postgres-smoke": "dotenv -c -- tsx scripts/smoke/test-postgres-core-routes.ts",
+		"test:gateway:text-conversion-live": "tsx scripts/smoke/test-text-protocol-conversion-live.ts",
 		"test:gateway:sql-storage-smoke": "dotenv -c -- tsx scripts/smoke/test-storage-concurrent-charge.ts",
 		"test:deploy": "node --test scripts/deploy/*.test.mjs",
 		"verify:proxy-bundle": "node scripts/ci/verify-proxy-bundle-externals.mjs",

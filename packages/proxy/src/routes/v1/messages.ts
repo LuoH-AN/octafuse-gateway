@@ -10,6 +10,8 @@ import { finalizeRequestLogJson } from '../../services/request-log-shared';
 import { summarizeMessagesShapeForLog } from '../../services/request-log-messages-shape';
 import { summarizeAnthropicToolsForLog } from '../../services/request-log-tools-summary';
 import { buildRouteRequestBody } from '../../services/route-default-params';
+import { isTextConversionAdapter } from '@octafuse/core/adapters/registry';
+import { textConversionUpstreamBodyForLog } from '../../services/egress/text-conversion-driver';
 import {
 	parseJsonModelBody,
 	runProxyPipeline,
@@ -43,6 +45,7 @@ function anthropicRequestBodyForLog(body: Record<string, unknown>): string | nul
 
 /** 与 anthropic-driver 一致：`{ ...buildRouteRequestBody, model }` 再脱敏（与 chat 分写，便于日后分叉）。 */
 function anthropicUpstreamWireBodyForLog(route: RouteResult, body: Record<string, unknown>): string | null {
+	if (isTextConversionAdapter(route.adapter)) return textConversionUpstreamBodyForLog(route, 'anthropic', body, body.stream === true);
 	const merged = buildRouteRequestBody(route, body);
 	const wire = { ...merged, model: route.providerModelName };
 	return finalizeRequestLogJson(anthropicBodyRedactedForLog(wire));

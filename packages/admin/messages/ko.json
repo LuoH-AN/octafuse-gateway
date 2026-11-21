@@ -1655,7 +1655,13 @@
 				"elevenlabs-asr-file": "ElevenLabs 파일 전사",
 				"elevenlabs-tts": "ElevenLabs 음성 합성",
 				"volcengine-image": "Volcengine Seedream 이미지 생성",
-				"gemini-image": "Gemini 공식 이미지 생성"
+				"gemini-image": "Gemini 공식 이미지 생성",
+				"openai-chat-to-anthropic": "OpenAI Chat → Anthropic Messages",
+				"openai-chat-to-gemini": "OpenAI Chat → Gemini",
+				"anthropic-to-openai-chat": "Anthropic Messages → OpenAI Chat",
+				"anthropic-to-gemini": "Anthropic Messages → Gemini",
+				"gemini-to-openai-chat": "Gemini → OpenAI Chat",
+				"gemini-to-anthropic": "Gemini → Anthropic Messages"
 			},
 			"adapterGuides": {
 				"passthrough": {
@@ -1828,6 +1834,60 @@
 						"WxH 형식의 size는 가장 가까운 imageConfig.aspectRatio로 환산하고 긴 변으로 1K / 2K / 4K를 고릅니다. 512 / 1K / 2K / 4K만 보내거나 auto도 쓸 수 있습니다.",
 						"response_format은 b64_json만 지원합니다. 참조 이미지는 image에 data URL로 넣으며 inlineData로 보냅니다. quality와 background는 전달하지 않습니다.",
 						"그 밖의 Gemini 파라미터는 generationConfig(imageConfig, thinkingConfig 등)에 넣으면 깊게 병합됩니다. 이미지 출력과 텍스트 출력 토큰으로 과금합니다. JSON만 반환하며 스트리밍은 Gemini 네이티브 패스스루를 사용하세요."
+					]
+				},
+				"openai-chat-to-anthropic": {
+					"purpose": "선택한 클라이언트와 업스트림 API 사이에서 대화, 함수 도구, 응답 및 SSE를 변환합니다.",
+					"mapping": [
+						"시스템 지시, 함수 정의, 도구 호출과 결과, 이미지 및 공통 생성 매개변수를 변환합니다.",
+						"텍스트와 추론은 즉시 전송하며 Gemini와 Anthropic 도구 인수는 완전한 JSON이 된 후 전송합니다.",
+						"경로의 사용자 지정 본문은 업스트림 형식을 사용합니다. 다른 공급자의 추론 서명과 캐시 제어는 재전송하지 않습니다. 내장 도구, 여러 후보 및 지원하지 않는 미디어는 400을 반환합니다.",
+						"Gemini 이미지 입력에는 base64 data URL을 사용하세요. OpenAI Responses에는 별도의 통과 경로가 필요합니다."
+					]
+				},
+				"openai-chat-to-gemini": {
+					"purpose": "선택한 클라이언트와 업스트림 API 사이에서 대화, 함수 도구, 응답 및 SSE를 변환합니다.",
+					"mapping": [
+						"시스템 지시, 함수 정의, 도구 호출과 결과, 이미지 및 공통 생성 매개변수를 변환합니다.",
+						"텍스트와 추론은 즉시 전송하며 Gemini와 Anthropic 도구 인수는 완전한 JSON이 된 후 전송합니다.",
+						"경로의 사용자 지정 본문은 업스트림 형식을 사용합니다. 다른 공급자의 추론 서명과 캐시 제어는 재전송하지 않습니다. 내장 도구, 여러 후보 및 지원하지 않는 미디어는 400을 반환합니다.",
+						"Gemini 이미지 입력에는 base64 data URL을 사용하세요. OpenAI Responses에는 별도의 통과 경로가 필요합니다."
+					]
+				},
+				"anthropic-to-openai-chat": {
+					"purpose": "선택한 클라이언트와 업스트림 API 사이에서 대화, 함수 도구, 응답 및 SSE를 변환합니다.",
+					"mapping": [
+						"시스템 지시, 함수 정의, 도구 호출과 결과, 이미지 및 공통 생성 매개변수를 변환합니다.",
+						"텍스트와 추론은 즉시 전송하며 Gemini와 Anthropic 도구 인수는 완전한 JSON이 된 후 전송합니다.",
+						"경로의 사용자 지정 본문은 업스트림 형식을 사용합니다. 다른 공급자의 추론 서명과 캐시 제어는 재전송하지 않습니다. 내장 도구, 여러 후보 및 지원하지 않는 미디어는 400을 반환합니다.",
+						"Gemini 이미지 입력에는 base64 data URL을 사용하세요. OpenAI Responses에는 별도의 통과 경로가 필요합니다."
+					]
+				},
+				"anthropic-to-gemini": {
+					"purpose": "선택한 클라이언트와 업스트림 API 사이에서 대화, 함수 도구, 응답 및 SSE를 변환합니다.",
+					"mapping": [
+						"시스템 지시, 함수 정의, 도구 호출과 결과, 이미지 및 공통 생성 매개변수를 변환합니다.",
+						"텍스트와 추론은 즉시 전송하며 Gemini와 Anthropic 도구 인수는 완전한 JSON이 된 후 전송합니다.",
+						"경로의 사용자 지정 본문은 업스트림 형식을 사용합니다. 다른 공급자의 추론 서명과 캐시 제어는 재전송하지 않습니다. 내장 도구, 여러 후보 및 지원하지 않는 미디어는 400을 반환합니다.",
+						"Gemini 이미지 입력에는 base64 data URL을 사용하세요. OpenAI Responses에는 별도의 통과 경로가 필요합니다."
+					]
+				},
+				"gemini-to-openai-chat": {
+					"purpose": "선택한 클라이언트와 업스트림 API 사이에서 대화, 함수 도구, 응답 및 SSE를 변환합니다.",
+					"mapping": [
+						"시스템 지시, 함수 정의, 도구 호출과 결과, 이미지 및 공통 생성 매개변수를 변환합니다.",
+						"텍스트와 추론은 즉시 전송하며 Gemini와 Anthropic 도구 인수는 완전한 JSON이 된 후 전송합니다.",
+						"경로의 사용자 지정 본문은 업스트림 형식을 사용합니다. 다른 공급자의 추론 서명과 캐시 제어는 재전송하지 않습니다. 내장 도구, 여러 후보 및 지원하지 않는 미디어는 400을 반환합니다.",
+						"Gemini 이미지 입력에는 base64 data URL을 사용하세요. OpenAI Responses에는 별도의 통과 경로가 필요합니다."
+					]
+				},
+				"gemini-to-anthropic": {
+					"purpose": "선택한 클라이언트와 업스트림 API 사이에서 대화, 함수 도구, 응답 및 SSE를 변환합니다.",
+					"mapping": [
+						"시스템 지시, 함수 정의, 도구 호출과 결과, 이미지 및 공통 생성 매개변수를 변환합니다.",
+						"텍스트와 추론은 즉시 전송하며 Gemini와 Anthropic 도구 인수는 완전한 JSON이 된 후 전송합니다.",
+						"경로의 사용자 지정 본문은 업스트림 형식을 사용합니다. 다른 공급자의 추론 서명과 캐시 제어는 재전송하지 않습니다. 내장 도구, 여러 후보 및 지원하지 않는 미디어는 400을 반환합니다.",
+						"Gemini 이미지 입력에는 base64 data URL을 사용하세요. OpenAI Responses에는 별도의 통과 경로가 필요합니다."
 					]
 				}
 			},

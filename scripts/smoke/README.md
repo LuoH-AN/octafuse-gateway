@@ -60,6 +60,22 @@ CI 还执行生产依赖审计（`scripts/ci/audit-prod.mjs`，仅对上游无�
 
 可在管理后台配好路由后，用「不传某字段 / 显式覆盖」做回归。
 
+### 三类文本协议互转（需真实上游）
+
+`test-text-protocol-conversion-live.ts` 使用当前源码的协议转换与上游驱动，真实调用 OpenAI Chat、Anthropic Messages、Gemini 端点。可以复用已部署的 Cloudflare Worker 作为上游，也可以直连供应商。脚本不部署 Worker、不修改路由、不写入本地数据库；使用线上网关作为上游时，线上仍会按正常请求计费和记日志。
+
+复制 [`text-protocol-live.example.json`](text-protocol-live.example.json) 为仓库根 `.env.text-protocol-live.json`，填写端点及各协议可用模型。凭据可通过 `apiKeyEnv` 指定环境变量，或在本地配置中填写 `apiKey`；该本地配置已被 `.gitignore` 忽略。`customParams` 可按上游格式填写模型要求的路由参数。
+
+```bash
+npm run test:gateway:text-conversion-live -- .env.text-protocol-live.json
+```
+
+覆盖六个转换方向，每个方向检查普通 JSON、SSE 文本及终止事件、函数调用与真实工具结果续轮，共 18 项检查、正常情况下 24 次模型调用，并核对实际驱动读取的用量。失败或缺少配置均以非零状态退出，不把跳过算通过。报告默认写到 `data/text-protocol-live-report.json`，不记录 Key 或完整响应。
+
+只测试已配置的上游时，可通过 `adapters` 显式指定适配器 ID 子集；报告会列出 `excludedAdapters`，子集通过不代表六个方向全部通过。`cases` 可选 `json`、`sse`、`tool-roundtrip`，用于定向复查失败。请求超过 `timeoutMs` 时停止并写入部分报告，未执行项计入 `notRun`。
+
+这个测试验证当前本地转换代码与真实上游的兼容性；Cloudflare Worker 上的新版本部署、HTTP 鉴权、数据库选路和本地计费落库需要另外做完整网关联调。流式工具参数与图片尚不在这份真实冒烟范围内。
+
 ### DashScope 实时 ASR（需真实上游）
 
 `test-dashscope-realtime-asr.ts` **不进 CI**。未设置 `GATEWAY_API_KEY` 或 `GATEWAY_REALTIME_PCM` 时跳过。需要已启动的代理服务、已配置的流式 ASR 路由，以及 16 kHz / 16 bit / 单声道裸 PCM：

@@ -1655,7 +1655,13 @@
 				"elevenlabs-asr-file": "ElevenLabs ファイル文字起こし",
 				"elevenlabs-tts": "ElevenLabs 音声合成",
 				"volcengine-image": "Volcengine Seedream 画像生成",
-				"gemini-image": "Gemini 公式画像生成"
+				"gemini-image": "Gemini 公式画像生成",
+				"openai-chat-to-anthropic": "OpenAI Chat → Anthropic Messages",
+				"openai-chat-to-gemini": "OpenAI Chat → Gemini",
+				"anthropic-to-openai-chat": "Anthropic Messages → OpenAI Chat",
+				"anthropic-to-gemini": "Anthropic Messages → Gemini",
+				"gemini-to-openai-chat": "Gemini → OpenAI Chat",
+				"gemini-to-anthropic": "Gemini → Anthropic Messages"
 			},
 			"adapterGuides": {
 				"passthrough": {
@@ -1828,6 +1834,60 @@
 						"WxH の size は最も近い imageConfig.aspectRatio に換算し、長辺から 1K / 2K / 4K を選びます。512 / 1K / 2K / 4K のみ、または auto も指定できます。",
 						"response_format は b64_json のみです。参照画像は image に data URL で置き、inlineData として送ります。quality と background は転送しません。",
 						"その他の Gemini パラメーターは generationConfig（imageConfig、thinkingConfig など）に書くと深くマージされます。画像出力とテキスト出力のトークンで課金します。JSON のみです。ストリームは Gemini のネイティブ透過を使います。"
+					]
+				},
+				"openai-chat-to-anthropic": {
+					"purpose": "選択したクライアントと上流 API 間で会話、関数ツール、応答と SSE を変換します。",
+					"mapping": [
+						"システム指示、関数定義、ツール呼び出しと結果、画像、共通の生成パラメータを変換します。",
+						"テキストと思考は即時配信し、Gemini と Anthropic のツール引数は完全な JSON を待って配信します。",
+						"ルートのカスタム本文には上流形式を使用します。他社の思考署名とキャッシュ制御は再送しません。組み込みツール、複数候補、非対応メディアは 400 になります。",
+						"Gemini の画像入力には base64 data URL を使用してください。OpenAI Responses には別の透過ルートが必要です。"
+					]
+				},
+				"openai-chat-to-gemini": {
+					"purpose": "選択したクライアントと上流 API 間で会話、関数ツール、応答と SSE を変換します。",
+					"mapping": [
+						"システム指示、関数定義、ツール呼び出しと結果、画像、共通の生成パラメータを変換します。",
+						"テキストと思考は即時配信し、Gemini と Anthropic のツール引数は完全な JSON を待って配信します。",
+						"ルートのカスタム本文には上流形式を使用します。他社の思考署名とキャッシュ制御は再送しません。組み込みツール、複数候補、非対応メディアは 400 になります。",
+						"Gemini の画像入力には base64 data URL を使用してください。OpenAI Responses には別の透過ルートが必要です。"
+					]
+				},
+				"anthropic-to-openai-chat": {
+					"purpose": "選択したクライアントと上流 API 間で会話、関数ツール、応答と SSE を変換します。",
+					"mapping": [
+						"システム指示、関数定義、ツール呼び出しと結果、画像、共通の生成パラメータを変換します。",
+						"テキストと思考は即時配信し、Gemini と Anthropic のツール引数は完全な JSON を待って配信します。",
+						"ルートのカスタム本文には上流形式を使用します。他社の思考署名とキャッシュ制御は再送しません。組み込みツール、複数候補、非対応メディアは 400 になります。",
+						"Gemini の画像入力には base64 data URL を使用してください。OpenAI Responses には別の透過ルートが必要です。"
+					]
+				},
+				"anthropic-to-gemini": {
+					"purpose": "選択したクライアントと上流 API 間で会話、関数ツール、応答と SSE を変換します。",
+					"mapping": [
+						"システム指示、関数定義、ツール呼び出しと結果、画像、共通の生成パラメータを変換します。",
+						"テキストと思考は即時配信し、Gemini と Anthropic のツール引数は完全な JSON を待って配信します。",
+						"ルートのカスタム本文には上流形式を使用します。他社の思考署名とキャッシュ制御は再送しません。組み込みツール、複数候補、非対応メディアは 400 になります。",
+						"Gemini の画像入力には base64 data URL を使用してください。OpenAI Responses には別の透過ルートが必要です。"
+					]
+				},
+				"gemini-to-openai-chat": {
+					"purpose": "選択したクライアントと上流 API 間で会話、関数ツール、応答と SSE を変換します。",
+					"mapping": [
+						"システム指示、関数定義、ツール呼び出しと結果、画像、共通の生成パラメータを変換します。",
+						"テキストと思考は即時配信し、Gemini と Anthropic のツール引数は完全な JSON を待って配信します。",
+						"ルートのカスタム本文には上流形式を使用します。他社の思考署名とキャッシュ制御は再送しません。組み込みツール、複数候補、非対応メディアは 400 になります。",
+						"Gemini の画像入力には base64 data URL を使用してください。OpenAI Responses には別の透過ルートが必要です。"
+					]
+				},
+				"gemini-to-anthropic": {
+					"purpose": "選択したクライアントと上流 API 間で会話、関数ツール、応答と SSE を変換します。",
+					"mapping": [
+						"システム指示、関数定義、ツール呼び出しと結果、画像、共通の生成パラメータを変換します。",
+						"テキストと思考は即時配信し、Gemini と Anthropic のツール引数は完全な JSON を待って配信します。",
+						"ルートのカスタム本文には上流形式を使用します。他社の思考署名とキャッシュ制御は再送しません。組み込みツール、複数候補、非対応メディアは 400 になります。",
+						"Gemini の画像入力には base64 data URL を使用してください。OpenAI Responses には別の透過ルートが必要です。"
 					]
 				}
 			},

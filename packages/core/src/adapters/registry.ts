@@ -245,6 +245,77 @@ export function matchAdapterUpstreamModel(
 	return 'mismatch';
 }
 
+const TEXT_CONVERSION_METADATA = {
+	modality: 'text',
+	modelKind: 'llm',
+	exchange: 'sse',
+	billing: 'tokens',
+	requestPayload: 'json',
+	responsePayload: 'sse',
+	roles: [],
+} as const;
+
+export const TEXT_CONVERSION_ADAPTERS = [
+	{
+		...TEXT_CONVERSION_METADATA,
+		id: 'openai-chat-to-anthropic',
+		optionKey: 'openai-chat-to-anthropic',
+		request: { protocol: 'openai', operation: 'chat' },
+		upstream: { protocol: 'anthropic', operations: ['messages'] },
+		requiredUpstreamCapabilities: ['messages'],
+		publicPath: '/v1/chat/completions',
+	},
+	{
+		...TEXT_CONVERSION_METADATA,
+		id: 'openai-chat-to-gemini',
+		optionKey: 'openai-chat-to-gemini',
+		request: { protocol: 'openai', operation: 'chat' },
+		upstream: { protocol: 'gemini', operations: ['models.generate'] },
+		requiredUpstreamCapabilities: ['models.generate'],
+		publicPath: '/v1/chat/completions',
+	},
+	{
+		...TEXT_CONVERSION_METADATA,
+		id: 'anthropic-to-openai-chat',
+		optionKey: 'anthropic-to-openai-chat',
+		request: { protocol: 'anthropic', operation: 'messages' },
+		upstream: { protocol: 'openai', operations: ['chat'] },
+		requiredUpstreamCapabilities: ['chat'],
+		publicPath: '/v1/messages',
+	},
+	{
+		...TEXT_CONVERSION_METADATA,
+		id: 'anthropic-to-gemini',
+		optionKey: 'anthropic-to-gemini',
+		request: { protocol: 'anthropic', operation: 'messages' },
+		upstream: { protocol: 'gemini', operations: ['models.generate'] },
+		requiredUpstreamCapabilities: ['models.generate'],
+		publicPath: '/v1/messages',
+	},
+	{
+		...TEXT_CONVERSION_METADATA,
+		id: 'gemini-to-openai-chat',
+		optionKey: 'gemini-to-openai-chat',
+		request: { protocol: 'gemini', operation: 'models.generate' },
+		upstream: { protocol: 'openai', operations: ['chat'] },
+		requiredUpstreamCapabilities: ['chat'],
+		publicPath: `/v1beta/models/${SURFACE_PATH_MODEL_PLACEHOLDER}:{generateContent|streamGenerateContent}`,
+	},
+	{
+		...TEXT_CONVERSION_METADATA,
+		id: 'gemini-to-anthropic',
+		optionKey: 'gemini-to-anthropic',
+		request: { protocol: 'gemini', operation: 'models.generate' },
+		upstream: { protocol: 'anthropic', operations: ['messages'] },
+		requiredUpstreamCapabilities: ['messages'],
+		publicPath: `/v1beta/models/${SURFACE_PATH_MODEL_PLACEHOLDER}:{generateContent|streamGenerateContent}`,
+	},
+] as const satisfies readonly AdapterDescriptor[];
+
+export function isTextConversionAdapter(id: string): boolean {
+	return TEXT_CONVERSION_ADAPTERS.some((adapter) => adapter.id === id);
+}
+
 const CONVERSION_ADAPTERS = [
 	{
 		id: 'dashscope-asr-qwen-file',
@@ -627,6 +698,7 @@ const CONVERSION_ADAPTERS = [
 		protectedUpstreamPaths: ['model_id', 'timestamps_granularity', 'webhook'],
 		extraBodyExample: { tag_audio_events: false, num_speakers: 2 },
 	},
+...TEXT_CONVERSION_ADAPTERS,
 ] as const satisfies readonly AdapterDescriptor[];
 
 function passthroughDescriptor(input: {

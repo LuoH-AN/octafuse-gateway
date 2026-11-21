@@ -2,6 +2,8 @@
 
 需要用户 API Key 认证的 OpenAI / Anthropic / Gemini 兼容 API。以下路径均部署在 **Proxy Worker**（`GATEWAY_URL`），与 Admin 的 `/api/admin/*` 无关。
 
+OpenAI Chat、Anthropic Messages 与 Gemini generateContent 可通过显式路由适配器互转，普通和流式响应均使用客户端协议。供应商需配置实际上游的端点；转换方向、函数工具及限制见[文本协议转换](../architecture/text-protocol-conversion.md)。Responses 仍使用同协议透传。
+
 ## 认证
 
 默认使用 `Authorization: Bearer <USER_API_KEY>`。

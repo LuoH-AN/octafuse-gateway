@@ -57,7 +57,7 @@ export function defaultDescribeOutcome<TBody>(
 		hasUsage: defaultHasUsage(input.usage),
 		incompleteErrorMessage: defaultIncompleteErrorMessage(input.timedOut, input.usage.stream_error),
 		httpErrorFallback: defaultHttpErrorFallback(input.httpStatus),
-		loggedRequestId: input.headerRequestId,
+		loggedRequestId: input.headerRequestId ?? input.usage.upstreamBodyRequestId ?? null,
 	};
 }
 

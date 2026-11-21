@@ -57,3 +57,10 @@ test('strict route smoke requires explicit production admin credentials', () => 
 	assert.equal(result.status, 1, result.stderr);
 	assert.match(result.stderr, /Strict smoke requires/);
 });
+
+test('live text conversion smoke fails without real upstream configuration', () => {
+	const result = run('test-text-protocol-conversion-live', { TEXT_PROTOCOL_LIVE_CONFIG: '' });
+	assert.equal(result.status, 1, result.stderr);
+	assert.match(result.stderr, /real upstream config file is required/);
+	assert.doesNotMatch(result.stdout, /PASS|passed|skip/i);
+});

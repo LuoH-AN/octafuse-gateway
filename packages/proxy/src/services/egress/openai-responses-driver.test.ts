@@ -208,6 +208,140 @@ describe('dispatchOpenAiResponsesRoute', () => {
 		};
 	}
 
+	function unsupportedToolResponse(tool = 'web_search'): Response {
+		return Response.json({ error: {
+			message: `Failed to convert responses request: Unsupported Responses tools type '${tool}': the Chat Completions adapter supports only function tools`,
+			type: 'invalid_request_error',
+		} }, { status: 400 });
+	}
+
+	for (const stream of [false, true]) {
+		it(`recovers optional web search rejection while preserving function tools and ${stream ? 'streamed' : 'JSON'} usage`, async () => {
+			const fn = { type: 'function', name: 'weather', parameters: { type: 'object' } };
+			const body = {
+				input: 'Call weather', stream, tools: [{ type: 'web_search' }, fn], tool_choice: 'auto',
+				instructions: 'Be brief', reasoning: { effort: 'high', summary: 'auto' }, store: false,
+			};
+			const original = structuredClone(body);
+			const requests: Record<string, unknown>[] = [];
+			const output = [{ type: 'function_call', name: 'weather', call_id: 'call_1', arguments: '{}' }];
+			const completed = { id: 'resp_1', status: 'completed', output, usage: { input_tokens: 13, output_tokens: 5 } };
+			mock.method(globalThis, 'fetch', async (_url: string, init: RequestInit) => {
+				const wire = JSON.parse(init.body as string);
+				requests.push(wire);
+				assert.equal(new Headers(init.headers).get('authorization'), 'Bearer sk-test');
+				if (requests.length === 1) return unsupportedToolResponse();
+				assert.deepEqual(wire.tools, [fn]);
+				assert.match(wire.instructions, /^Be brief\n\n.*web_search tool is unavailable/);
+				assert.deepEqual(wire.reasoning, body.reasoning);
+				assert.equal(wire.store, false);
+				return stream
+					? new Response(`data: ${JSON.stringify({ type: 'response.completed', response: completed })}\n\n`, {
+						headers: { 'Content-Type': 'text/event-stream', 'x-request-id': 'req_retry' },
+					})
+					: Response.json(completed, { headers: { 'x-request-id': 'req_retry' } });
+			});
+			const result = await dispatchOpenAiResponsesRoute(responsesRoute(), body);
+			assert.equal(requests.length, 2);
+			assert.deepEqual(requests[0]!.tools, original.tools);
+			assert.deepEqual(body, original);
+			assert.equal(result.response.status, 200);
+			assert.equal(result.upstreamRequestId, 'req_retry');
+			assert.equal(result.response.headers.get('X-Octafuse-Disabled-Tools'), 'web_search');
+			assert.match(result.response.headers.get('Warning')!, /optional tool disabled/);
+			if (stream) {
+				const text = await result.response.text();
+				assert.match(text, /response.completed/);
+				assert.match(text, /"sequence_number":0/);
+				assert.match(text, /"call_id":"call_1"/);
+			} else {
+				assert.deepEqual(await result.response.json(), completed);
+			}
+			const usage = await result.usagePromise;
+			assert.equal(usage.input_tokens, 13);
+			assert.equal(usage.output_tokens, 5);
+		});
+	}
+
+	it('forwards web search unchanged when the upstream supports it', async () => {
+		const body = { input: 'Search', tools: [{ type: 'web_search', filters: { allowed_domains: ['example.com'] } }] };
+		let calls = 0;
+		mock.method(globalThis, 'fetch', async (_url: string, init: RequestInit) => {
+			calls++;
+			assert.deepEqual(JSON.parse(init.body as string), { ...body, model: 'gpt-5' });
+			return Response.json({ output: [{ type: 'web_search_call', status: 'completed' }] });
+		});
+		const result = await dispatchOpenAiResponsesRoute(responsesRoute(), body);
+		assert.equal(calls, 1);
+		assert.equal(result.response.headers.get('X-Octafuse-Disabled-Tools'), null);
+	});
+
+	for (const toolChoice of ['required', { type: 'web_search' }, { type: 'allowed_tools', mode: 'required', tools: [{ type: 'web_search' }] }]) {
+		it(`keeps explicit tool requirements ${JSON.stringify(toolChoice)} visible as errors`, async () => {
+			let calls = 0;
+			mock.method(globalThis, 'fetch', async () => { calls++; return unsupportedToolResponse(); });
+			const result = await dispatchOpenAiResponsesRoute(responsesRoute(), {
+				input: 'Search', tools: [{ type: 'web_search' }], tool_choice: toolChoice,
+			});
+			assert.equal(calls, 1);
+			assert.equal(result.response.status, 400);
+			assert.match(await result.response.text(), /Unsupported Responses tools type/);
+			assert.equal(result.response.headers.get('X-Octafuse-Disabled-Tools'), null);
+		});
+	}
+
+	it('does not mask unrelated errors or retry indefinitely', async () => {
+		for (const kind of ['other-parameter', 'other-tool', 'second-error', 'sensitive']) {
+			let calls = 0;
+			mock.method(globalThis, 'fetch', async () => {
+				calls++;
+				if (kind === 'other-parameter') return Response.json({ error: { message: 'invalid temperature' } }, { status: 400 });
+				if (kind === 'other-tool') return unsupportedToolResponse('code_interpreter');
+				if (kind === 'sensitive') return Response.json({ error: { message: "Unsupported Responses tools type 'web_search': sensitive content blocked" } }, { status: 400 });
+				return unsupportedToolResponse();
+			});
+			const result = await dispatchOpenAiResponsesRoute(responsesRoute(), { tools: [{ type: 'web_search' }] });
+			assert.equal(calls, kind === 'second-error' ? 2 : 1);
+			assert.equal(result.response.status, 400);
+			await result.response.text();
+			mock.reset();
+		}
+	});
+
+	for (const toolChoice of ['required', { type: 'function', name: 'weather' }]) {
+		it(`preserves function tool choice ${JSON.stringify(toolChoice)} when search is optional`, async () => {
+			const fn = { type: 'function', name: 'weather', parameters: { type: 'object' } };
+			let calls = 0;
+			mock.method(globalThis, 'fetch', async (_url: string, init: RequestInit) => {
+				calls++;
+				if (calls === 1) return unsupportedToolResponse();
+				const wire = JSON.parse(init.body as string);
+				assert.deepEqual(wire.tools, [fn]);
+				assert.deepEqual(wire.tool_choice, toolChoice);
+				return Response.json({ output: [{ type: 'function_call', name: 'weather', call_id: 'call_1', arguments: '{}' }] });
+			});
+			const result = await dispatchOpenAiResponsesRoute(responsesRoute(), {
+				tools: [{ type: 'web_search' }, fn], tool_choice: toolChoice,
+			});
+			assert.equal(calls, 2);
+			assert.equal(result.response.status, 200);
+			assert.equal((await result.response.json() as { output: { name: string }[] }).output[0]!.name, 'weather');
+		});
+	}
+
+	it('also handles optional preview search without removing client function tools', async () => {
+		let calls = 0;
+		mock.method(globalThis, 'fetch', async (_url: string, init: RequestInit) => {
+			calls++;
+			if (calls === 1) return unsupportedToolResponse('web_search_preview');
+			assert.deepEqual(JSON.parse(init.body as string).tools, []);
+			return Response.json({ output: [] });
+		});
+		const result = await dispatchOpenAiResponsesRoute(responsesRoute(), { tools: [{ type: 'web_search_preview' }] });
+		assert.equal(calls, 2);
+		assert.equal(result.response.headers.get('X-Octafuse-Disabled-Tools'), 'web_search_preview');
+	});
+
 	for (const summary of [undefined, null]) {
 		it(`repairs ${String(summary)} reasoning summary before a tool continuation reaches the upstream`, async () => {
 			const reasoning = { type: 'reasoning', id: 'rs_1', encrypted_content: 'opaque-state', summary };

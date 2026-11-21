@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { PLAYGROUND_LLM_SAMPLE_IDS } from './samples';
 import { quickTestLlmFamily, quickTestSample, setQuickTestStreaming } from './quick-test-samples';
+import { TEXT_CONVERSION_ADAPTERS } from '@octafuse/core/adapters/registry';
 
 const route = {
 	model_id: 'deepseek-v4',
@@ -11,6 +12,11 @@ const route = {
 };
 
 describe('Quick test protocol templates', () => {
+	it('uses the client protocol family for every text conversion adapter', () => {
+		for (const adapter of TEXT_CONVERSION_ADAPTERS) {
+			assert.equal(quickTestLlmFamily({ ...route, adapter: adapter.id, upstream_protocol: adapter.upstream.protocol, upstream_operation: adapter.upstream.operations[0] }), adapter.request.protocol === 'openai' ? 'openai_chat' : adapter.request.protocol);
+		}
+	});
 	it('selects exact endpoint families and excludes media/unsupported operations', () => {
 		assert.equal(quickTestLlmFamily(route), 'openai_chat');
 		assert.equal(quickTestLlmFamily({ ...route, upstream_operation: 'responses' }), 'openai_responses');

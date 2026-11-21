@@ -89,6 +89,23 @@ describe('dispatchAnthropicRoute', () => {
 	afterEach(() => {
 		mock.reset();
 	});
+	it('combines message_start input/cache usage with output-only message_delta usage', async () => {
+		const frames = [
+			{ type: 'message_start', message: { id: 'msg_split', usage: { input_tokens: 10, cache_read_input_tokens: 6, cache_creation_input_tokens: 2, output_tokens: 0 } } },
+			{ type: 'message_delta', delta: { stop_reason: 'end_turn' }, usage: { output_tokens: 4 } },
+			{ type: 'message_stop' },
+		];
+		mock.method(globalThis, 'fetch', async () => new Response(frames.map(frame => `data: ${JSON.stringify(frame)}\n\n`).join(''), { headers: { 'Content-Type': 'text/event-stream' } }));
+		const result = await dispatchAnthropicRoute(anthropicRoute(), { stream: true });
+		await result.response.text();
+		const usage = await result.usagePromise;
+		assert.equal(usage.input_tokens, 18);
+		assert.equal(usage.output_tokens, 4);
+		assert.equal(usage.cache_read_tokens, 6);
+		assert.equal(usage.cache_write_tokens, 2);
+		assert.equal(usage.total_tokens, 22);
+		assert.equal(usage.upstreamMessageId, 'msg_split');
+	});
 
 	it('parses non-stream JSON usage and message id', async () => {
 		const body = JSON.stringify({

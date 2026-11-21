@@ -1,15 +1,19 @@
 import { loadPlaygroundSampleBody, type PlaygroundLlmFamily, type PlaygroundLlmSampleId } from './samples';
+import { TEXT_CONVERSION_ADAPTERS } from '@octafuse/core/adapters/registry';
 
 type RouteHint = {
 	model_id: string;
 	provider_model_name: string;
 	upstream_protocol: string;
 	upstream_operation: string;
+	adapter?: string | null;
 };
 
 export function quickTestLlmFamily(route: RouteHint, mediaModel = false): PlaygroundLlmFamily | null {
 	if (mediaModel) return null;
-	const { upstream_protocol: protocol, upstream_operation: operation } = route;
+	const conversion = TEXT_CONVERSION_ADAPTERS.find(adapter => adapter.id === route.adapter);
+	const protocol = conversion?.request.protocol ?? route.upstream_protocol;
+	const operation = conversion?.request.operation ?? route.upstream_operation;
 	if (protocol === 'openai' && operation === 'chat') return 'openai_chat';
 	if (protocol === 'openai' && operation === 'responses') return 'openai_responses';
 	if (protocol === 'anthropic' && operation === 'messages') return 'anthropic';

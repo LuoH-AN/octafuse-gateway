@@ -7,6 +7,7 @@
  */
 import type { GatewayRepositories, RouteStrategyName, UpstreamProtocol } from '@octafuse/core';
 import { DEFAULT_ROUTE_STRATEGY, fingerprintProviderApiKey } from '@octafuse/core';
+import { TEXT_CONVERSION_ADAPTERS } from '@octafuse/core/adapters/registry';
 import { overlayClientHeadersOnRouteCustomParams } from '@octafuse/core/route-custom-params';
 import type { RoutePoolStickyRoutingConfig } from '@octafuse/core/db/route-pool-sticky-types';
 import type { RouteResult } from './model-router';
@@ -67,6 +68,8 @@ export type ImageDispatchAbortReason = 'client_abort' | 'gateway_timeout';
 
 /** 协议 driver 可选透传（如 Images / Audio 已解析的 body / usage，避免 route 侧重复 parse）。 */
 export type ProxyDispatchMeta = {
+	/** 转换前的本地参数校验失败，不触发用户与模型级上游熔断。 */
+	textConversionClientError?: boolean;
 	imageUsage?: import('@octafuse/core').ImageTokenUsage | null;
 	parsedBody?: unknown;
 	/** 仅 Images：上游 wait 被 abort 时由 driver 写入（见 openai-images-driver） */
@@ -331,6 +334,8 @@ export async function failoverDispatch(
 	const protocolRoutes = routes
 		.filter((route) => {
 			if (expectedProtocols.includes(route.upstreamProtocol)) return true;
+			const conversion = TEXT_CONVERSION_ADAPTERS.find(adapter => adapter.id === route.adapter);
+			if (conversion && expectedProtocols.includes(conversion.request.protocol) && conversion.upstream.protocol === route.upstreamProtocol) return true;
 			console.warn(
 				`[Gateway Proxy] unsupported protocol, skipping providerId=${route.providerId} protocol=${route.upstreamProtocol}`
 			);

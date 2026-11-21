@@ -19,6 +19,7 @@ import { allocateRequestLogId } from './accounting';
 import { withGatewayRequestIdHeader } from './gateway-error-response';
 import { recordUsage } from './usage-tracker';
 import type { RequestTimingCollector } from './request-timing';
+import { isUnsupportedResponsesToolError } from './egress/openai-responses-compat';
 
 const GATEWAY_PROVIDER_ID = 'gateway';
 
@@ -125,6 +126,9 @@ export function maybeTriggerUserModelCircuitFromUpstream(
 			return null;
 		}
 		if (options?.clientErrorCircuitEnabled === false) {
+			return null;
+		}
+		if (isUnsupportedResponsesToolError(status, errorBodyText)) {
 			return null;
 		}
 	}

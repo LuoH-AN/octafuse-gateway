@@ -64,6 +64,12 @@ describe('adapter registry', () => {
 			'gemini-image',
 			'elevenlabs-tts',
 			'elevenlabs-asr-file',
+			'openai-chat-to-anthropic',
+			'openai-chat-to-gemini',
+			'anthropic-to-openai-chat',
+			'anthropic-to-gemini',
+			'gemini-to-openai-chat',
+			'gemini-to-anthropic',
 		]);
 	});
 
@@ -113,7 +119,7 @@ describe('adapter registry', () => {
 			upstreamProtocol: 'minimax',
 			upstreamOperation: 'audio.transcriptions',
 		});
-		assert.equal(listConversionAdapters().length, 20);
+		assert.equal(listConversionAdapters().length, 26);
 		assert.deepEqual(ROUTE_ADAPTER_MAPPINGS['dashscope-tts-qwen-audio'], {
 			requestProtocol: 'openai',
 			requestOperation: 'audio.speech',

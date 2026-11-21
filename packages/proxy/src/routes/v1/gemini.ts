@@ -8,6 +8,8 @@ import { describeEmbeddingsOutcome, describeGeminiOutcome } from '../../services
 import type { RouteResult } from '../../services/model-router';
 import { proxyGeminiContent, proxyGeminiEmbeddings } from '../../services/proxy';
 import { buildRouteRequestBody } from '../../services/route-default-params';
+import { isTextConversionAdapter } from '@octafuse/core/adapters/registry';
+import { textConversionUpstreamBodyForLog } from '../../services/egress/text-conversion-driver';
 import { finalizeRequestLogJson } from '../../services/request-log-shared';
 import { summarizeGeminiToolsForLog } from '../../services/request-log-tools-summary';
 import { resolveModelRouting } from '../../services/resolve-model-route-group';
@@ -65,6 +67,7 @@ function geminiUpstreamWireBodyForLog(
 	body: Record<string, unknown>,
 	action: GeminiAction
 ): string | null {
+	if (isTextConversionAdapter(route.adapter)) return textConversionUpstreamBodyForLog(route, 'gemini', body, action === 'streamGenerateContent');
 	const merged = buildRouteRequestBody(route, body) as Record<string, unknown>;
 	return finalizeRequestLogJson(geminiBodyRedactedForLog(merged, action));
 }

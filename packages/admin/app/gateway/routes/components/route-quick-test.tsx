@@ -183,21 +183,23 @@ function QuickTestContent({
 		() =>
 			previewPlaygroundResponse(
 				responseText,
-				normalizeProtocol(form.upstream_protocol),
+				normalizeProtocol(family === 'openai_chat' || family === 'openai_responses' ? 'openai' : family ?? form.upstream_protocol),
 				meta?.contentType ?? null,
 				!sending && !stopped
 			),
-		[responseText, form.upstream_protocol, meta?.contentType, sending, stopped]
+		[responseText, family, form.upstream_protocol, meta?.contentType, sending, stopped]
 	);
 	const mergedRequest = previewPlaygroundMergedBody({
 		bodyText,
 		customParams: draft?.custom_params,
 		upstreamProtocol: form.upstream_protocol,
 		providerModelName: form.provider_model_name,
+		adapter: form.adapter,
+		geminiAction: geminiStream ? 'streamGenerateContent' : 'generateContent',
 	});
 	const plannedStreaming =
-		family === 'gemini'
-			? geminiStream
+		family
+			? streamingRequest
 			: mergedRequest.status === 'preview' && JSON.parse(mergedRequest.json).stream === true;
 	const showStream = meta ? preview.streaming : Boolean(family && plannedStreaming);
 	const upstreamPreview = describePlaygroundUpstreamUrl({
@@ -208,7 +210,7 @@ function QuickTestContent({
 		providerModelName: form.provider_model_name,
 		modelKind,
 		imageOperation,
-		geminiAction: geminiStream ? 'streamGenerateContent' : 'generateContent',
+		geminiAction: streamingRequest ? 'streamGenerateContent' : 'generateContent',
 	});
 	const targetUrl = upstreamPreview.url;
 	const actualBody =
@@ -262,7 +264,7 @@ function QuickTestContent({
 					routeDraft: draft,
 					body,
 					imageOperation,
-					...(form.upstream_protocol === 'gemini'
+					...(form.upstream_protocol === 'gemini' || family === 'gemini'
 						? { geminiAction: geminiStream ? 'streamGenerateContent' : 'generateContent' }
 						: {}),
 				}),

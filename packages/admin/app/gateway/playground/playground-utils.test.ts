@@ -48,6 +48,23 @@ function route(overrides: Partial<RouteListRow> = {}): RouteListRow {
 }
 
 describe('playground-utils', () => {
+	it('previews converted upstream fields and keeps route defaults when the client omits max_tokens', () => {
+		const result = previewPlaygroundMergedBody({
+			bodyText: JSON.stringify({ messages: [{ role: 'user', content: 'ping' }], stream: true }),
+			adapter: 'openai-chat-to-anthropic',
+			upstreamProtocol: 'anthropic',
+			customParams: JSON.stringify({ body: { max_tokens: 8192 } }),
+			providerModelName: 'claude-native',
+		});
+		assert.equal(result.status, 'preview');
+		if (result.status !== 'preview') return;
+		assert.deepEqual(JSON.parse(result.json), {
+			model: 'claude-native',
+			messages: [{ role: 'user', content: [{ type: 'text', text: 'ping' }] }],
+			stream: true,
+			max_tokens: 8192,
+		});
+	});
 	it('routeMatchesSearch matches model, provider, protocol, and id', () => {
 		const r = route();
 		assert.equal(routeMatchesSearch(r, ''), true);

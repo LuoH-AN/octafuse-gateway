@@ -90,6 +90,41 @@ function post(body: unknown, authenticated = true, repos?: GatewayRepositories) 
 afterEach(() => mock.restoreAll());
 
 describe('Playground route drafts', () => {
+	it('tests an Anthropic client against an OpenAI upstream and returns Anthropic output', async () => {
+		mock.method(globalThis, 'fetch', async (url: RequestInfo | URL, init?: RequestInit) => {
+			assert.equal(String(url), 'https://upstream.example/v1/chat/completions');
+			const wire = JSON.parse(String(init?.body));
+			assert.deepEqual(wire.messages, [{ role: 'system', content: 'Be concise' }, { role: 'user', content: 'ping' }]);
+			assert.equal(wire.model, 'unsaved-model');
+			assert.equal(wire.max_tokens, 321);
+			return Response.json({ id: 'response-id', choices: [{ message: { content: 'pong' }, finish_reason: 'stop' }], usage: { prompt_tokens: 3, completion_tokens: 1 } });
+		});
+		const result = await invokePlaygroundUpstream(repositories(), {
+			routeDraft: { ...draft, request_protocol: 'anthropic', request_operation: 'messages', adapter: 'anthropic-to-openai-chat' },
+			body: { model: 'catalog-model', system: 'Be concise', messages: [{ role: 'user', content: 'ping' }], max_tokens: 321 },
+		});
+		assert.equal(result.response.status, 200);
+		const body = await result.response.json() as Record<string, unknown>;
+		assert.equal(body.type, 'message');
+		assert.deepEqual(body.content, [{ type: 'text', text: 'pong' }]);
+		assert.equal(body.stop_reason, 'end_turn');
+		assert.equal(JSON.parse(result.upstreamWireBodyJson).max_tokens, 321);
+	});
+	it('uses Gemini action to select an OpenAI stream for a Gemini client', async () => {
+		mock.method(globalThis, 'fetch', async (_url: RequestInfo | URL, init?: RequestInit) => {
+			assert.equal(JSON.parse(String(init?.body)).stream, true);
+			return new Response('data: {"choices":[{"index":0,"delta":{"content":"pong"},"finish_reason":"stop"}],"usage":{"prompt_tokens":3,"completion_tokens":1}}\n\ndata: [DONE]\n\n', { headers: { 'Content-Type': 'text/event-stream' } });
+		});
+		const result = await invokePlaygroundUpstream(repositories(), {
+			routeDraft: { ...draft, request_protocol: 'gemini', request_operation: 'models.generate', adapter: 'gemini-to-openai-chat' },
+			body: { contents: [{ role: 'user', parts: [{ text: 'ping' }] }] },
+			geminiAction: 'streamGenerateContent',
+		});
+		const text = await result.response.text();
+		assert.match(text, /"text":"pong"/);
+		assert.match(text, /"finishReason":"STOP"/);
+		assert.doesNotMatch(text, /\[DONE\]/);
+	});
 	it('tests an unsaved mapping and forced custom body/headers using stored provider credentials', async () => {
 		const fetchMock = mock.method(globalThis, 'fetch', async (url: RequestInfo | URL, init?: RequestInit) => {
 			assert.equal(url, 'https://upstream.example/v1/chat/completions');

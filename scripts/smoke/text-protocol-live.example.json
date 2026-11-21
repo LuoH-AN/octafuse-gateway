@@ -1,0 +1,24 @@
+{
+	"maxTokens": 2048,
+	"timeoutMs": 120000,
+	"upstreams": {
+		"openai": {
+			"model": "OPENAI_CHAT_MODEL",
+			"apiKeyEnv": "LIVE_GATEWAY_API_KEY",
+			"endpoint": { "base": "https://YOUR_WORKER/v1" }
+		},
+		"anthropic": {
+			"model": "ANTHROPIC_MESSAGES_MODEL",
+			"apiKeyEnv": "LIVE_GATEWAY_API_KEY",
+			"endpoint": { "base": "https://YOUR_WORKER" }
+		},
+		"gemini": {
+			"model": "GEMINI_MODEL",
+			"apiKeyEnv": "LIVE_GATEWAY_API_KEY",
+			"endpoint": {
+				"base": "https://YOUR_WORKER/v1beta/models",
+				"auth": "bearer"
+			}
+		}
+	}
+}

@@ -2,7 +2,17 @@
 
 ## Unreleased
 
+- **上游同步**：同步上游 `main` 至 `6912830a`，保留本地文本协议互转与 Responses 工具兼容补丁。
+
 **升级前请先执行数据库迁移。** `0037` 为 OAuth 客户端增加凭据字段，`0038` 为供应商增加可空的 `custom_params` 字段。[0037 迁移与回退说明](docs/operators/migrations/0037-oauth-client-credentials.md)
+
+- **工具续轮签名修复**：Anthropic 格式的转换响应通过 `tool_use.extra_content.google.thought_signature` 保留 Google 函数调用签名，回传到 OpenAI 兼容或 Gemini 上游时恢复签名，修复首轮成功、工具结果续轮返回 400 的问题；JSON 与 SSE 均支持，原生 Anthropic 出站请求继续过滤外来签名。
+
+- **文本互转真实冒烟**：新增 `test:gateway:text-conversion-live`，复用当前转换与上游驱动，检查六个方向的 JSON、SSE、函数调用及结果续轮，并生成用量报告；可用已部署 Worker 或供应商作真实上游，缺少配置和失败均以非零状态退出。
+
+- **三类文本 API 互转**：新增 OpenAI Chat、Anthropic Messages、Gemini 的六个方向转换适配器，覆盖 JSON、SSE、系统提示、函数工具与结果回传、图片及常用生成参数；同一请求入口可混合透传和转换目标并故障转移。计费继续读取实际上游用量，修复 Anthropic 流式初始输入／缓存用量被输出增量覆盖的问题；转换日志脱敏，后台调试台、快速测试、参数预览及四种语言说明同步支持。Responses 仍为独立透传，无法映射的专属工具或媒体返回明确错误。
+
+- **Responses 搜索工具兼容**：上游明确拒绝可选的 `web_search` / `web_search_preview` 时，保留函数工具及其调用约束并关闭内置搜索重试一次，JSON 与流式响应均通过 `X-Octafuse-Disabled-Tools` 和 `Warning` 响应头说明降级；明确指定搜索或没有函数工具可满足强制调用要求的请求继续返回能力错误。此类工具能力错误不再触发用户与模型级熔断，修正后的请求可以立即重试。
 
 - **上游同步与本地兼容补丁**：同步上游 `main` 至 `8740828a`，保留 Responses 工具续轮兼容修复：请求、JSON 响应和 SSE 输出中的推理项缺失或为 `null` 的 `summary` 自动补为空数组，已有摘要、加密推理和工具信息保持不变。
 
